@@ -10,9 +10,9 @@
 - 전국적으로 작동 가능한 시스템을 구축하되, 실제 주문은 광화문 근처 음식점으로 한정
 
 ⚙️ 프로젝트 핵심 기술
-백엔드 :  Spring Boot 3.X, Java 25, Spring Security + JWT 인증, JPA, PostgreSQL, Gradle, Redis
-AI : Gemini AI API
-협업 : Git, Github, Postman, Swagger, Notion, Slack
+- 백엔드 :  Spring Boot 3.X, Java 25, Spring Security + JWT 인증, JPA, PostgreSQL, Gradle, Redis
+- AI : Gemini AI API
+- 협업 : Git, Github, Postman, Swagger, Notion, Slack
 
 
 👥 팀 역할 분담
