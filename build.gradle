@@ -10,8 +10,8 @@ description = '배민어플만들어보기'
 
 java {
 	toolchain {
-		//languageVersion = JavaLanguageVersion.of(25)
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(25)
+		//languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
