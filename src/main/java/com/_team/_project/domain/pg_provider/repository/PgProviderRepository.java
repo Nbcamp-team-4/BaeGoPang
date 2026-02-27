@@ -11,4 +11,6 @@ public interface PgProviderRepository {
 	Optional<PgProvider> getPgProviderByCode(String code);
 
 	Optional<PgProvider> getById(UUID providerId);
+
+	void deletePgProvider(UUID providerId);
 }

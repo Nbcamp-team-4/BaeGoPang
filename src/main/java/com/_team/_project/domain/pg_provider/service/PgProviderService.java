@@ -10,4 +10,6 @@ public interface PgProviderService {
 	CreatePgProviderResponse createPgProvider(CreatePgProviderRequest request);
 
 	GetPgProviderResponse getPgProvider(UUID providerId);
+
+	void deletePgProvider(UUID providerId);
 }

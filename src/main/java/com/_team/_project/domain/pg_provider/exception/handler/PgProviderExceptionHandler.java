@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com._team._project.domain.pg_provider.exception.AlreadyDeactivatedPgProviderException;
 import com._team._project.domain.pg_provider.exception.DuplicatePgProviderCodeException;
 import com._team._project.domain.pg_provider.exception.PgProviderNotFoundException;
 import com._team._project.global.common.dto.BaseResponse;
@@ -33,5 +34,11 @@ public class PgProviderExceptionHandler {
 	@ExceptionHandler(PgProviderNotFoundException.class)
 	public ResponseEntity<BaseResponse<Void>> handlePgProviderAlreadyExists(PgProviderNotFoundException e) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(BaseResponse.ofError(e.getErrorCode()));
+	}
+
+	@ExceptionHandler(AlreadyDeactivatedPgProviderException.class)
+	public ResponseEntity<BaseResponse<Void>> handleAlreadyDeactivatedPgProvider(
+		AlreadyDeactivatedPgProviderException e) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.ofError(e.getErrorCode()));
 	}
 }

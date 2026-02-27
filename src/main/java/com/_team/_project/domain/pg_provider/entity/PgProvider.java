@@ -44,4 +44,11 @@ public class PgProvider extends BaseEntity {
 		this.name = name;
 		this.status = status;
 	}
+
+	public void markDeleted(UUID deletedBy) {
+		super.markDeleted(deletedBy);
+		this.status = PgProviderStatus.DEACTIVE;
+	}
 }
+
+
