@@ -1,6 +1,7 @@
 package com._team._project.domain.pg_provider.repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
 
@@ -24,5 +25,10 @@ public class PgProviderRepositoryImpl implements PgProviderRepository {
 	@Override
 	public Optional<PgProvider> getPgProviderByCode(String code) {
 		return pgProviderJpaRepository.findByCode(code);
+	}
+
+	@Override
+	public Optional<PgProvider> getById(UUID providerId) {
+		return pgProviderJpaRepository.findById(providerId);
 	}
 }

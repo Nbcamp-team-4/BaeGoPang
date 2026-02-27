@@ -1,13 +1,16 @@
 package com._team._project.domain.pg_provider.service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.pg_provider.api.request.CreatePgProviderRequest;
 import com._team._project.domain.pg_provider.api.response.CreatePgProviderResponse;
+import com._team._project.domain.pg_provider.api.response.GetPgProviderResponse;
 import com._team._project.domain.pg_provider.entity.PgProvider;
 import com._team._project.domain.pg_provider.exception.DuplicatePgProviderCodeException;
+import com._team._project.domain.pg_provider.exception.PgProviderNotFoundException;
 import com._team._project.domain.pg_provider.model.vo.PgProviderStatus;
 import com._team._project.domain.pg_provider.repository.PgProviderRepository;
 
@@ -50,6 +53,17 @@ public class PgProviderServiceImpl implements PgProviderService {
 			.createdAt(saved.getCreatedAt())
 			.createdBy(saved.getCreatedBy())
 			.build();
+	}
+
+	@Override
+	public GetPgProviderResponse getPgProvider(UUID providerId) {
+
+		// 1. PG사 기본키로 PG사를 찾는다, 검색 결과가 없다면 예외 반환
+		PgProvider provider = pgProviderRepository.getById(providerId)
+			.orElseThrow(PgProviderNotFoundException::new);
+
+		// 2. DTO로 반환한다.
+		return GetPgProviderResponse.from(provider);
 	}
 
 }
