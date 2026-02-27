@@ -25,7 +25,7 @@ public class PgProvider extends BaseEntity {
 
 	@Id
 	@UuidGenerator
-	@Column(name = "id", columnDefinition = "BINARY(16)", updatable = false, nullable = false)
+	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
 
 	@Column(name = "code", unique = true, nullable = false)
