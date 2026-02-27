@@ -31,4 +31,9 @@ public class PgProviderRepositoryImpl implements PgProviderRepository {
 	public Optional<PgProvider> getById(UUID providerId) {
 		return pgProviderJpaRepository.findById(providerId);
 	}
+
+	@Override
+	public void deletePgProvider(UUID providerId) {
+		pgProviderJpaRepository.deleteById(providerId);
+	}
 }

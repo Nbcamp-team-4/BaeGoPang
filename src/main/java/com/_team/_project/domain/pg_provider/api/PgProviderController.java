@@ -3,6 +3,7 @@ package com._team._project.domain.pg_provider.api;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,4 +48,15 @@ public class PgProviderController {
 			BaseResponse.ofSuccess(response)
 		);
 	}
+
+	@DeleteMapping("/{providerId}")
+	public ResponseEntity<?> deletePgProvider(@PathVariable("providerId") UUID providerId) {
+
+		pgProviderService.deletePgProvider(providerId);
+
+		return ResponseEntity.ok().body(
+			BaseResponse.ofSuccess(null)
+		);
+	}
+
 }
