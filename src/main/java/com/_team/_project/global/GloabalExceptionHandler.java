@@ -7,7 +7,7 @@ public class GloabalExceptionHandler {
 
     @Getter
     @AllArgsConstructor
-    public class ApiResponse<T> {
+    public static class ApiResponse<T> {
         private int statusCode;
         private String message;
         private T data;
