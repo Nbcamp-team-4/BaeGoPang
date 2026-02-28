@@ -9,6 +9,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import com._team._project.domain.pg_provider.exception.AlreadyDeactivatedPgProviderException;
 import com._team._project.domain.pg_provider.exception.DuplicatePgProviderCodeException;
+import com._team._project.domain.pg_provider.exception.InvalidInputException;
 import com._team._project.domain.pg_provider.exception.PgProviderNotFoundException;
 import com._team._project.global.common.dto.BaseResponse;
 
@@ -41,4 +42,10 @@ public class PgProviderExceptionHandler {
 		AlreadyDeactivatedPgProviderException e) {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.ofError(e.getErrorCode()));
 	}
+
+	@ExceptionHandler(InvalidInputException.class)
+	public ResponseEntity<BaseResponse<Void>> handleInvalidInput(InvalidInputException e) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(BaseResponse.ofError(e.getErrorCode()));
+	}
+
 }

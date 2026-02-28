@@ -6,8 +6,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.pg_provider.api.request.CreatePgProviderRequest;
+import com._team._project.domain.pg_provider.api.request.UpdatePgProviderRequest;
 import com._team._project.domain.pg_provider.api.response.CreatePgProviderResponse;
 import com._team._project.domain.pg_provider.api.response.GetPgProviderResponse;
+import com._team._project.domain.pg_provider.api.response.UpdatePgProviderResponse;
 import com._team._project.domain.pg_provider.entity.PgProvider;
 import com._team._project.domain.pg_provider.exception.AlreadyDeactivatedPgProviderException;
 import com._team._project.domain.pg_provider.exception.DuplicatePgProviderCodeException;
@@ -75,7 +77,7 @@ public class PgProviderServiceImpl implements PgProviderService {
 		PgProvider provider = pgProviderRepository.getById(providerId)
 			.orElseThrow(PgProviderNotFoundException::new);
 
-		// 2. 이미 비활성화된 회원인 경우, 에러 발생
+		// 2. 이미 비활성화된 경우, 에러 발생
 		if (isAreadyDeactivated(provider)) {
 			throw new AlreadyDeactivatedPgProviderException();
 		}
@@ -83,6 +85,32 @@ public class PgProviderServiceImpl implements PgProviderService {
 		// 3. 삭제 표시한다.
 		provider.markDeleted(null); // 수정 필요
 
+	}
+
+	@Override
+	@Transactional
+	public UpdatePgProviderResponse updatePgProvider(UUID providerId, UpdatePgProviderRequest request) {
+
+		// 1. PG사 기본키로 PG사를 찾는다, 검색 결과가 없다면 예외 반환
+		PgProvider provider = pgProviderRepository.getById(providerId)
+			.orElseThrow(PgProviderNotFoundException::new);
+
+		// 2. 이미 비활성화된 경우, 에러 발생
+		if (isAreadyDeactivated(provider)) {
+			throw new AlreadyDeactivatedPgProviderException();
+		}
+
+		// 3. 코드의 중복 여부를 확인한뒤,
+		Optional<PgProvider> found = pgProviderRepository.getPgProviderByCode(request.getCode());
+		if (found.isPresent() && !provider.equals(found.get())) {
+			throw new DuplicatePgProviderCodeException();
+		}
+
+		// 4. 변경
+		boolean result = provider.update(request);
+
+		// 5. dto로 변환
+		return UpdatePgProviderResponse.from(provider);
 	}
 
 	private boolean isAreadyDeactivated(PgProvider provider) {
