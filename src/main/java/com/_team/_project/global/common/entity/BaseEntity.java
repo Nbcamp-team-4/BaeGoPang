@@ -30,6 +30,10 @@ public abstract class BaseEntity {
 	private UUID updatedBy;
 	private LocalDateTime deletedAt;
 	private UUID deletedBy;
+
+	protected void markDeleted(UUID deletedBy) {
+
+	}
 }
 
 
