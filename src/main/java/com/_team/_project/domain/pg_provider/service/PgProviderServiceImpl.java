@@ -1,14 +1,20 @@
 package com._team._project.domain.pg_provider.service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.pg_provider.api.request.CreatePgProviderRequest;
+import com._team._project.domain.pg_provider.api.request.GetPgProvidersRequest;
 import com._team._project.domain.pg_provider.api.request.UpdatePgProviderRequest;
 import com._team._project.domain.pg_provider.api.response.CreatePgProviderResponse;
 import com._team._project.domain.pg_provider.api.response.GetPgProviderResponse;
+import com._team._project.domain.pg_provider.api.response.GetPgProvidersResponse;
 import com._team._project.domain.pg_provider.api.response.UpdatePgProviderResponse;
 import com._team._project.domain.pg_provider.entity.PgProvider;
 import com._team._project.domain.pg_provider.exception.AlreadyDeactivatedPgProviderException;
@@ -111,6 +117,33 @@ public class PgProviderServiceImpl implements PgProviderService {
 
 		// 5. dto로 변환
 		return UpdatePgProviderResponse.from(provider);
+	}
+
+	@Override
+	public GetPgProvidersResponse getPgProviders(GetPgProvidersRequest request) {
+		int page = request.getPage() == null ? 0 : request.getPage();
+		int size = request.getSize() == null ? 10 : request.getSize();
+
+		Pageable pageable = PageRequest.of(page, size);
+
+		Page<PgProvider> pageResult = pgProviderRepository.getPgProviders(request, pageable);
+
+		List<GetPgProvidersResponse.Item> content = pageResult.getContent().stream()
+			.map(p -> GetPgProvidersResponse.Item.builder()
+				.id(p.getId())
+				.code(p.getCode())
+				.name(p.getName())
+				.status(p.getStatus())
+				.build())
+			.toList();
+
+		return GetPgProvidersResponse.builder()
+			.content(content)
+			.page(pageResult.getNumber())
+			.size(pageResult.getSize())
+			.totalElements(pageResult.getTotalElements())
+			.totalPages(pageResult.getTotalPages())
+			.build();
 	}
 
 	private boolean isAreadyDeactivated(PgProvider provider) {
