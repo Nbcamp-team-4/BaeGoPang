@@ -55,4 +55,5 @@ public class Payment extends BaseEntity {
 		this.paidAt = paidAt;
 		this.order = order;
 	}
+
 }
