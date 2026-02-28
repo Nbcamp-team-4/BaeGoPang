@@ -68,8 +68,7 @@ public class PgProviderServiceImpl implements PgProviderService {
 	public GetPgProviderResponse getPgProvider(UUID providerId) {
 
 		// 1. PG사 기본키로 PG사를 찾는다, 검색 결과가 없다면 예외 반환
-		PgProvider provider = pgProviderRepository.getById(providerId)
-			.orElseThrow(PgProviderNotFoundException::new);
+		PgProvider provider = getPgProviderInnerWithException(providerId);
 
 		// 2. DTO로 반환한다.
 		return GetPgProviderResponse.from(provider);
@@ -80,8 +79,7 @@ public class PgProviderServiceImpl implements PgProviderService {
 	public void deletePgProvider(UUID providerId) {
 
 		// 1. PG사 기본키로 PG사를 찾는다, 검색 결과가 없다면 예외 반환
-		PgProvider provider = pgProviderRepository.getById(providerId)
-			.orElseThrow(PgProviderNotFoundException::new);
+		PgProvider provider = getPgProviderInnerWithException(providerId);
 
 		// 2. 이미 비활성화된 경우, 에러 발생
 		if (isAreadyDeactivated(provider)) {
@@ -98,8 +96,7 @@ public class PgProviderServiceImpl implements PgProviderService {
 	public UpdatePgProviderResponse updatePgProvider(UUID providerId, UpdatePgProviderRequest request) {
 
 		// 1. PG사 기본키로 PG사를 찾는다, 검색 결과가 없다면 예외 반환
-		PgProvider provider = pgProviderRepository.getById(providerId)
-			.orElseThrow(PgProviderNotFoundException::new);
+		PgProvider provider = getPgProviderInnerWithException(providerId);
 
 		// 2. 이미 비활성화된 경우, 에러 발생
 		if (isAreadyDeactivated(provider)) {
@@ -144,6 +141,12 @@ public class PgProviderServiceImpl implements PgProviderService {
 			.totalElements(pageResult.getTotalElements())
 			.totalPages(pageResult.getTotalPages())
 			.build();
+	}
+
+	@Override
+	public PgProvider getPgProviderInnerWithException(UUID providerId) {
+		return pgProviderRepository.getById(providerId)
+			.orElseThrow(PgProviderNotFoundException::new);
 	}
 
 	private boolean isAreadyDeactivated(PgProvider provider) {

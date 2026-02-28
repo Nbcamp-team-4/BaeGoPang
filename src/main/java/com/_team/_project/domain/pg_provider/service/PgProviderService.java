@@ -9,6 +9,7 @@ import com._team._project.domain.pg_provider.api.response.CreatePgProviderRespon
 import com._team._project.domain.pg_provider.api.response.GetPgProviderResponse;
 import com._team._project.domain.pg_provider.api.response.GetPgProvidersResponse;
 import com._team._project.domain.pg_provider.api.response.UpdatePgProviderResponse;
+import com._team._project.domain.pg_provider.entity.PgProvider;
 
 public interface PgProviderService {
 	CreatePgProviderResponse createPgProvider(CreatePgProviderRequest request);
@@ -20,4 +21,6 @@ public interface PgProviderService {
 	UpdatePgProviderResponse updatePgProvider(UUID providerId, UpdatePgProviderRequest request);
 
 	GetPgProvidersResponse getPgProviders(GetPgProvidersRequest request);
+
+	PgProvider getPgProviderInnerWithException(UUID pgProviderId);
 }
