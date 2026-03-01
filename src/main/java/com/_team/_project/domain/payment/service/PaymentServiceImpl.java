@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com._team._project.domain.payment.api.request.CreatePaymentRequest;
 import com._team._project.domain.payment.api.response.CancelPaymentResponse;
 import com._team._project.domain.payment.api.response.CreatePaymentResponse;
+import com._team._project.domain.payment.api.response.GetPaymentResponse;
 import com._team._project.domain.payment.api.response.PayPaymentResponse;
 import com._team._project.domain.payment.entity.Payment;
 import com._team._project.domain.payment.exception.InvalidPaymentMethodException;
@@ -144,6 +145,15 @@ public class PaymentServiceImpl implements PaymentService {
 		// 2. 삭제 표시한다.
 		payment.markDeleted(null); // 수정 필요
 
+	}
+
+	@Override
+	public GetPaymentResponse getPayment(UUID paymentId) {
+
+		// 1. 결제 기본키로 결제 데이터를 찾는다, 검색 결과가 없다면 예외 반환
+		Payment payment = paymentRepository.getPayment(paymentId).orElseThrow(PaymentNotFoundException::new);
+
+		return GetPaymentResponse.from(payment);
 	}
 
 }

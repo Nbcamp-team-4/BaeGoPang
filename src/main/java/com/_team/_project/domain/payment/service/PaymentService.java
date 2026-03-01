@@ -5,6 +5,7 @@ import java.util.UUID;
 import com._team._project.domain.payment.api.request.CreatePaymentRequest;
 import com._team._project.domain.payment.api.response.CancelPaymentResponse;
 import com._team._project.domain.payment.api.response.CreatePaymentResponse;
+import com._team._project.domain.payment.api.response.GetPaymentResponse;
 import com._team._project.domain.payment.api.response.PayPaymentResponse;
 
 public interface PaymentService {
@@ -15,4 +16,6 @@ public interface PaymentService {
 	CancelPaymentResponse cancelPayment(UUID paymentId);
 
 	void deletePayment(UUID paymentId);
+
+	GetPaymentResponse getPayment(UUID paymentId);
 }
