@@ -32,7 +32,8 @@ public abstract class BaseEntity {
 	private UUID deletedBy;
 
 	protected void markDeleted(UUID deletedBy) {
-
+		this.deletedAt = LocalDateTime.now();
+		this.deletedBy = deletedBy;
 	}
 }
 

@@ -122,6 +122,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
+	@Transactional
 	public CancelPaymentResponse cancelPayment(UUID paymentId) {
 
 		Payment payment = paymentRepository.getPayment(paymentId).orElseThrow(PaymentNotFoundException::new);
@@ -131,6 +132,18 @@ public class PaymentServiceImpl implements PaymentService {
 		// 로그 생성
 
 		return CancelPaymentResponse.from(payment);
+	}
+
+	@Override
+	@Transactional
+	public void deletePayment(UUID paymentId) {
+
+		// 1. 결제 기본키로 결제 데이터를 찾는다, 검색 결과가 없다면 예외 반환
+		Payment payment = paymentRepository.getPayment(paymentId).orElseThrow(PaymentNotFoundException::new);
+
+		// 2. 삭제 표시한다.
+		payment.markDeleted(null); // 수정 필요
+
 	}
 
 }

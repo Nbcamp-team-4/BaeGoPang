@@ -3,6 +3,7 @@ package com._team._project.domain.payment.api;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,6 +61,18 @@ public class PaymentController {
 		return ResponseEntity.ok().body(
 			BaseResponse.ofSuccess(
 				response
+			)
+		);
+	}
+
+	@DeleteMapping("/{paymentId}")
+	public ResponseEntity<?> deletePayment(@PathVariable("paymentId") UUID paymentId) {
+
+		paymentService.deletePayment(paymentId);
+
+		return ResponseEntity.ok().body(
+			BaseResponse.ofSuccess(
+				null
 			)
 		);
 	}

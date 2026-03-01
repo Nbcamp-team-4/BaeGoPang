@@ -64,4 +64,8 @@ public class Payment extends BaseEntity {
 	public void cancel() {
 		this.status = PaymentStatus.CANCELED;
 	}
+
+	public void markDeleted(UUID deletedBy) {
+		super.markDeleted(deletedBy);
+	}
 }

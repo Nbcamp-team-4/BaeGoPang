@@ -13,4 +13,6 @@ public interface PaymentService {
 	PayPaymentResponse payPayment(UUID paymentId);
 
 	CancelPaymentResponse cancelPayment(UUID paymentId);
+
+	void deletePayment(UUID paymentId);
 }
