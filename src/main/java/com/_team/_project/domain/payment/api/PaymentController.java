@@ -1,6 +1,9 @@
 package com._team._project.domain.payment.api;
 
+import java.util.UUID;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com._team._project.domain.payment.api.request.CreatePaymentRequest;
 import com._team._project.domain.payment.api.response.CreatePaymentResponse;
+import com._team._project.domain.payment.api.response.PayPaymentResponse;
 import com._team._project.domain.payment.service.PaymentService;
 import com._team._project.global.common.dto.BaseResponse;
 
@@ -27,6 +31,18 @@ public class PaymentController {
 	public ResponseEntity<?> createPayment(@RequestBody @Valid CreatePaymentRequest request) {
 
 		CreatePaymentResponse response = paymentService.createPayment(request);
+
+		return ResponseEntity.ok().body(
+			BaseResponse.ofSuccess(
+				response
+			)
+		);
+	}
+
+	@PostMapping("/{paymentId}/paid")
+	public ResponseEntity<?> payPayment(@PathVariable("paymentId") UUID paymentId) {
+
+		PayPaymentResponse response = paymentService.payPayment(paymentId);
 
 		return ResponseEntity.ok().body(
 			BaseResponse.ofSuccess(

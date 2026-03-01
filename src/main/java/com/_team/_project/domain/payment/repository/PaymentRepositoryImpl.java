@@ -1,5 +1,8 @@
 package com._team._project.domain.payment.repository;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Repository;
 
 import com._team._project.domain.payment.entity.Payment;
@@ -18,5 +21,10 @@ public class PaymentRepositoryImpl implements PaymentRepository {
 	public Payment createPayment(Payment payment) {
 		Payment save = paymentJpaRepository.save(payment);
 		return save;
+	}
+
+	@Override
+	public Optional<Payment> getPayment(UUID paymentId) {
+		return paymentJpaRepository.findById(paymentId);
 	}
 }

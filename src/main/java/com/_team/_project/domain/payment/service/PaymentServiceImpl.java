@@ -1,11 +1,15 @@
 package com._team._project.domain.payment.service;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.payment.api.request.CreatePaymentRequest;
 import com._team._project.domain.payment.api.response.CreatePaymentResponse;
+import com._team._project.domain.payment.api.response.PayPaymentResponse;
 import com._team._project.domain.payment.entity.Payment;
 import com._team._project.domain.payment.exception.InvalidPaymentMethodException;
+import com._team._project.domain.payment.exception.PaymentNotFoundException;
 import com._team._project.domain.payment.model.vo.PaymentMethod;
 import com._team._project.domain.payment.model.vo.PaymentStatus;
 import com._team._project.domain.payment.repository.PaymentRepository;
@@ -103,6 +107,17 @@ public class PaymentServiceImpl implements PaymentService {
 				.createdBy(saved.getCreatedBy())
 				.build();
 		}
+	}
+
+	@Override
+	@Transactional
+	public PayPaymentResponse payPayment(UUID paymentId) {
+
+		Payment payment = paymentRepository.getPayment(paymentId).orElseThrow(PaymentNotFoundException::new);
+
+		payment.pay();
+
+		return PayPaymentResponse.from(payment);
 	}
 
 }

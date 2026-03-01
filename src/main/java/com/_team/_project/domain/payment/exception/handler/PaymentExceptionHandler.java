@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com._team._project.domain.payment.exception.InvalidPaymentMethodException;
+import com._team._project.domain.payment.exception.PaymentNotFoundException;
 import com._team._project.domain.pg_provider.exception.PgProviderNotFoundException;
 import com._team._project.global.common.dto.BaseResponse;
 
@@ -33,5 +34,10 @@ public class PaymentExceptionHandler {
 	@ExceptionHandler(PgProviderNotFoundException.class)
 	public ResponseEntity<BaseResponse<Void>> handlePgProviderAlreadyExists(PgProviderNotFoundException e) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(BaseResponse.ofError(e.getErrorCode()));
+	}
+
+	@ExceptionHandler(PaymentNotFoundException.class)
+	public ResponseEntity<BaseResponse<Void>> handlePaymentNotFound(PaymentNotFoundException e) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(BaseResponse.ofError(e.getMessage()));
 	}
 }
