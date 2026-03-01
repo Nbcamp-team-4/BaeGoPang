@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.payment.api.request.CreatePaymentRequest;
+import com._team._project.domain.payment.api.response.CancelPaymentResponse;
 import com._team._project.domain.payment.api.response.CreatePaymentResponse;
 import com._team._project.domain.payment.api.response.PayPaymentResponse;
 import com._team._project.domain.payment.entity.Payment;
@@ -118,6 +119,18 @@ public class PaymentServiceImpl implements PaymentService {
 		payment.pay();
 
 		return PayPaymentResponse.from(payment);
+	}
+
+	@Override
+	public CancelPaymentResponse cancelPayment(UUID paymentId) {
+
+		Payment payment = paymentRepository.getPayment(paymentId).orElseThrow(PaymentNotFoundException::new);
+
+		payment.cancel();
+
+		// 로그 생성
+
+		return CancelPaymentResponse.from(payment);
 	}
 
 }

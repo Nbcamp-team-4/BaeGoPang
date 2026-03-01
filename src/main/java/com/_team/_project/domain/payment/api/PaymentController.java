@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com._team._project.domain.payment.api.request.CreatePaymentRequest;
+import com._team._project.domain.payment.api.response.CancelPaymentResponse;
 import com._team._project.domain.payment.api.response.CreatePaymentResponse;
 import com._team._project.domain.payment.api.response.PayPaymentResponse;
 import com._team._project.domain.payment.service.PaymentService;
@@ -43,6 +44,18 @@ public class PaymentController {
 	public ResponseEntity<?> payPayment(@PathVariable("paymentId") UUID paymentId) {
 
 		PayPaymentResponse response = paymentService.payPayment(paymentId);
+
+		return ResponseEntity.ok().body(
+			BaseResponse.ofSuccess(
+				response
+			)
+		);
+	}
+
+	@PostMapping("/{paymentId}/canceled")
+	public ResponseEntity<?> cancelPayment(@PathVariable("paymentId") UUID paymentId) {
+
+		CancelPaymentResponse response = paymentService.cancelPayment(paymentId);
 
 		return ResponseEntity.ok().body(
 			BaseResponse.ofSuccess(
