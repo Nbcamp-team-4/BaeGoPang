@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com._team._project.domain.product.entity.Product;
 import org.hibernate.annotations.UuidGenerator;
 
-import com._team._project.domain.product.entity.Product;
 import com._team._project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;

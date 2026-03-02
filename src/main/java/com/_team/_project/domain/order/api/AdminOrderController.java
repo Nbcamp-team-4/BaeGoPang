@@ -1,4 +1,4 @@
-package com._team._project.domain.order.api.admin;
+package com._team._project.domain.order.api;
 
 import java.util.List;
 import java.util.UUID;
