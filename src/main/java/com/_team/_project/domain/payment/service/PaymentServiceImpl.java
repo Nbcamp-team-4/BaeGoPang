@@ -15,6 +15,9 @@ import com._team._project.domain.payment.exception.PaymentNotFoundException;
 import com._team._project.domain.payment.model.vo.PaymentMethod;
 import com._team._project.domain.payment.model.vo.PaymentStatus;
 import com._team._project.domain.payment.repository.PaymentRepository;
+import com._team._project.domain.payment_log.entity.PaymentLog;
+import com._team._project.domain.payment_log.model.vo.PaymentLogStatus;
+import com._team._project.domain.payment_log.service.PaymentLogService;
 import com._team._project.domain.pg_provider.entity.PgProvider;
 import com._team._project.domain.pg_provider.service.PgProviderService;
 
@@ -29,6 +32,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final PgProviderService pgProviderService;
+	private final PaymentLogService paymentLogService;
 
 	@Override
 	@Transactional
@@ -37,8 +41,8 @@ public class PaymentServiceImpl implements PaymentService {
 		// 1. 주문 확인, 주문이 PENDING상태인 경우만 결제 데이터 생성 <- 선택(order에서 payment를 생성하는 경우, 구현할필요없음)
 
 		// 2. 결제 데이터와 결제 로그 데이터 생성
+		// 2-1. PG 결제인 경우
 		if (request.getMethod() == PaymentMethod.PG_PROVIDER) {
-			// PG 결제인 경우
 			// 1. PG사 관련 정보 확인
 			if (request.getPgProviderId() == null || request.getPgTid() == null) {
 				// pg사에서 결제하는데 PG사 관련 결제 정보가 없다면 에러 발생
@@ -54,32 +58,37 @@ public class PaymentServiceImpl implements PaymentService {
 				.build();
 
 			// 3. 결제 로그 생성
-			// PgProvider 찾아오기
-			log.info("{}", request.getPgProviderId());
+			// 3-1. PgProvider 찾아오기
 			PgProvider pgProvider = pgProviderService.getPgProviderInnerWithException(request.getPgProviderId());
-			// payment log 생성
-			// 로직 실행
-			// payment log 생성 끝
+			// 3-2. PaymentLog 생성
+			PaymentLog paymentLog = PaymentLog.builder()
+				.tid(request.getPgTid())
+				.status(PaymentLogStatus.READY)
+				.payment(payment)
+				.pgProvider(pgProvider)
+				.build();
 
 			// 4. 결제 로그 저장
+			PaymentLog savedPaymentLog = paymentLogService.createPaymentLog(paymentLog);
+
 			// 5. 결제 정보 저장
-			Payment saved = paymentRepository.createPayment(payment);
+			Payment savedPayment = paymentRepository.createPayment(payment);
 
 			// 6. 리턴
 			return CreatePaymentResponse.builder()
-				.id(saved.getId())
-				.status(saved.getStatus())
-				.method(saved.getMethod())
-				.amount(saved.getAmount())
+				.id(savedPayment.getId())
+				.status(savedPayment.getStatus())
+				.method(savedPayment.getMethod())
+				.amount(savedPayment.getAmount())
 				.orderNo("test_number")
 				.orderStatus("test_status")
 				.pgCode(pgProvider.getCode())
 				.pgName(pgProvider.getName())
-				.createdAt(saved.getCreatedAt())
-				.createdBy(saved.getCreatedBy())
+				.createdAt(savedPayment.getCreatedAt())
+				.createdBy(savedPayment.getCreatedBy())
 				.build();
+			// 2-2. 카드 결제인 경우
 		} else {
-			// 카드 결제인 경우
 			// 1. 결제 정보 생성
 			Payment payment = Payment.builder()
 				.method(request.getMethod())
@@ -89,11 +98,14 @@ public class PaymentServiceImpl implements PaymentService {
 				.build();
 
 			// 2. 결제 로그 생성
-			// payment log 생성
-			// 로직 실행
-			// payment log 생성 끝
+			// 2-1. PaymentLog 생성
+			PaymentLog paymentLog = PaymentLog.builder()
+				.status(PaymentLogStatus.READY)
+				.payment(payment)
+				.build();
 
 			// 3. 결제 로그 저장
+			PaymentLog savedPaymentLog = paymentLogService.createPaymentLog(paymentLog);
 
 			// 4. 결제 저장
 			Payment saved = paymentRepository.createPayment(payment);
