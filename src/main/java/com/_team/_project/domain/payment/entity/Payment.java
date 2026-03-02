@@ -57,7 +57,7 @@ public class Payment extends BaseEntity {
 	}
 
 	public void pay() {
-		this.status = PaymentStatus.PAID;
+		this.status = PaymentStatus.SUCCESS;
 		this.paidAt = LocalDateTime.now();
 	}
 
