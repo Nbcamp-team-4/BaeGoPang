@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com._team._project.domain.product.entity.Product;
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.order.api.request.CancelOrderRequest;
@@ -24,7 +25,6 @@ import com._team._project.domain.order.exception.OrderForbiddenException;
 import com._team._project.domain.order.exception.OrderNotFoundException;
 import com._team._project.domain.order.model.vo.OrderStatus;
 import com._team._project.domain.order.repository.OrderRepository;
-import com._team._project.domain.product.entity.Product;
 import com._team._project.domain.product.repository.ProductRepository;
 import com._team._project.domain.store.entity.Store;
 import com._team._project.domain.store.repository.StoreRepository;
