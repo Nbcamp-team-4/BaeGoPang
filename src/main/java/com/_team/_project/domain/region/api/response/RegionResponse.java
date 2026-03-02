@@ -8,10 +8,10 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class GetRegionResponse {
+public class RegionResponse {
 
     private UUID id;
     private String name;
-    private Boolean isActive;
+    private boolean isActive;
     private LocalDateTime createdAt;
 }

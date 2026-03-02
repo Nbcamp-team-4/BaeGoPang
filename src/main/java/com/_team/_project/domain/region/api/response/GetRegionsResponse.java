@@ -9,5 +9,6 @@ import lombok.Getter;
 @Builder
 public class GetRegionsResponse {
 
-    private List<GetRegionResponse> regions;
+    private List<RegionResponse> regions;
+
 }

@@ -1,23 +1,21 @@
 package com._team._project.domain.region.service;
 
-import java.util.UUID;
-
 import com._team._project.domain.region.api.request.CreateRegionRequest;
 import com._team._project.domain.region.api.request.UpdateRegionRequest;
-import com._team._project.domain.region.api.response.CreateRegionResponse;
-import com._team._project.domain.region.api.response.GetRegionResponse;
 import com._team._project.domain.region.api.response.GetRegionsResponse;
-import com._team._project.domain.region.api.response.UpdateRegionResponse;
+import com._team._project.domain.region.api.response.RegionResponse;
+
+import java.util.UUID;
 
 public interface RegionService {
 
-    CreateRegionResponse createRegion(CreateRegionRequest request);
+    RegionResponse createRegion(CreateRegionRequest request);
 
-    GetRegionResponse getRegion(UUID regionId);
+    RegionResponse getRegion(UUID regionId);
 
-    GetRegionsResponse getRegions();
+    GetRegionsResponse getRegions(); // 래핑 유지
 
-    UpdateRegionResponse updateRegion(UUID regionId, UpdateRegionRequest request);
+    RegionResponse updateRegion(UUID regionId, UpdateRegionRequest request);
 
-    void deleteRegion(UUID regionId);
+    void deactivateRegion(UUID regionId);
 }
