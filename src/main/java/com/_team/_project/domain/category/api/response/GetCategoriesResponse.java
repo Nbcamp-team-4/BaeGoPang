@@ -1,12 +1,17 @@
 package com._team._project.domain.category.api.response;
 
-import lombok.Builder;
-import lombok.Getter;
-
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 @Getter
-@Builder
+@AllArgsConstructor
 public class GetCategoriesResponse {
-    private List<CategoryResponse> categories;
+
+    private List<CategoryResponse> items;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
 }

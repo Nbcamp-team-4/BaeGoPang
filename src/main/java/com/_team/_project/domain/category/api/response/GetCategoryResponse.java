@@ -1,10 +1,15 @@
 package com._team._project.domain.category.api.response;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
-@Builder
+@AllArgsConstructor
 public class GetCategoryResponse {
+
     private CategoryResponse category;
+
+    public static GetCategoryResponse of(CategoryResponse category) {
+        return new GetCategoryResponse(category);
+    }
 }

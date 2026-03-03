@@ -1,17 +1,29 @@
 package com._team._project.domain.category.repository;
 
-import com._team._project.domain.category.entity.Category;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com._team._project.domain.category.entity.Category;
+
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
+
+    Optional<Category> findById(UUID id);
 
     Optional<Category> findByName(String name);
 
     boolean existsByName(String name);
 
-    // 목록/상세 조회 시 deletedAt IS NULL 조건 필요함 (1차에서는 service에서 필터하거나, 2차에 쿼리로 통일)
-    // Search(Page/Slice) + 정렬 + size 제한 필요함 (2차)
+    //관리자
+    Page<Category> findAll(Pageable pageable);
+
+    //사용자
+    Page<Category> findAllByDeletedAtIsNull(Pageable pageable);
+
+    //추후 가게-카테고리 매핑 시 필요
+    //List<StoreCategory> findAllByCategoryIdAndDeletedAtIsNull(UUID categoryId);
+
 }
