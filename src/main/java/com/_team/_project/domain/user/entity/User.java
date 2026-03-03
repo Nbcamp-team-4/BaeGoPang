@@ -1,4 +1,4 @@
-package com._team._project.domain.store.entity;
+package com._team._project.domain.user.entity;
 
 import java.util.UUID;
 
@@ -9,10 +9,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "p_store")
+@Table(name = "p_user")
 @Getter
 @NoArgsConstructor
-public class Store {
+public class User {
 
     @Id
     @UuidGenerator
