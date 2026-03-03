@@ -1,9 +1,7 @@
 package com._team._project.domain.region.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.MultiPolygon;
@@ -14,6 +12,8 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@AllArgsConstructor
+@Builder
 @Table(name = "p_region")
 public class Region {
 
@@ -55,6 +55,10 @@ public class Region {
     public void updateInfo(String name, MultiPolygon geom) {
         this.name = name;
         this.geom = geom;
+    }
+
+    public boolean isActive() {
+        return active;
     }
 
     // 비활성화

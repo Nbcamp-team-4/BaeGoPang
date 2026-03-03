@@ -14,4 +14,5 @@ public class CreateRegionRequest {
         private String geomWkt;
 
         private Boolean isActive;
+
 }
