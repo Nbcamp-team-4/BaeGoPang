@@ -55,7 +55,7 @@ public class PaymentLogRepositoryImpl implements PaymentLogRepository {
 				);
 		}
 
-		// 2️⃣ range만 있는 경우
+		// 2. range만 있는 경우
 		if (status == null && start != null && end != null) {
 			return paymentLogJpaRepository
 				.findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(
@@ -63,12 +63,12 @@ public class PaymentLogRepositoryImpl implements PaymentLogRepository {
 				);
 		}
 
-		// 3️⃣ status만 있는 경우
+		// 3. status만 있는 경우
 		if (status != null) {
 			return paymentLogJpaRepository.findByStatus(status, pageable);
 		}
 
-		// 4️⃣ 아무 조건도 없으면 전체 조회
+		// 4. 아무 조건도 없으면 전체 조회
 		return paymentLogJpaRepository.findAll(pageable);
 	}
 }
