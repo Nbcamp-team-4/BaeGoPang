@@ -1,18 +1,17 @@
 package com._team._project.domain.region.api.response;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.UUID;
+
 @Getter
 @Builder
-public class RegionResponse {
+public class GetRegionResponse {
 
     private UUID id;
     private String name;
-    private boolean isActive;
-    private LocalDateTime createdAt;
+    private String geomWkt;   // 상세에서 보임
+    private Boolean isActive;
 
 }

@@ -19,7 +19,7 @@ public class Region {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(nullable = false, unique = true, length = 50)
@@ -29,7 +29,7 @@ public class Region {
     @Column(nullable = false, columnDefinition = "geometry(MultiPolygon,4326)")
     private MultiPolygon geom;
 
-    /**
+    /*
      * 비활성화 운영용 컬럼
      * - true  : 활성(기본 조회 대상)
      * - false : 비활성(일반 조회에서 제외)
@@ -49,7 +49,6 @@ public class Region {
     public Region(String name, MultiPolygon geom) {
         this.name = name;
         this.geom = geom;
-        this.active = true;
     }
 
     // 정보 수정
