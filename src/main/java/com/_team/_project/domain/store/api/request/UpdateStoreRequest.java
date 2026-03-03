@@ -1,17 +1,39 @@
 package com._team._project.domain.store.api.request;
 
-import lombok.Getter;
-
+import java.time.LocalTime;
 import java.util.UUID;
 
+import com._team._project.domain.store.entity.StoreStatus;
+
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.Getter;
+
 @Getter
+@Data
 public class UpdateStoreRequest {
 
+    @NotNull
+    private UUID userId; // 수정자
+
     private String name;
+    private String description;
+    private String address;
 
     private Double latitude;
     private Double longitude;
 
-    // region 자동 판별/권한 정책에 따라 수정 불가일 수 있음 (2차)
-    private UUID regionId;
+    private String phone;
+    private String imageUrl;
+
+    private LocalTime openTime;
+    private LocalTime closeTime;
+
+    private StoreStatus status;
+
+    private Integer deliveryMinMinutes;
+    private Integer deliveryMaxMinutes;
+
+    private Integer deliveryFee;
+    private Integer minimumOrderAmount;
 }
