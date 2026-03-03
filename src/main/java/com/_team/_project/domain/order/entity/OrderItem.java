@@ -1,10 +1,9 @@
 package com._team._project.domain.order.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import com._team._project.domain.product.entity.Product;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.UuidGenerator;
 
 import com._team._project.global.common.entity.BaseEntity;
@@ -44,8 +43,9 @@ public class OrderItem extends BaseEntity {
     @Column(name = "line_total_amount", nullable = false)
     private Integer lineTotalAmount;
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItemOption> options = new ArrayList<>();
+    private Set<OrderItemOption> options = new LinkedHashSet<>();
 
     public OrderItem(Product product, String productName, Integer unitPrice, Integer quantity) {
         this.product = product;

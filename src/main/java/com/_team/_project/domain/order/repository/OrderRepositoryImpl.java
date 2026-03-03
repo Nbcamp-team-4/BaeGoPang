@@ -40,20 +40,18 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
 	@Override
 	public Optional<Order> findDetailByIdAndUserId(UUID orderId, UUID userId) {
-		// 고객용 주문 상세 조회(권한 체크)
-		// - orderId + userId 조건으로 "내 주문"인지 확인하면서 상세 조회
-		return em.createQuery("""
-				select distinct o
-				from Order o
-				join fetch o.user u
-				join fetch o.store s
-				left join fetch o.deliveryAddress a
-				left join fetch o.items i
-				left join fetch i.options io
-				join fetch i.product p
-				where o.id = :orderId
-				  and u.id = :userId
-			""", Order.class)
+		String jpql = """
+        select distinct o
+        from Order o
+        join fetch o.user u
+        join fetch o.store s
+        left join fetch o.items i
+        left join fetch i.product p
+        where o.id = :orderId
+          and u.id = :userId
+    """;
+
+		return em.createQuery(jpql, Order.class)
 				.setParameter("orderId", orderId)
 				.setParameter("userId", userId)
 				.getResultStream()
@@ -95,21 +93,18 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
 	@Override
 	public Optional<Order> findDetailByIdAndStoreId(UUID orderId, UUID storeId) {
-		// 가게(매니저)용 주문 상세 조회(소유 확인)
-		// - orderId + storeId 조건으로 "우리 가게 주문"인지 확인하면서 상세 조회
-		// - 주문상품/옵션까지 모두 fetch join 해서 상세 화면에 필요한 데이터 한 번에 조회
-		return em.createQuery("""
-				select distinct o
-				from Order o
-				join fetch o.user u
-				join fetch o.store s
-				left join fetch o.deliveryAddress a
-				left join fetch o.items i
-				left join fetch i.options io
-				join fetch i.product p
-				where o.id = :orderId
-				  and s.id = :storeId
-			""", Order.class)
+		String jpql = """
+        select distinct o
+        from Order o
+        join fetch o.user u
+        join fetch o.store s
+        left join fetch o.items i
+        left join fetch i.product p
+        where o.id = :orderId
+          and s.id = :storeId
+    """;
+
+		return em.createQuery(jpql, Order.class)
 				.setParameter("orderId", orderId)
 				.setParameter("storeId", storeId)
 				.getResultStream()
