@@ -1,26 +1,44 @@
 package com._team._project.domain.product.service;
 
+import java.util.UUID;
+
 import com._team._project.domain.product.api.request.CreateProductRequest;
 import com._team._project.domain.product.api.request.UpdateProductRequest;
-import com._team._project.domain.product.api.response.*;
-
-import java.util.UUID;
+import com._team._project.domain.product.api.response.GetProductsResponse;
+import com._team._project.domain.product.api.response.ProductResponse;
 
 public interface ProductService {
 
-    CreateProductResponse createProduct(CreateProductRequest request);
+    // ===== 기본 CRUD =====
 
-    GetProductResponse getProduct(UUID productId);
+    ProductResponse createProduct(CreateProductRequest request);
 
-    GetProductsResponse getProducts();
+    ProductResponse updateProduct(UUID productId, UpdateProductRequest request);
 
-    UpdateProductResponse updateProduct(UUID productId, UpdateProductRequest request);
+    void deleteProduct(UUID productId, UUID userId);
 
-    DeleteProductResponse deleteProduct(UUID productId); // Soft Delete
+    GetProductsResponse getProducts(UUID storeId);
 
-    HideProductResponse hideProduct(UUID productId);
+    ProductResponse getProduct(UUID productId);
 
-    HideProductResponse unhideProduct(UUID productId);
+
+    // ===== 상태 변경 =====
+
+    // 품절 처리
+    ProductResponse markSoldOut(UUID productId, UUID userId);
+
+    // 품절 해제
+    ProductResponse markAvailable(UUID productId, UUID userId);
+
+    // 숨김 처리
+    ProductResponse hideProduct(UUID productId, UUID userId);
+
+    // 숨김 해제
+    ProductResponse unhideProduct(UUID productId, UUID userId);
+
+
+    // ===== 2차 확장 예정 =====
 
     // Search(Page/Slice) + 정렬 + size 제한 필요함 (2차)
+
 }

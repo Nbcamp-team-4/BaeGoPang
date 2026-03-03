@@ -1,14 +1,28 @@
 package com._team._project.domain.product.api;
 
+import java.util.UUID;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
 import com._team._project.domain.product.api.request.CreateProductRequest;
 import com._team._project.domain.product.api.request.UpdateProductRequest;
-import com._team._project.domain.product.api.response.*;
+import com._team._project.domain.product.api.response.GetProductsResponse;
+import com._team._project.domain.product.api.response.ProductResponse;
 import com._team._project.domain.product.service.ProductService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,46 +31,67 @@ public class ProductController {
 
     private final ProductService productService;
 
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','OWNER')")
     @PostMapping
-    public CreateProductResponse createProduct(@RequestBody CreateProductRequest request) {
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProductResponse createProduct(@Valid @RequestBody CreateProductRequest request) {
         return productService.createProduct(request);
     }
 
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/{productId}")
-    public GetProductResponse getProduct(@PathVariable UUID productId) {
-        return productService.getProduct(productId);
-    }
-
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping
-    public GetProductsResponse getProducts() {
-        return productService.getProducts();
-    }
-
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','OWNER')")
-    @PatchMapping("/{productId}")
-    public UpdateProductResponse updateProduct(@PathVariable UUID productId,
-                                               @RequestBody UpdateProductRequest request) {
+    @PutMapping("/{productId}")
+    public ProductResponse updateProduct(
+        @PathVariable UUID productId,
+        @Valid @RequestBody UpdateProductRequest request
+    ) {
         return productService.updateProduct(productId, request);
     }
 
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','OWNER')")
     @DeleteMapping("/{productId}")
-    public DeleteProductResponse deleteProduct(@PathVariable UUID productId) {
-        return productService.deleteProduct(productId);
+    public void deleteProduct(
+        @PathVariable UUID productId,
+        @RequestParam UUID userId
+    ) {
+        productService.deleteProduct(productId, userId);
     }
 
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','OWNER')")
+    @GetMapping
+    public GetProductsResponse getProducts(@RequestParam UUID storeId) {
+        return productService.getProducts(storeId);
+    }
+
+    @GetMapping("/{productId}")
+    public ProductResponse getProduct(@PathVariable UUID productId) {
+        return productService.getProduct(productId);
+    }
+
+    @PatchMapping("/{productId}/sold-out")
+    public ProductResponse markSoldOut(
+        @PathVariable UUID productId,
+        @RequestParam UUID userId
+    ) {
+        return productService.markSoldOut(productId, userId);
+    }
+
+    @PatchMapping("/{productId}/available")
+    public ProductResponse markAvailable(
+        @PathVariable UUID productId,
+        @RequestParam UUID userId
+    ) {
+        return productService.markAvailable(productId, userId);
+    }
+
     @PatchMapping("/{productId}/hide")
-    public HideProductResponse hideProduct(@PathVariable UUID productId) {
-        return productService.hideProduct(productId);
+    public ProductResponse hideProduct(
+        @PathVariable UUID productId,
+        @RequestParam UUID userId
+    ) {
+        return productService.hideProduct(productId, userId);
     }
 
-    @PreAuthorize("hasAnyRole('MASTER','MANAGER','OWNER')")
     @PatchMapping("/{productId}/unhide")
-    public HideProductResponse unhideProduct(@PathVariable UUID productId) {
-        return productService.unhideProduct(productId);
+    public ProductResponse unhideProduct(
+        @PathVariable UUID productId,
+        @RequestParam UUID userId
+    ) {
+        return productService.unhideProduct(productId, userId);
     }
 }

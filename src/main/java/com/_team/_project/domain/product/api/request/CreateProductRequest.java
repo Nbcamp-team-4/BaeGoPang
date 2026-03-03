@@ -1,20 +1,31 @@
 package com._team._project.domain.product.api.request;
 
-import lombok.*;
-
-import java.math.BigDecimal;
 import java.util.UUID;
 
-@Getter
-@Setter
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+@Data
 public class CreateProductRequest {
 
+    @NotNull
     private UUID storeId;
-    private UUID categoryId;
 
+    @NotBlank
     private String name;
-    private BigDecimal price;
 
-    // AI 생성/프롬프트 AI 담당자 영역
+    @NotNull
+    private Integer price;
+
+    //AI 연동 필요
     private String description;
+
+    @NotNull
+    private Boolean useAiDescription;
+
+    private String imageUrl;
+
+    @NotNull
+    private UUID userId;
 }

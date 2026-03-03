@@ -1,28 +1,45 @@
 package com._team._project.domain.product.api.response;
 
-import com._team._project.domain.product.entity.ProductStatus;
-import lombok.Builder;
-import lombok.Getter;
-
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import lombok.Getter;
+
 @Getter
-@Builder
 public class ProductResponse {
 
     private UUID id;
     private UUID storeId;
-    private UUID categoryId;
-
     private String name;
-    private BigDecimal price;
+    private Integer price;
     private String description;
-
-    private boolean hidden;
-    private ProductStatus status;
-
+    private Boolean useAiDescription;
+    private String imageUrl;
+    private Boolean isSoldOut;
+    private Boolean isHidden;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+
+    public ProductResponse(
+        UUID id,
+        UUID storeId,
+        String name,
+        Integer price,
+        String description,
+        Boolean useAiDescription,
+        String imageUrl,
+        Boolean isSoldOut,
+        Boolean isHidden,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt) {
+        this.id = id;
+        this.storeId = storeId;
+        this.name = name;
+        this.price = price;
+        this.description = description;
+        this.useAiDescription = useAiDescription;
+        this.imageUrl = imageUrl;
+        this.isSoldOut = isSoldOut;
+        this.isHidden = isHidden;
+        this.createdAt = createdAt;
+    }
 }
