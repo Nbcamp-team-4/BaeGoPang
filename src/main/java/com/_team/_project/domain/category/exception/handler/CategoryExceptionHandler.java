@@ -1,4 +1,4 @@
-package com._team._project.domain.category.handler;
+package com._team._project.domain.category.exception.handler;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
