@@ -2,6 +2,7 @@ package com._team._project.domain.payment_log.service;
 
 import java.util.UUID;
 
+import com._team._project.domain.payment_log.api.response.GetPaymentLogResponse;
 import com._team._project.domain.payment_log.entity.PaymentLog;
 
 public interface PaymentLogService {
@@ -9,5 +10,5 @@ public interface PaymentLogService {
 
 	void deletePaymentLog(UUID paymentLogId);
 
-	PaymentLog getPaymentLog(UUID paymentLogId);
+	GetPaymentLogResponse getPaymentLog(UUID paymentLogId);
 }
