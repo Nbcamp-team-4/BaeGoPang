@@ -47,9 +47,8 @@ public class CartServiceImpl implements CartService {
     private final com._team._project.domain.product.repository.ProductOptionItemRepository productOptionItemRepository;
 
     @Override
+    @Transactional // 또는 readOnly=true로 바꾸고 싶으면 spring 트랜잭션으로
     public GetCartResponse getCart(UUID userId) {
-
-        // ✅ 유저의 ACTIVE 장바구니 상세 조회(items/options 포함)
         Cart cart = cartRepository.findActiveCartDetailByUserId(userId)
                 .orElseThrow(CartNotFoundException::new);
 
