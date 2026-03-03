@@ -1,4 +1,4 @@
-package com._team._project.global;
+package com.team.project.global;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
