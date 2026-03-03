@@ -31,16 +31,16 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 
 		// 1. 결제 로그 ID로 결제 로그를 조회한다.
 		// 없다면 PaymentLogNotFound 에러 발생
-		PaymentLog paymentLog = paymentLogRepository.getPaymentLog(paymentLogId)
-			.orElseThrow(PaymentLogNotFoundException::new);
+		PaymentLog paymentLog = getPaymentLogInnerWithException(paymentLogId);
 
 		// 2. 결제 로그 삭제
 		paymentLog.markDeleted(null);
 
 	}
 
-	@Override
-	public PaymentLog getPaymentLog(UUID paymentLogId) {
+	public
+
+	public PaymentLog getPaymentLogInnerWithException(UUID paymentLogId) {
 
 		// 1. 결제 로그 ID로 결제 로그를 조회한다.
 		// 없다면 PaymentLogNotFound 에러 발생
