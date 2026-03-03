@@ -1,13 +1,21 @@
 package com._team._project.domain.payment_log.service;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.payment.entity.Payment;
+import com._team._project.domain.payment_log.api.request.GetPaymentLogsRequest;
+import com._team._project.domain.payment_log.api.request.GetPaymentLogsResponse;
 import com._team._project.domain.payment_log.api.response.GetPaymentLogResponse;
 import com._team._project.domain.payment_log.entity.PaymentLog;
 import com._team._project.domain.payment_log.exception.PaymentLogNotFoundException;
+import com._team._project.domain.payment_log.model.vo.PaymentLogStatus;
 import com._team._project.domain.payment_log.repository.PaymentLogRepository;
 import com._team._project.domain.pg_provider.entity.PgProvider;
 
@@ -86,6 +94,41 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 			.orElseThrow(PaymentLogNotFoundException::new);
 
 		return paymentLog;
+	}
+
+	@Override
+	public GetPaymentLogsResponse getPaymentLogs(GetPaymentLogsRequest request) {
+		// 1. 조건 파싱
+		PaymentLogStatus status = request.getStatus();
+
+		// 2. 페이징 객체 생성
+		Pageable pageable = PageRequest.of(
+			request.getPage(),
+			request.getSize(),
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		// 3. repository 조회 (조건 기반)
+		Page<PaymentLog> pageResult = paymentLogRepository.getPaymentLogs(
+			status,
+			request.getRangeCreatedAt(),
+			pageable
+		);
+
+		// 4. Entity → DTO 변환
+		List<GetPaymentLogsResponse.Item> contents = pageResult.getContent()
+			.stream()
+			.map((PaymentLog content) -> GetPaymentLogsResponse.Item.builder().build())
+			.toList();
+
+		// 5️⃣ 응답 생성
+		return GetPaymentLogsResponse.builder()
+			.content(contents)
+			.page(pageResult.getNumber())
+			.size(pageResult.getSize())
+			.totalElements(pageResult.getTotalElements())
+			.totalPages(pageResult.getTotalPages())
+			.build();
 	}
 
 }
