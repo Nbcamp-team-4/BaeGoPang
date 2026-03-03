@@ -61,4 +61,12 @@ public class PaymentLog extends BaseEntity {
 		this.payment = payment;
 		this.pgProvider = pgProvider;
 	}
+
+	public void updateStatus(PaymentLogStatus status) {
+		this.status = status;
+	}
+
+	public void markDeleted(UUID deletedBy) {
+		super.markDeleted(deletedBy);
+	}
 }

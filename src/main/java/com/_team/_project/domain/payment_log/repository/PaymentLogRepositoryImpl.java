@@ -1,5 +1,8 @@
 package com._team._project.domain.payment_log.repository;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Repository;
 
 import com._team._project.domain.payment_log.entity.PaymentLog;
@@ -17,5 +20,10 @@ public class PaymentLogRepositoryImpl implements PaymentLogRepository {
 	@Override
 	public PaymentLog createPaymentLog(PaymentLog paymentLog) {
 		return paymentLogJpaRepository.save(paymentLog);
+	}
+
+	@Override
+	public Optional<PaymentLog> getPaymentLog(UUID paymentLogId) {
+		return paymentLogJpaRepository.findById(paymentLogId);
 	}
 }
