@@ -5,6 +5,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com._team._project.domain.product.entity.Product;
+import com._team._project.domain.user.entity.UserAddress;
+import com._team._project.domain.user.repository.UserAddressRepository;
 import org.springframework.stereotype.Service;
 
 import com._team._project.domain.order.api.request.CancelOrderRequest;
@@ -44,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
+    private final UserAddressRepository userAddressRepository;
 
     // ======================
     // customer
@@ -76,17 +79,27 @@ public class OrderServiceImpl implements OrderService {
                 })
                 .sum();
 
-        // 4) Order 생성
+        // 4) 배송지 조회 로직 추가
+        UserAddress deliveryAddress = null;
+
+        if (request.getDeliveryAddressId() != null) {
+            // 내 배송지인지까지 확인하려면 findByIdAndUserId 사용
+            deliveryAddress = userAddressRepository
+                    .findByIdAndUserId(request.getDeliveryAddressId(), request.getUserId())
+                    .orElseThrow(() -> new IllegalArgumentException("DELIVERY_ADDRESS_NOT_FOUND"));
+        }
+
+        // 5) Order 생성
         Order order = new Order(
                 user,
                 store,
-                null, // deliveryAddressId 연동은 추후(UserAddress 조회 후 세팅)
+                deliveryAddress,
                 orderNo,
                 totalAmount,
                 request.getRequestMemo()
         );
 
-        // 5) OrderItem/Option 생성 후 연결
+        // 6) OrderItem/Option 생성 후 연결
         for (CreateOrderRequest.CreateOrderItemRequest itemReq : request.getItems()) {
 
             Product product = productRepository.findById(itemReq.getProductId())
@@ -113,10 +126,10 @@ public class OrderServiceImpl implements OrderService {
             order.addItem(orderItem);
         }
 
-        // 6) 저장
+        // 7) 저장
         Order saved = orderRepository.save(order);
 
-        // 7) 응답 반환
+        // 8) 응답 반환
         return CreateOrderResponse.from(saved);
     }
 

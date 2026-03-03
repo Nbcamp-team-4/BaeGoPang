@@ -1,9 +1,7 @@
 package com._team._project.domain.order.entity;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
@@ -65,7 +63,7 @@ public class Order extends BaseEntity {
     private LocalDateTime completedAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderItem> items = new ArrayList<>();
+    private Set<OrderItem> items = new LinkedHashSet<>();
 
     // ====== 생성 로직 (CRUD용) ======
     public Order(User user, Store store, UserAddress deliveryAddress,

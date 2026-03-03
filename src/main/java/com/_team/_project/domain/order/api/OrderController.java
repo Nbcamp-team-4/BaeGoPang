@@ -45,8 +45,8 @@ public class OrderController {
      * - 인증 적용 전 임시로 userId를 query param으로 받음
      */
     @GetMapping
-    public ResponseEntity<?> getMyOrders(@RequestParam(value = "userId", required = false) UUID userId,
-                                         @RequestParam(value = "storeId", required = false) UUID storeId) {
+    public ResponseEntity<?> getMyOrders(@RequestParam(value = "userId", required = true) UUID userId,
+                                         @RequestParam(value = "storeId", required = true) UUID storeId) {
 
         // 고객: userId로 조회 / 매니저: storeId로 조회를 같은 엔드포인트에서 분기 (API 명세 기준)
         if (storeId != null) {
@@ -97,7 +97,7 @@ public class OrderController {
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancelOrder(@PathVariable("orderId") UUID orderId,
                                          @RequestParam("userId") UUID userId,
-                                         @RequestBody @Valid CancelOrderRequest request) {
+                                         @RequestBody(required = false) @Valid CancelOrderRequest request) {
 
         CancelOrderResponse response = orderService.cancelOrder(orderId, userId, request);
         return ResponseEntity.ok().body(BaseResponse.ofSuccess(response));
