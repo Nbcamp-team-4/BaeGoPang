@@ -38,7 +38,18 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 		paymentLog.markDeleted(null);
 
 	}
-	
+
+	@Override
+	public PaymentLog getPaymentLog(UUID paymentLogId) {
+
+		// 1. 결제 로그 ID로 결제 로그를 조회한다.
+		// 없다면 PaymentLogNotFound 에러 발생
+		PaymentLog paymentLog = paymentLogRepository.getPaymentLog(paymentLogId)
+			.orElseThrow(PaymentLogNotFoundException::new);
+
+		return paymentLog;
+	}
+
 }
 
 
