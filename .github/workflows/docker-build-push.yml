@@ -78,5 +78,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/baegopang-api:latest
-            ghcr.io/${{ github.repository_owner }}/baegopang-api:${{ github.sha }}
+            ghcr.io/nbcamp-team-4/baegopang-api:latest
+            ghcr.io/nbcamp-team-4/baegopang-api:${{ github.sha }}
