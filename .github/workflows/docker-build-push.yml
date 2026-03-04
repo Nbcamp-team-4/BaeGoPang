@@ -5,6 +5,10 @@ on:
   push:
     branches: [ "main" ]
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   docker-build-push:
     runs-on: ubuntu-latest
@@ -80,3 +84,28 @@ jobs:
           tags: |
             ghcr.io/nbcamp-team-4/baegopang-api:latest
             ghcr.io/nbcamp-team-4/baegopang-api:${{ github.sha }}
+      # --------------------
+      # 8-1) API 이미지 빌드 & 푸시
+      # --------------------
+      - name: Build and Push API Image (EN/KR)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/nbcamp-team-4/baegopang-api:latest
+            ghcr.io/nbcamp-team-4/baegopang-api:${{ github.sha }}
+
+      # --------------------
+      # 8-2) Nginx 이미지 빌드 & 푸시 (정적 /test 포함)
+      # --------------------
+      - name: Build and Push Nginx Image (EN/KR)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./infra/nginx
+          file: ./infra/nginx/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/nbcamp-team-4/baegopang-nginx:latest
+            ghcr.io/nbcamp-team-4/baegopang-nginx:${{ github.sha }}
