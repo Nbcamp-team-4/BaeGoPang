@@ -21,6 +21,7 @@ jobs:
           POSTGRES_DB: baegopang
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          SPRING_PROFILES_ACTIVE: test
         # ✅ DB가 '준비됨' 상태까지 기다릴 수 있게 health check
         options: >-
           --health-cmd="pg_isready -U postgres -d baegopang"
