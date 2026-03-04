@@ -44,6 +44,7 @@ public class CartItem extends BaseEntity {
     private Integer quantity;
 
     @OneToMany(mappedBy = "cartItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 100)
     private List<CartItemOption> options = new ArrayList<>();
 
     public CartItem(Product product, Integer quantity) {

@@ -47,6 +47,16 @@ public class GetCartResponse {
                 .build();
     }
 
+    public static GetCartResponse empty() {
+        // 프로젝트 응답 규격에 맞춰 "없는 장바구니"를 빈 형태로 내려줌
+        // items는 반드시 빈 리스트로 내려줘야 FE에서 분기 줄어듦
+        return GetCartResponse.builder()
+                .cartId(null)
+                .storeId(null)
+                .items(java.util.List.of())
+                .build();
+    }
+
     @Getter
     @Builder
     public static class CartItemResponse {
