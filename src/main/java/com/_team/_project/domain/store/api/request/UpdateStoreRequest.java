@@ -3,7 +3,7 @@ package com._team._project.domain.store.api.request;
 import java.time.LocalTime;
 import java.util.UUID;
 
-import com._team._project.domain.store.entity.StoreStatus;
+import com._team._project.domain.store.model.vo.StoreStatus;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

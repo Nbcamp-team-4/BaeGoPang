@@ -20,7 +20,6 @@ import com._team._project.domain.store.api.request.UpdateStoreRequest;
 import com._team._project.domain.store.api.response.StoreResponse;
 import com._team._project.domain.store.service.StoreService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -30,21 +29,40 @@ public class StoreController {
 
     private final StoreService storeService;
 
+    //가게 생성
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public StoreResponse createStore(@Valid @RequestBody CreateStoreRequest request) {
+    public StoreResponse createStore(@RequestBody CreateStoreRequest request) {
         return storeService.createStore(request);
     }
 
+    //가게 전체 조회
+    @GetMapping
+    public List<StoreResponse> getStores() {
+        return storeService.getStores();
+    }
+
+
+    //가게 상세 조회
+    @GetMapping("/{storeId}")
+    public StoreResponse getStore(@PathVariable UUID storeId) {
+        return storeService.getStore(storeId);
+    }
+
+
+    //가게 수정
     @PutMapping("/{storeId}")
     public StoreResponse updateStore(
         @PathVariable UUID storeId,
-        @Valid @RequestBody UpdateStoreRequest request
+        @RequestBody UpdateStoreRequest request
     ) {
         return storeService.updateStore(storeId, request);
     }
 
+
+    //가게 삭제 (Soft Delete)
     @DeleteMapping("/{storeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteStore(
         @PathVariable UUID storeId,
         @RequestParam UUID userId
@@ -52,13 +70,4 @@ public class StoreController {
         storeService.deleteStore(storeId, userId);
     }
 
-    @GetMapping
-    public List<StoreResponse> getStores() {
-        return storeService.getStores();
-    }
-
-    @GetMapping("/{storeId}")
-    public StoreResponse getStore(@PathVariable UUID storeId) {
-        return storeService.getStore(storeId);
-    }
 }

@@ -2,7 +2,9 @@ package com._team._project.domain.store.service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,135 +14,133 @@ import com._team._project.domain.store.api.response.StoreResponse;
 import com._team._project.domain.store.entity.Store;
 import com._team._project.domain.store.exception.StoreNotFoundException;
 import com._team._project.domain.store.repository.StoreRepository;
+import com._team._project.domain.store.util.GeometryUtil;
 
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class StoreServiceImpl implements StoreService {
 
-    private final StoreRepository storeRepository;
-    //private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+	private final StoreRepository storeRepository;
 
-    @Override
-    public StoreResponse createStore(CreateStoreRequest request) {
 
-        /*Point point = geometryFactory.createPoint(
-            new Coordinate(request.getLongitude(), request.getLatitude())
-        );
-        point.setSRID(4326);
-        */
-        Store store = new Store(
-            request.getUserId(),
-            request.getRegionId(),
-            request.getName(),
-            request.getDescription(),
-            request.getAddress(),
-            //point,
-            request.getPhone(),
-            request.getImageUrl(),
-            request.getOpenTime(),
-            request.getCloseTime(),
-            request.getDeliveryMinMinutes(),
-            request.getDeliveryMaxMinutes(),
-            request.getDeliveryFee(),
-            request.getMinimumOrderAmount()
-        );
+	/*
+	 * 가게 생성
+	 */
+	@Override
+	@Transactional
+	public StoreResponse createStore(CreateStoreRequest request) {
 
-        storeRepository.save(store);
+		// 1) 좌표 생성
+		Point location = GeometryUtil.createPoint(
+			request.getLongitude(),
+			request.getLatitude()
+		);
 
-        return toResponse(store);
-    }
+		// 2) 엔티티 생성
+		Store store = new Store(
+			request.getUserId(),
+			request.getRegionId(),
+			request.getName(),
+			request.getDescription(),
+			request.getAddress(),
+			location,
+			request.getPhone(),
+			request.getImageUrl(),
+			request.getOpenTime(),
+			request.getCloseTime(),
+			request.getDeliveryMinMinutes(),
+			request.getDeliveryMaxMinutes(),
+			request.getDeliveryFee(),
+			request.getMinimumOrderAmount()
+		);
 
-    @Override
-    public StoreResponse updateStore(UUID storeId, UpdateStoreRequest request) {
+		// 3) 저장
+		Store savedStore = storeRepository.save(store);
 
-        Store store = storeRepository.findById(storeId)
-            .orElseThrow(StoreNotFoundException::new);
+		// 4) 응답 변환
+		return StoreResponse.from(savedStore);
+	}
 
-       /* Point point = null;
-        if (request.getLatitude() != null && request.getLongitude() != null) {
-            point = geometryFactory.createPoint(
-                new Coordinate(request.getLongitude(), request.getLatitude())
-            );
-            point.setSRID(4326);
-        }
-        */
-        store.update(
-            request.getName(),
-            request.getDescription(),
-            request.getAddress(),
-            //point,
-            request.getPhone(),
-            request.getImageUrl(),
-            request.getOpenTime(),
-            request.getCloseTime(),
-            request.getStatus(),
-            request.getDeliveryMinMinutes(),
-            request.getDeliveryMaxMinutes(),
-            request.getDeliveryFee(),
-            request.getMinimumOrderAmount(),
-            request.getUserId()
-        );
 
-        return toResponse(store);
-    }
+	/*
+	 * 가게 전체 조회
+	 */
+	@Override
+	public List<StoreResponse> getStores() {
 
-    @Override
-    public void deleteStore(UUID storeId, UUID userId) {
+		// 1) 전체 조회
+		List<Store> stores = storeRepository.findAll();
 
-        Store store = storeRepository.findById(storeId)
-            .orElseThrow(StoreNotFoundException::new);
+		// 2) 응답 변환
+		return stores.stream()
+			.map(StoreResponse::from)
+			.collect(Collectors.toList());
+	}
 
-        store.delete(userId);
-    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<StoreResponse> getStores() {
+	/*
+	 * 가게 상세 조회
+	 */
+	@Override
+	public StoreResponse getStore(UUID storeId) {
 
-        return storeRepository.findAllByDeletedAtIsNull()
-            .stream()
-            .map(this::toResponse)
-            .toList();
-    }
+		// 1) 매장 조회
+		Store store = storeRepository.findById(storeId)
+			.orElseThrow(StoreNotFoundException::new);
 
-    @Override
-    @Transactional(readOnly = true)
-    public StoreResponse getStore(UUID storeId) {
+		// 2) 응답 변환
+		return StoreResponse.from(store);
+	}
 
-        Store store = storeRepository.findById(storeId)
-            .orElseThrow(StoreNotFoundException::new);
 
-        if (store.getDeletedAt() != null) {
-            throw new StoreNotFoundException();
-        }
+	/*
+	 * 가게 수정
+	 */
+	@Override
+	@Transactional
+	public StoreResponse updateStore(UUID storeId, UpdateStoreRequest request) {
 
-        return toResponse(store);
-    }
+		// 1) 매장 조회
+		Store store = storeRepository.findById(storeId)
+			.orElseThrow(StoreNotFoundException::new);
 
-    private StoreResponse toResponse(Store store) {
+		// 2) 매장 수정
+		store.update(
+			request.getName(),
+			request.getDescription(),
+			request.getAddress(),
+			request.getPhone(),
+			request.getImageUrl(),
+			request.getOpenTime(),
+			request.getCloseTime(),
+			request.getStatus(),
+			request.getDeliveryMinMinutes(),
+			request.getDeliveryMaxMinutes(),
+			request.getDeliveryFee(),
+			request.getMinimumOrderAmount()
+		);
 
-        return new StoreResponse(
-            store.getId(),
-            store.getUserId(),
-            store.getRegionId(),
-            store.getName(),
-            store.getDescription(),
-            store.getAddress(),
-           // store.getLocation().getY(),
-           // store.getLocation().getX(),
-            store.getPhone(),
-            store.getImageUrl(),
-            store.getOpenTime(),
-            store.getCloseTime(),
-            store.getStatus(),
-            store.getDeliveryMinMinutes(),
-            store.getDeliveryMaxMinutes(),
-            store.getDeliveryFee(),
-            store.getMinimumOrderAmount(),
-            store.getCreatedAt()
-        );
-    }
+		// 3) 응답 반환
+		return StoreResponse.from(store);
+	}
+
+
+	/*
+	 * 가게 삭제
+	 */
+	@Override
+	@Transactional
+	public void deleteStore(UUID storeId, UUID userId) {
+
+		// 1) 매장 조회
+		Store store = storeRepository.findById(storeId)
+			.orElseThrow(StoreNotFoundException::new);
+
+		// 2) Soft Delete
+		store.delete(userId);
+	}
+
 }

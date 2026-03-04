@@ -42,6 +42,6 @@ public class CreateStoreRequest {
     @NotNull
     private Integer deliveryMaxMinutes;
 
-    private Integer deliveryFee = 0;
-    private Integer minimumOrderAmount = 0;
+    private Integer deliveryFee;
+    private Integer minimumOrderAmount;
 }
