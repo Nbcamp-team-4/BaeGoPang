@@ -1,4 +1,4 @@
-package com.team.project.review.dto;
+package com._team._project.domain.review.api.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

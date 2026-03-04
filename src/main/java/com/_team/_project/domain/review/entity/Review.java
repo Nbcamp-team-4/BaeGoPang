@@ -1,7 +1,5 @@
-package com.team.project.review.entity;
+package com._team._project.domain.review.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,13 +9,26 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 @Entity
 @EntityListeners(AuditingEntityListener .class)
 @Table(name = "p_review")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Builder // 이 어노테이션이 있어야 .builder()를 사용 가능합니다.
+@Builder
 public class Review {
 
 	@Id
@@ -57,9 +68,11 @@ public class Review {
 		this.content = content;
 	}
 
-	// Soft Delete 로직
-	public void softDelete() {
+	// Review.java (Entity)
+	public void delete(UUID userId) {
 		this.deletedAt = LocalDateTime.now();
-		// 삭제한 사용자 ID는 AuditorAware나 SecurityContext에서 주입받아야 함
+		this.deletedBy = userId;
+		// 만약 isHidden 같은 상태값도 바꿔야 한다면 여기에 추가
+		this.isHidden = true;
 	}
 }
