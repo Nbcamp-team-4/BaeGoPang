@@ -5,6 +5,15 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
+# --- allow intra/nginx ---
+!intra/
+!intra/nginx/
+!intra/nginx/**
+
+# (conf.d 안도 포함)
+!intra/nginx/conf.d/
+!intra/nginx/conf.d/**
+
 ### STS ###
 .apt_generated
 .classpath
