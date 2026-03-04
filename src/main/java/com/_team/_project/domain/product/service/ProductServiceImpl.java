@@ -33,8 +33,7 @@ public class ProductServiceImpl implements ProductService {
             request.getPrice(),
             request.getDescription(),
             request.getUseAiDescription(),
-            request.getImageUrl(),
-            request.getUserId()
+            request.getImageUrl()
         );
 
         productRepository.save(product);
@@ -54,14 +53,13 @@ public class ProductServiceImpl implements ProductService {
             request.getPrice(),
             request.getDescription(),
             request.getUseAiDescription(),
-            request.getImageUrl(),
-            request.getUserId()
+            request.getImageUrl()
         );
 
         return toResponse(product);
     }
 
-    // ===== 삭제 (Soft) =====
+    // ===== 삭제 (Soft Delete) =====
     @Override
     public void deleteProduct(UUID productId, UUID userId) {
 
@@ -71,7 +69,7 @@ public class ProductServiceImpl implements ProductService {
         product.delete(userId);
     }
 
-    // ===== 목록 조회 (숨김 제외) =====
+    // ===== 목록 조회 =====
     @Override
     @Transactional(readOnly = true)
     public GetProductsResponse getProducts(UUID storeId) {
@@ -110,7 +108,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId)
             .orElseThrow(ProductNotFoundException::new);
 
-        product.markSoldOut(userId);
+        product.markSoldOut();
 
         return toResponse(product);
     }
@@ -121,7 +119,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId)
             .orElseThrow(ProductNotFoundException::new);
 
-        product.markAvailable(userId);
+        product.markAvailable();
 
         return toResponse(product);
     }
@@ -133,7 +131,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId)
             .orElseThrow(ProductNotFoundException::new);
 
-        product.hide(userId);
+        product.hide();
 
         return toResponse(product);
     }
@@ -144,12 +142,12 @@ public class ProductServiceImpl implements ProductService {
         Product product = productRepository.findById(productId)
             .orElseThrow(ProductNotFoundException::new);
 
-        product.unhide(userId);
+        product.unhide();
 
         return toResponse(product);
     }
 
-    // ===== 매핑 =====
+    // ===== Entity → Response =====
     private ProductResponse toResponse(Product product) {
         return new ProductResponse(
             product.getId(),

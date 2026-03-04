@@ -1,7 +1,8 @@
 package com._team._project.domain.product.entity;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com._team._project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,11 +18,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "p_product")
-public class Product {
+public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "uuid", updatable = false, nullable = false)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(name = "store_id", columnDefinition = "uuid", nullable = false)
@@ -47,17 +48,6 @@ public class Product {
     @Column(nullable = false)
     private Boolean isHidden;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    private UUID createdBy;
-
-    private LocalDateTime updatedAt;
-    private UUID updatedBy;
-
-    private LocalDateTime deletedAt;
-    private UUID deletedBy;
-
     // ===== 생성 =====
     public Product(
         UUID storeId,
@@ -65,8 +55,7 @@ public class Product {
         Integer price,
         String description,
         Boolean useAiDescription,
-        String imageUrl,
-        UUID userId
+        String imageUrl
     ) {
         this.storeId = storeId;
         this.name = name;
@@ -76,8 +65,6 @@ public class Product {
         this.imageUrl = imageUrl;
         this.isSoldOut = false;
         this.isHidden = false;
-        this.createdAt = LocalDateTime.now();
-        this.createdBy = userId;
     }
 
     // ===== 수정 =====
@@ -86,48 +73,35 @@ public class Product {
         Integer price,
         String description,
         Boolean useAiDescription,
-        String imageUrl,
-        UUID userId
+        String imageUrl
     ) {
         if (name != null) this.name = name;
         if (price != null) this.price = price;
         if (description != null) this.description = description;
         if (useAiDescription != null) this.useAiDescription = useAiDescription;
         if (imageUrl != null) this.imageUrl = imageUrl;
-
-        this.updatedAt = LocalDateTime.now();
-        this.updatedBy = userId;
     }
 
     // ===== 품절 =====
-    public void markSoldOut(UUID userId) {
+    public void markSoldOut() {
         this.isSoldOut = true;
-        this.updatedAt = LocalDateTime.now();
-        this.updatedBy = userId;
     }
 
-    public void markAvailable(UUID userId) {
+    public void markAvailable() {
         this.isSoldOut = false;
-        this.updatedAt = LocalDateTime.now();
-        this.updatedBy = userId;
     }
 
     // ===== 숨김 =====
-    public void hide(UUID userId) {
+    public void hide() {
         this.isHidden = true;
-        this.updatedAt = LocalDateTime.now();
-        this.updatedBy = userId;
     }
 
-    public void unhide(UUID userId) {
+    public void unhide() {
         this.isHidden = false;
-        this.updatedAt = LocalDateTime.now();
-        this.updatedBy = userId;
     }
 
     // ===== 삭제 =====
     public void delete(UUID userId) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = userId;
+        markDeleted(userId);
     }
 }
