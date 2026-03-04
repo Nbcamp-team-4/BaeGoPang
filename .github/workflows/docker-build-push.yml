@@ -1,9 +1,8 @@
 name: Docker Build & Push (GHCR)
 
-# ✅ main 브랜치에 push(=머지 포함)되면 실행
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -14,15 +13,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # --------------------
       # 1) 소스 체크아웃
-      # --------------------
       - name: Checkout (EN/KR)
         uses: actions/checkout@v4
 
-      # --------------------
-      # 2) 빌드 환경 세팅 (JDK 21)
-      # --------------------
+      # 2) (디버그) nginx 디렉토리 확인
+      - name: Check nginx directory (EN/KR)
+        run: |
+          echo "📁 repo root"
+          ls -la
+          echo "📁 intra"
+          ls -la intra || true
+          echo "📁 infra"
+          ls -la infra || true
+          echo "🔎 dockerfiles"
+          find . -maxdepth 4 -type f -name Dockerfile
+
+      # 3) 빌드 환경 세팅 (JDK 21)
       - name: Set up JDK 21 (EN/KR)
         uses: actions/setup-java@v4
         with:
@@ -30,15 +37,11 @@ jobs:
           java-version: "21"
           cache: gradle
 
-      # --------------------
-      # 3) gradlew 실행권한 부여
-      # --------------------
+      # 4) gradlew 실행권한 부여
       - name: Grant execute permission for gradlew (EN/KR)
         run: chmod +x gradlew
 
-      # --------------------
-      # 4) (로그) 빌드 정보 출력
-      # --------------------
+      # 5) (로그) 빌드 정보 출력
       - name: Print build info (EN/KR)
         run: |
           echo "✅ Docker Build & Push 시작 / Start"
@@ -47,17 +50,13 @@ jobs:
           echo "📌 Gradle version / 그레이들 버전"
           ./gradlew --version
 
-      # --------------------
-      # 5) 테스트/빌드 (원하면 test는 CI에서만 돌리고 여기선 생략 가능)
-      # --------------------
+      # 6) 빌드 (테스트는 생략)
       - name: Build (EN/KR)
         run: |
           echo "🏗️ Gradle 빌드 진행 / Building..."
           ./gradlew clean build -x test --no-daemon
 
-      # --------------------
-      # 6) GHCR 로그인 (※ Enterprise 정책 때문에 GITHUB_TOKEN write가 막혀서 PAT 사용)
-      # --------------------
+      # 7) GHCR 로그인 (PAT)
       - name: Login to GHCR (EN/KR)
         uses: docker/login-action@v3
         with:
@@ -65,28 +64,11 @@ jobs:
           username: ${{ secrets.GHCR_USERNAME }}
           password: ${{ secrets.GHCR_PAT }}
 
-      # --------------------
-      # 7) Docker Buildx 세팅 (멀티 플랫폼/캐시 지원)
-      # --------------------
+      # 8) Buildx 세팅
       - name: Set up Docker Buildx (EN/KR)
         uses: docker/setup-buildx-action@v3
 
-      # --------------------
-      # 8) 이미지 빌드 & 푸시
-      #    - latest 태그 + 커밋 SHA 태그 2개를 같이 올려서 버전 관리
-      # --------------------
-      - name: Build and Push Docker Image (EN/KR)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ghcr.io/nbcamp-team-4/baegopang-api:latest
-            ghcr.io/nbcamp-team-4/baegopang-api:${{ github.sha }}
-      # --------------------
-      # 8-1) API 이미지 빌드 & 푸시
-      # --------------------
+      # 9) API 이미지 빌드 & 푸시
       - name: Build and Push API Image (EN/KR)
         uses: docker/build-push-action@v6
         with:
@@ -97,14 +79,12 @@ jobs:
             ghcr.io/nbcamp-team-4/baegopang-api:latest
             ghcr.io/nbcamp-team-4/baegopang-api:${{ github.sha }}
 
-      # --------------------
-      # 8-2) Nginx 이미지 빌드 & 푸시 (정적 /test 포함)
-      # --------------------
+      # 10) Nginx 이미지 빌드 & 푸시
       - name: Build and Push Nginx Image (EN/KR)
         uses: docker/build-push-action@v6
         with:
-          context: ./infra/nginx
-          file: ./infra/nginx/Dockerfile
+          context: ./intra/nginx
+          file: ./intra/nginx/Dockerfile
           push: true
           tags: |
             ghcr.io/nbcamp-team-4/baegopang-nginx:latest
