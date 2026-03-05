@@ -10,6 +10,31 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d baegopang"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  baegopang-api:
+    container_name: baegopang-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Spring이 컨테이너 내부에서 DB를 찾을 때는 localhost가 아니라 서비스명(postgres)을 써야 함
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/baegopang
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+      # JPA/Flyway
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
 
 volumes:
   pgdata:
