@@ -31,6 +31,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/baegopang
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
+      
       # ✅ Spring AI Google GenAI 자동 설정을 꺼서, 설정 없어도 부팅되게 함
       SPRING_AI_GOOGLE_GENAI_ENABLED: "false"
 
