@@ -1,6 +1,8 @@
 package com._team._project.domain.review.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.annotation.CreatedBy;
@@ -15,13 +17,14 @@ import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
+import jakarta.persistence.CascadeType;
 @Entity
 @EntityListeners(AuditingEntityListener .class)
 @Table(name = "p_review")
@@ -40,6 +43,10 @@ public class Review {
 	private Integer rating;
 	private String content;
 	private Boolean isHidden;
+
+	@Builder.Default
+	@OneToMany(mappedBy = "review", cascade = CascadeType.ALL)
+	private List<ReviewImage> reviewImages = new ArrayList<>();
 
 	// Audit 필드 (실제로는 공통 클래스로 빼는 것이 좋지만, 우선 직접 추가)
 

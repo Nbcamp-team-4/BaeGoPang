@@ -55,7 +55,7 @@ public class ReviewServiceImpl implements ReviewService {
 		}
 
 		// 4. 응답으로 변환하여 반환
-		return toResponse(savedReview);
+		return ReviewResponse.from(savedReview);
 	}
 
 	// READ
@@ -64,7 +64,7 @@ public class ReviewServiceImpl implements ReviewService {
 	public ReviewResponse getReview(UUID reviewId) {
 		Review review = reviewRepository.findByIdAndDeletedAtIsNull(reviewId)
 			.orElseThrow(() -> new IllegalArgumentException("해당 리뷰가 존재하지 않거나 삭제되었습니다."));
-		return toResponse(review);
+		return ReviewResponse.from(review);
 	}
 
 	// UPDATE
@@ -74,7 +74,7 @@ public class ReviewServiceImpl implements ReviewService {
 			.orElseThrow(() -> new IllegalArgumentException("수정할 수 없는 리뷰입니다."));
 
 		review.update(request.getRating(), request.getContent());
-		return toResponse(review);
+		return ReviewResponse.from(review);
 	}
 
 	// DELETE
@@ -107,23 +107,6 @@ public class ReviewServiceImpl implements ReviewService {
 			.map(ReviewResponse::from) // Response 변환 로직에 맞게 수정
 			.collect(Collectors.toList());
 	}
-
-
-	// Response 변환용 공통 메서드
-	private ReviewResponse toResponse(Review review) {
-		return new ReviewResponse(
-			review.getId(),
-			review.getOrderId(),
-			review.getUserId(),
-			review.getStoreId(),
-			review.getRating(),
-			review.getContent(),
-			review.getIsHidden(),
-			review.getCreatedAt(),
-			review.getUpdatedAt()
-		);
-	}
-
 
 
 }
