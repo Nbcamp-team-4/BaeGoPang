@@ -1,0 +1,63 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main  # main push 시 배포
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) 소스코드 체크아웃
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) GHCR 로그인
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+      # 3) API 이미지 빌드 & 푸시 (EC2 compose에 적힌 경로 그대로!)
+      - name: Build & Push API Image
+        run: |
+          docker build -t ghcr.io/nbcamp-team-4/baegopang-api:latest .
+          docker push ghcr.io/nbcamp-team-4/baegopang-api:latest
+
+      # 4) Nginx 이미지 빌드 & 푸시 (EC2 compose에 적힌 경로 그대로!)
+      - name: Build & Push Nginx Image
+        run: |
+          docker build -t ghcr.io/nbcamp-team-4/baegopang-nginx:latest -f intra/nginx/Dockerfile intra/nginx
+          docker push ghcr.io/nbcamp-team-4/baegopang-nginx:latest
+
+  deploy-ec2:
+    if: github.ref == 'refs/heads/main'
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      # 5) EC2(Amazon Linux)에 SSH 접속해서 pull + up
+      - name: Deploy to Amazon Linux EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}   # ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            echo "✅ [1] GHCR 로그인 (EC2)"
+            docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" -p "${{ secrets.GHCR_TOKEN }}"
+
+            echo "✅ [2] 배포 폴더 이동"
+            cd ~/baegopang
+
+            echo "✅ [3] 최신 이미지 pull"
+            docker compose pull
+
+            echo "✅ [4] 컨테이너 재기동"
+            docker compose up -d
+
+            echo "✅ [5] 상태 확인"
+            docker ps
