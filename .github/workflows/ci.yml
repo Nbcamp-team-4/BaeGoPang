@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  push:
+    branches: ["develop"]
   pull_request:
-    branches: [ "develop" ]
+    branches: ["develop"]
 
 permissions:
   contents: read
@@ -21,7 +23,6 @@ jobs:
           POSTGRES_DB: baegopang
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          SPRING_PROFILES_ACTIVE: test
         # ✅ DB가 '준비됨' 상태까지 기다릴 수 있게 health check
         options: >-
           --health-cmd="pg_isready -U postgres -d baegopang"
@@ -31,6 +32,7 @@ jobs:
 
     # ✅ Spring이 테스트에서 DB로 붙도록 환경변수로 주입
     env:
+      SPRING_PROFILES_ACTIVE: test
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/baegopang
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
