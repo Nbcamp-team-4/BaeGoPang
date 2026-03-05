@@ -1,11 +1,11 @@
-package com._team._project;
+package com._team;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication
 @EnableJpaAuditing
+@SpringBootApplication
 public class Application {
 
 	public static void main(String[] args) {
