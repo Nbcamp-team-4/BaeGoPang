@@ -2,7 +2,7 @@ name: Docker Build & Push (GHCR)
 
 on:
   push:
-    branches: ["main"]
+    branches: ["develop"]
 
 permissions:
   contents: read
@@ -76,8 +76,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/nbcamp-team-4/baegopang-api:latest
-            ghcr.io/nbcamp-team-4/baegopang-api:${{ github.sha }}
+            ghcr.io/nbcamp-team-4/baegopang-api:dev-latest
+            ghcr.io/nbcamp-team-4/baegopang-api:dev-${{ github.sha }}
 
       # 10) Nginx 이미지 빌드 & 푸시
       - name: Build and Push Nginx Image (EN/KR)
@@ -87,5 +87,5 @@ jobs:
           file: ./intra/nginx/Dockerfile
           push: true
           tags: |
-            ghcr.io/nbcamp-team-4/baegopang-nginx:latest
-            ghcr.io/nbcamp-team-4/baegopang-nginx:${{ github.sha }}
+            ghcr.io/nbcamp-team-4/baegopang-nginx:dev-latest
+            ghcr.io/nbcamp-team-4/baegopang-nginx:dev-${{ github.sha }}
