@@ -5,6 +5,6 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class ReviewDeleteRequest {
+public class DeleteReviewRequest {
 	private String message;
 }

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor
 @Getter
-public class ReviewCreateRequest {
+public class CreateReviewRequest {
 
 	private UUID orderId;
 	private UUID  userId;

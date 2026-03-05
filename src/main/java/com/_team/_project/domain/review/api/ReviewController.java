@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com._team._project.domain.review.api.request.ReviewCreateRequest;
+import com._team._project.domain.review.api.request.CreateReviewRequest;
 import com._team._project.domain.review.api.response.ReviewResponse;
-import com._team._project.domain.review.api.response.ReviewUpdateRequest;
+import com._team._project.domain.review.api.response.UpdateReviewRequest;
 import com._team._project.domain.review.service.ReviewService;
 
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class ReviewController {
 	@PostMapping("/orders/{orderId}")
 	public ResponseEntity<ReviewResponse> createReview
 	(@PathVariable UUID orderId,
-		@RequestBody ReviewCreateRequest request) {
+		@RequestBody CreateReviewRequest request) {
 		ReviewResponse response = reviewService.createReview(orderId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
@@ -59,7 +59,7 @@ public class ReviewController {
 	@PutMapping("/{reviewId}")
 	public ResponseEntity<ReviewResponse> updateReview(
 		@PathVariable UUID reviewId,
-		@RequestBody ReviewUpdateRequest request) {
+		@RequestBody UpdateReviewRequest request) {
 		ReviewResponse response = reviewService.updateReview(reviewId, request);
 		return ResponseEntity.ok(response);
 	}

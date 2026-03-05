@@ -7,9 +7,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com._team._project.domain.review.api.request.ReviewCreateRequest;
+import com._team._project.domain.review.api.request.CreateReviewRequest;
 import com._team._project.domain.review.api.response.ReviewResponse;
-import com._team._project.domain.review.api.response.ReviewUpdateRequest;
+import com._team._project.domain.review.api.response.UpdateReviewRequest;
 import com._team._project.domain.review.entity.Review;
 import com._team._project.domain.review.entity.ReviewImage;
 import com._team._project.domain.review.repository.ReviewImageRepository;
@@ -29,7 +29,7 @@ public class ReviewServiceImpl implements ReviewService {
 
 	// CREATE (하나로 합친 버전)
 	@Override
-	public ReviewResponse createReview(UUID orderId,ReviewCreateRequest request) {
+	public ReviewResponse createReview(UUID orderId, CreateReviewRequest request) {
 		// 1. 리뷰 엔티티 생성 (Request DTO의 데이터를 사용)
 		Review review = Review.builder()
 			.orderId(orderId)
@@ -69,7 +69,7 @@ public class ReviewServiceImpl implements ReviewService {
 
 	// UPDATE
 	@Override
-	public ReviewResponse updateReview(UUID reviewId, ReviewUpdateRequest request) {
+	public ReviewResponse updateReview(UUID reviewId, UpdateReviewRequest request) {
 		Review review = reviewRepository.findByIdAndDeletedAtIsNull(reviewId)
 			.orElseThrow(() -> new IllegalArgumentException("수정할 수 없는 리뷰입니다."));
 
