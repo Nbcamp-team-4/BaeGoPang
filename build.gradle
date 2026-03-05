@@ -10,9 +10,9 @@ version = '0.0.1-SNAPSHOT'
 description = '배민어플만들어보기'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
 }
 
 configurations {
