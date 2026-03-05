@@ -3,7 +3,7 @@ name: Deploy
 on:
   push:
     branches:
-      - develop  # develop push 시 배포
+      - main  # main push 시 배포
 
 jobs:
   build-and-push:
@@ -31,6 +31,7 @@ jobs:
           docker push ghcr.io/nbcamp-team-4/baegopang-nginx:latest
 
   deploy-ec2:
+    if: github.ref == 'refs/heads/main'
     needs: build-and-push
     runs-on: ubuntu-latest
 
