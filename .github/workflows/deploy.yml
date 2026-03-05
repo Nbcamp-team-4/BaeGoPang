@@ -27,7 +27,7 @@ jobs:
       # 4) Nginx 이미지 빌드 & 푸시 (EC2 compose에 적힌 경로 그대로!)
       - name: Build & Push Nginx Image
         run: |
-          docker build -t ghcr.io/nbcamp-team-4/baegopang-nginx:latest -f nginx/Dockerfile nginx
+          docker build -t ghcr.io/nbcamp-team-4/baegopang-nginx:latest -f intra/nginx/Dockerfile intra/nginx
           docker push ghcr.io/nbcamp-team-4/baegopang-nginx:latest
 
   deploy-ec2:
