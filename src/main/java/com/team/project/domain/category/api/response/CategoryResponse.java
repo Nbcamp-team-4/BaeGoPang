@@ -1,12 +1,11 @@
 package com.team.project.domain.category.api.response;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 import com.team.project.domain.category.entity.Category;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @AllArgsConstructor

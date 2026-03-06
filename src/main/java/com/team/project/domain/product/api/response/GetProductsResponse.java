@@ -1,9 +1,9 @@
 package com.team.project.domain.product.api.response;
 
-import java.util.List;
-
 import lombok.Builder;
 import lombok.Getter;
+
+import java.util.List;
 
 @Getter
 @Builder

@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:src/main/java/com/team/Application.java
 package com.team;
+========
+package com.team.project;
+>>>>>>>> develop:src/main/java/com/team/project/Application.java
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

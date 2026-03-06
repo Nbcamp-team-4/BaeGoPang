@@ -12,7 +12,7 @@ import com.team.project.domain.payment.exception.PaymentNotFoundException;
 import com.team.project.domain.pg_provider.exception.PgProviderNotFoundException;
 import com.team.project.global.common.dto.BaseResponse;
 
-@RestControllerAdvice(basePackages = "com._team._project.domain.payment")
+@RestControllerAdvice(basePackages = "com.team.project.domain.payment")
 public class PaymentExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

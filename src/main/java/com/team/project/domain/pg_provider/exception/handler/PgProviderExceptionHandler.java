@@ -13,7 +13,7 @@ import com.team.project.domain.pg_provider.exception.InvalidInputException;
 import com.team.project.domain.pg_provider.exception.PgProviderNotFoundException;
 import com.team.project.global.common.dto.BaseResponse;
 
-@RestControllerAdvice(basePackages = "com._team._project.domain.pg_provider")
+@RestControllerAdvice(basePackages = "com.team.project.domain.pg_provider")
 public class PgProviderExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

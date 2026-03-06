@@ -1,7 +1,13 @@
 package com.team.project.domain.region.service;
 
-import java.util.UUID;
-
+import com.team.project.domain.region.api.request.CreateRegionRequest;
+import com.team.project.domain.region.api.request.UpdateRegionRequest;
+import com.team.project.domain.region.api.response.PagedRegionsResponse;
+import com.team.project.domain.region.api.response.RegionResponse;
+import com.team.project.domain.region.entity.Region;
+import com.team.project.domain.region.exception.RegionNotFoundException;
+import com.team.project.domain.region.repository.RegionRepository;
+import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.io.WKTReader;
@@ -10,15 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.team.project.domain.region.api.request.CreateRegionRequest;
-import com.team.project.domain.region.api.request.UpdateRegionRequest;
-import com.team.project.domain.region.api.response.PagedRegionsResponse;
-import com.team.project.domain.region.api.response.RegionResponse;
-import com.team.project.domain.region.entity.Region;
-import com.team.project.domain.region.exception.RegionNotFoundException;
-import com.team.project.domain.region.repository.RegionRepository;
-
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor

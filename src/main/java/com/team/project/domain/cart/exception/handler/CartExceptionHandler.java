@@ -14,7 +14,7 @@ import com.team.project.domain.cart.exception.InvalidCartQuantityException;
 import com.team.project.domain.cart.exception.InvalidCartStatusException;
 import com.team.project.global.common.dto.BaseResponse;
 
-@RestControllerAdvice(basePackages = "com._team._project.domain.cart")
+@RestControllerAdvice(basePackages = "com.team.project.domain.cart")
 public class CartExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

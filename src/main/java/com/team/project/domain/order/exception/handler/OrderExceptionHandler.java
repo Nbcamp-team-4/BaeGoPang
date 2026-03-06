@@ -14,7 +14,7 @@ import com.team.project.domain.order.exception.OrderForbiddenException;
 import com.team.project.domain.order.exception.OrderNotFoundException;
 import com.team.project.global.common.dto.BaseResponse;
 
-@RestControllerAdvice(basePackages = "com._team._project.domain.order")
+@RestControllerAdvice(basePackages = "com.team.project.domain.order")
 public class OrderExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

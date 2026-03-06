@@ -1,11 +1,10 @@
 package com.team.project.domain.region.exception.handler;
 
+import com.team.project.domain.region.exception.RegionNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import com.team.project.domain.region.exception.RegionNotFoundException;
 
 @RestControllerAdvice
 public class RegionExceptionHandler {

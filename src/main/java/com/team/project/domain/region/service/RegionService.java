@@ -1,13 +1,12 @@
 package com.team.project.domain.region.service;
 
-import java.util.UUID;
-
-import org.springframework.data.domain.Pageable;
-
 import com.team.project.domain.region.api.request.CreateRegionRequest;
 import com.team.project.domain.region.api.request.UpdateRegionRequest;
 import com.team.project.domain.region.api.response.PagedRegionsResponse;
 import com.team.project.domain.region.api.response.RegionResponse;
+import org.springframework.data.domain.Pageable;
+
+import java.util.UUID;
 
 public interface RegionService {
 
