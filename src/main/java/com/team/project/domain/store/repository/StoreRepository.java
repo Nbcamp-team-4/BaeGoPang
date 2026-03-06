@@ -1,0 +1,15 @@
+package com.team.project.domain.store.repository;
+
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.team.project.domain.store.entity.Store;
+
+public interface StoreRepository extends JpaRepository<Store, UUID> {
+
+	//삭제되지 않은 매장 조회
+	List<Store> findAllByDeletedAtIsNull();
+
+}
