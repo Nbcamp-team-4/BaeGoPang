@@ -5,6 +5,9 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.team.project.domain.order.entity.Order;
+import com.team.project.domain.order.exception.OrderNotFoundException;
+import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.exception.PaymentAlreadyPaidException;
@@ -40,6 +43,7 @@ public class PaymentServiceImpl implements PaymentService {
 	private final PaymentRepository paymentRepository;
 	private final PaymentLogService paymentLogService;
 	private final PgProviderService pgProviderService;
+	private final OrderRepository orderRepository;
 
 	/**
 	 * 결제 준비 메서드
@@ -60,10 +64,13 @@ public class PaymentServiceImpl implements PaymentService {
 		}
 
 		// 2. 결제 데이터 생성
+		// 2-1. 주문 찾아오기
+		Order foundOrder = orderRepository.findById(command.getOrderId()).orElseThrow(OrderNotFoundException::new);
+		// 2-2. 결제 생성
 		Payment payment = Payment.builder()
 			.status(PaymentStatus.READY)
 			.amount(command.getAmount())
-			.order(command.getOrderId())
+			.order(foundOrder)
 			.build();
 
 		// 3. 결제 데이터 저장
@@ -100,7 +107,7 @@ public class PaymentServiceImpl implements PaymentService {
 		CreatePaymentLogCommand paymentLogCommand = CreatePaymentLogCommand.builder()
 			.paymentKey(paymentKey)
 			.status(PaymentLogStatus.SUCCESS)
-			.payment(payment)
+			.paymentId(payment.getId())
 			.build();
 
 		// 5. 결제 로그 저장

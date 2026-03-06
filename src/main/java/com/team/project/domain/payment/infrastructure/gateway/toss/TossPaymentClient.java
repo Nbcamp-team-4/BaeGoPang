@@ -1,4 +1,4 @@
-package com.team.project.domain.payment.infrastructure.toss;
+package com.team.project.domain.payment.infrastructure.gateway.toss;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -8,10 +8,10 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import com.team.project.domain.payment.infrastructure.toss.dto.TossCancelRequest;
-import com.team.project.domain.payment.infrastructure.toss.dto.TossCancelResponse;
-import com.team.project.domain.payment.infrastructure.toss.dto.TossConfirmRequest;
-import com.team.project.domain.payment.infrastructure.toss.dto.TossConfirmResponse;
+import com.team.project.domain.payment.infrastructure.gateway.toss.dto.TossCancelRequest;
+import com.team.project.domain.payment.infrastructure.gateway.toss.dto.TossCancelResponse;
+import com.team.project.domain.payment.infrastructure.gateway.toss.dto.TossConfirmRequest;
+import com.team.project.domain.payment.infrastructure.gateway.toss.dto.TossConfirmResponse;
 import com.team.project.global.config.TossPaymentsProperties;
 
 import lombok.extern.slf4j.Slf4j;

@@ -2,13 +2,17 @@ package com.team.project.domain.payment.model.dto;
 
 import java.util.UUID;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
-@Builder
+@AllArgsConstructor
 public class RequestCancelPaymentCommand {
 
 	UUID orderId;
 	String reason;
+
+	public static RequestCancelPaymentCommand of(UUID orderId, String reason) {
+		return new RequestCancelPaymentCommand(orderId, reason);
+	}
 }
