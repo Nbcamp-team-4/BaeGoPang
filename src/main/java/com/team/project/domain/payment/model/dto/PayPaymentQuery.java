@@ -1,11 +1,9 @@
-package com.team.project.domain.payment.api.response;
+package com.team.project.domain.payment.model.dto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-
-import com.team.project.domain.payment.model.dto.PayPaymentQuery;
+import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 
 import lombok.Builder;
@@ -13,7 +11,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class PayPaymentResponse {
+public class PayPaymentQuery {
+
 	private UUID id;
 	private PaymentStatus status;
 	private Integer amount;
@@ -21,8 +20,8 @@ public class PayPaymentResponse {
 	private LocalDateTime updatedAt;
 	private UUID updatedBy;
 
-	public static PayPaymentResponse from(@MonotonicNonNull PayPaymentQuery payment) {
-		return PayPaymentResponse.builder()
+	public static PayPaymentQuery from(Payment payment) {
+		return PayPaymentQuery.builder()
 			.id(payment.getId())
 			.status(payment.getStatus())
 			.amount(payment.getAmount())

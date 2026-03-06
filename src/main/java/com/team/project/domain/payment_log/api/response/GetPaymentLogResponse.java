@@ -3,7 +3,6 @@ package com.team.project.domain.payment_log.api.response;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.team.project.domain.payment.model.vo.PaymentMethod;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 import com.team.project.domain.payment_log.model.vo.PaymentLogStatus;
 
@@ -19,7 +18,6 @@ public class GetPaymentLogResponse {
 	private PaymentLogStatus status;
 	private String reason;
 
-	private PaymentMethod paymentMethod;
 	private PaymentStatus paymentStatus;
 	private Integer paymentAmount;
 	private LocalDateTime paidAt;

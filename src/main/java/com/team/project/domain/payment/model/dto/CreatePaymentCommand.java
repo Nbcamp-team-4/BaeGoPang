@@ -1,13 +1,15 @@
-package com.team.project.domain.payment.api.request;
+package com.team.project.domain.payment.model.dto;
 
 import java.util.UUID;
 
 import javax.validation.constraints.NotNull;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-public class CreatePaymentRequest {
+@Builder
+public class CreatePaymentCommand {
 
 	@NotNull
 	private UUID orderId;

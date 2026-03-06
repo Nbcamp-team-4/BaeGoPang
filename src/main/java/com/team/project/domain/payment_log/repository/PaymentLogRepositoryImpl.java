@@ -1,6 +1,7 @@
 package com.team.project.domain.payment_log.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -70,5 +71,10 @@ public class PaymentLogRepositoryImpl implements PaymentLogRepository {
 
 		// 4. 아무 조건도 없으면 전체 조회
 		return paymentLogJpaRepository.findAll(pageable);
+	}
+
+	@Override
+	public List<PaymentLog> getPaymentLogByPayment(UUID paymentId) {
+		return paymentLogJpaRepository.findAllByPayment(paymentId);
 	}
 }

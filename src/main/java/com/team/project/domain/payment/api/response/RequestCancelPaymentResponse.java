@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-import com.team.project.domain.payment.model.dto.PayPaymentQuery;
+import com.team.project.domain.payment.model.dto.RequestCancelPaymentQuery;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 
 import lombok.Builder;
@@ -13,22 +13,20 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class PayPaymentResponse {
+public class RequestCancelPaymentResponse {
 	private UUID id;
 	private PaymentStatus status;
 	private Integer amount;
+	private String paymentKey;
 	private LocalDateTime paidAt;
-	private LocalDateTime updatedAt;
-	private UUID updatedBy;
 
-	public static PayPaymentResponse from(@MonotonicNonNull PayPaymentQuery payment) {
-		return PayPaymentResponse.builder()
+	public static RequestCancelPaymentResponse from(@MonotonicNonNull RequestCancelPaymentQuery payment) {
+		return RequestCancelPaymentResponse.builder()
 			.id(payment.getId())
 			.status(payment.getStatus())
 			.amount(payment.getAmount())
+			.paymentKey(payment.getPaymentKey())
 			.paidAt(payment.getPaidAt())
-			.updatedAt(payment.getUpdatedAt())
-			.updatedBy(payment.getUpdatedBy())
 			.build();
 	}
 }
