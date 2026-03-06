@@ -1,4 +1,4 @@
-package com.team.project.domain.payment.infrastructure.toss;
+package com.team.project.domain.payment.infrastructure.gateway.toss;
 
 import java.util.UUID;
 
@@ -9,8 +9,8 @@ import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymen
 import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymentQuery;
 import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentCommand;
 import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentQuery;
-import com.team.project.domain.payment.infrastructure.toss.dto.TossCancelResponse;
-import com.team.project.domain.payment.infrastructure.toss.dto.TossConfirmResponse;
+import com.team.project.domain.payment.infrastructure.gateway.toss.dto.TossCancelResponse;
+import com.team.project.domain.payment.infrastructure.gateway.toss.dto.TossConfirmResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

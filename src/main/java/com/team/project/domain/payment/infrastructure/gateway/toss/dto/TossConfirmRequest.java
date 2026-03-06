@@ -1,4 +1,4 @@
-package com.team.project.domain.payment.infrastructure.toss.dto;
+package com.team.project.domain.payment.infrastructure.gateway.toss.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
