@@ -107,7 +107,7 @@ public class PaymentServiceImpl implements PaymentService {
 		CreatePaymentLogCommand paymentLogCommand = CreatePaymentLogCommand.builder()
 			.paymentKey(paymentKey)
 			.status(PaymentLogStatus.SUCCESS)
-			.payment(payment)
+			.paymentId(payment.getId())
 			.build();
 
 		// 5. 결제 로그 저장
