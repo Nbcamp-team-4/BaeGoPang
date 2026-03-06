@@ -3,6 +3,8 @@ package com.team.project.domain.store.service.command;
 import java.time.LocalTime;
 import java.util.UUID;
 
+import com.team.project.domain.store.model.vo.StoreStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -10,9 +12,10 @@ import lombok.Getter;
 @Getter
 @Builder
 @AllArgsConstructor
-public class CreateStoreCommand {
-	private final UUID userId;
+public class UpdateStoreByAdminCommand {
+	private final UUID storeId;
 	private final UUID regionId;
+	//private final UUID categoryId;
 	private final String name;
 	private final String description;
 	private final String address;
@@ -26,4 +29,5 @@ public class CreateStoreCommand {
 	private final Integer deliveryMaxMinutes;
 	private final Integer deliveryFee;
 	private final Integer minimumOrderAmount;
+	private final StoreStatus status;         // OPEN, CLOSED, PENDING, BANNED 등 상태 제어
 }
