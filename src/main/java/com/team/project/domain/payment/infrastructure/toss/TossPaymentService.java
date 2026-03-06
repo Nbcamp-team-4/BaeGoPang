@@ -25,12 +25,17 @@ public class TossPaymentService implements PgProviderService {
 
 	private final TossPaymentClient tossPaymentClient;
 
+	/**
+	 *  결제 승인
+	 */
 	@Override
 	public ConfirmPgProviderPaymentQuery confirmPayment(ConfirmPgProviderPaymentCommand command) {
 
+		// 1. 토스 결제 승인 호출
 		TossConfirmResponse tossReponse = tossPaymentClient.confirm(command.getPaymentKey(),
 			command.getOrderId().toString(), command.getAmount());
 
+		// 2. DTO로 변환
 		ConfirmPgProviderPaymentQuery response = ConfirmPgProviderPaymentQuery.builder()
 			.paymentKey(tossReponse.getPaymentKey())
 			.orderId(UUID.fromString(tossReponse.getOrderId()))
@@ -40,14 +45,16 @@ public class TossPaymentService implements PgProviderService {
 		return response;
 	}
 
+	/**
+	 *  결제 취소
+	 */
 	@Override
 	public CancelPgProviderPaymentQuery cancelPayment(CancelPgProviderPaymentCommand command) {
 
-		System.out.println("TossPaymentService.cancelPayment");
-		System.out.println("command = " + command.getPaymentKey());
-		System.out.println("command.getReason() = " + command.getReason());
+		// 1. 토스 결제 취소 호출
 		TossCancelResponse tossResponse = tossPaymentClient.cancel(command.getPaymentKey(), command.getReason());
 
+		// 2. DTO로 변환
 		if (tossResponse.getCancels() == null || tossResponse.getCancels().isEmpty()) {
 			return CancelPgProviderPaymentQuery.builder()
 				.paymentKey(tossResponse.getPaymentKey())

@@ -50,13 +50,16 @@ public class PaymentController {
 	@PostMapping
 	public ResponseEntity<?> createPayment(@RequestBody @Valid CreatePaymentRequest request) {
 
+		// 1. service dto 변환
 		CreatePaymentCommand command = CreatePaymentCommand.builder()
 			.orderId(request.getOrderId())
 			.amount(request.getAmount())
 			.build();
 
+		// 2. service 호출
 		CreatePaymentQuery query = paymentService.createPayment(command);
 
+		// 3. dto 변환
 		CreatePaymentResponse response = CreatePaymentResponse.from(query);
 
 		return ResponseEntity.ok().body(
@@ -72,14 +75,17 @@ public class PaymentController {
 	@PostMapping("/confirm")
 	public ResponseEntity<?> confirmPayment(@RequestBody PayPaymentRequest request) {
 
+		// 1. service dto 변환
 		PayPaymentCommand command = PayPaymentCommand.builder()
 			.orderId(request.getOrderId())
 			.paymentKey(request.getPaymentKey())
 			.amount(request.getAmount())
 			.build();
 
+		// 2. service 호출
 		PayPaymentQuery query = paymentService.payPayment(command);
 
+		// 3. dto 변환
 		PayPaymentResponse response = PayPaymentResponse.from(query);
 
 		return ResponseEntity.ok().body(
@@ -95,13 +101,16 @@ public class PaymentController {
 	@PostMapping("/cancel/request")
 	public ResponseEntity<?> requestCancelPayment(@RequestBody RequestCancelPaymentRequest request) {
 
+		// 1. service dto 변환
 		RequestCancelPaymentCommand command = RequestCancelPaymentCommand.builder()
 			.orderId(request.getOrderId())
 			.reason(request.getReason())
 			.build();
 
+		// 2. service 호출
 		RequestCancelPaymentQuery query = paymentService.requestCancelPayment(command);
 
+		// 3. dto 변환
 		RequestCancelPaymentResponse response = RequestCancelPaymentResponse.from(query);
 
 		return ResponseEntity.ok().body(
@@ -117,13 +126,16 @@ public class PaymentController {
 	@PostMapping("/cancel")
 	public ResponseEntity<?> cancelPayment(@RequestBody CancelPaymentRequest request) {
 
+		// 1. service dto 변환
 		CancelPaymentCommand command = CancelPaymentCommand.builder()
 			.orderId(request.getOrderId())
 			.reason(request.getReason())
 			.build();
 
+		// 2. service 호출
 		CancelPaymentQuery query = paymentService.cancelPayment(command);
 
+		// 3. dto 변환
 		CancelPaymentResponse response = CancelPaymentResponse.from(query);
 
 		return ResponseEntity.ok().body(
@@ -137,8 +149,10 @@ public class PaymentController {
 	@GetMapping("/{paymentId}")
 	public ResponseEntity<?> getPayment(@PathVariable("paymentId") UUID paymentId) {
 
+		// 1. service 호출
 		GetPaymentQuery query = paymentService.getPayment(paymentId);
 
+		// 2. dto 변환
 		GetPaymentResponse response = GetPaymentResponse.from(query);
 
 		return ResponseEntity.ok().body(
@@ -158,8 +172,9 @@ public class PaymentController {
 	@DeleteMapping("/{paymentId}")
 	public ResponseEntity<?> deletePayment(@PathVariable("paymentId") UUID paymentId) {
 
+		// 1. service 호출
 		paymentService.deletePayment(paymentId);
-
+		
 		return ResponseEntity.ok().body(
 			BaseResponse.ofSuccess(
 				null

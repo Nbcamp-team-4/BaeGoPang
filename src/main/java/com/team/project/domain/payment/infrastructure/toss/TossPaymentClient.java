@@ -34,11 +34,10 @@ public class TossPaymentClient {
 
 	}
 
+	/**
+	 *  TOSS 결제 승인 HTTP 호출
+	 */
 	public TossConfirmResponse confirm(String paymentKey, String orderId, Integer amount) {
-		System.out.println("TossPaymentClient.confirm");
-		System.out.println("paymentKey = " + paymentKey);
-		System.out.println("orderId = " + orderId);
-		System.out.println("amount = " + amount);
 		TossConfirmRequest request = new TossConfirmRequest(paymentKey, orderId, amount);
 
 		return restClient.post()
@@ -50,6 +49,9 @@ public class TossPaymentClient {
 			.body(TossConfirmResponse.class);
 	}
 
+	/**
+	 *  TOSS 결제 취소 HTTP 호출
+	 */
 	public TossCancelResponse cancel(String paymentKey, String reason) {
 
 		TossCancelRequest request = new TossCancelRequest(reason);
