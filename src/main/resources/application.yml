@@ -24,3 +24,10 @@ spring:
         format_sql: true
         # ✅ deprecated 경고 피하려면 이걸로 교체 권장
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+      spring:
+       ai:
+      google:
+        ai:
+          api-key:AIzaSyDjSuXlD5-71Fh5drIDri8T2Hd3616VWFE

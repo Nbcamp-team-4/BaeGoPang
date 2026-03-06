@@ -23,10 +23,14 @@ configurations {
 
 repositories {
     mavenCentral()
+  // ai 설정중
+    maven { url 'https://repo.spring.io/milestone' }
+    maven { url 'https://repo.spring.io/snapshot' } // 스냅샷 저장소 추가
 }
 
 ext {
-    set('springAiVersion', "1.1.2")
+// 현재 가장 안정적인 마일스톤 버전으로 변경
+    set('springAiVersion', "1.0.0-M4")
 }
 
 dependencies {
@@ -34,7 +38,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
     compileOnly 'org.projectlombok:lombok'
@@ -44,6 +47,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.hibernate.orm:hibernate-spatial:6.4.4.Final'
+
+    // implementation 'org.springframework.ai:spring-ai-starter-model-google-genai'
+    implementation 'org.springframework.ai:spring-ai-google-ai-spring-boot-starter:1.0.0-M4'
 
 }
 
