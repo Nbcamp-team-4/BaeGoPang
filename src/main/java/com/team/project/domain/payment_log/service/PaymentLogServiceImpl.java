@@ -15,9 +15,9 @@ import com.team.project.domain.payment_log.api.request.GetPaymentLogsResponse;
 import com.team.project.domain.payment_log.api.response.GetPaymentLogResponse;
 import com.team.project.domain.payment_log.entity.PaymentLog;
 import com.team.project.domain.payment_log.exception.PaymentLogNotFoundException;
+import com.team.project.domain.payment_log.model.dto.CreatePaymentLogCommand;
 import com.team.project.domain.payment_log.model.vo.PaymentLogStatus;
 import com.team.project.domain.payment_log.repository.PaymentLogRepository;
-import com.team.project.domain.pg_provider.entity.PgProvider;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +31,20 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 
 	private final PaymentLogRepository paymentLogRepository;
 
+	// @Override
+	// public PaymentLog createPaymentLog(PaymentLog paymentLog) {
+	// 	PaymentLog saved = paymentLogRepository.createPaymentLog(paymentLog);
+	// 	return saved;
+	// }
+
 	@Override
-	public PaymentLog createPaymentLog(PaymentLog paymentLog) {
+	public PaymentLog createPaymentLog(CreatePaymentLogCommand command) {
+		PaymentLog paymentLog = PaymentLog.builder()
+			.paymentKey(command.getPaymentKey())
+			.status(command.getStatus())
+			.reason(command.getReason())
+			.payment(command.getPayment())
+			.build();
 		PaymentLog saved = paymentLogRepository.createPaymentLog(paymentLog);
 		return saved;
 	}
@@ -54,36 +66,16 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 		// 없다면 PaymentLogNotFound 에러 발생
 		PaymentLog paymentLog = getPaymentLogInnerWithException(paymentLogId);
 		Payment payment = paymentLog.getPayment();
-		PgProvider pgProvider = paymentLog.getPgProvider();
 
-		// PG사 결제인 경우
-		if (pgProvider != null) {
-			return GetPaymentLogResponse.builder()
-				.id(paymentLog.getId())
-				.status(paymentLog.getStatus())
-				.reason(paymentLog.getReason())
-				.paymentMethod(payment.getMethod())
-				.paymentStatus(payment.getStatus())
-				.paymentAmount(payment.getAmount())
-				.pgProviderId(pgProvider.getId())
-				.pgProviderName(pgProvider.getName())
-				.pgProviderCode(pgProvider.getCode())
-				.createdAt(paymentLog.getCreatedAt())
-				.createdBy(paymentLog.getCreatedBy())
-				.build();
-			// 카드 결제인 경우
-		} else {
-			return GetPaymentLogResponse.builder()
-				.id(paymentLog.getId())
-				.status(paymentLog.getStatus())
-				.reason(paymentLog.getReason())
-				.paymentMethod(payment.getMethod())
-				.paymentStatus(payment.getStatus())
-				.paymentAmount(payment.getAmount())
-				.createdAt(paymentLog.getCreatedAt())
-				.createdBy(paymentLog.getCreatedBy())
-				.build();
-		}
+		return GetPaymentLogResponse.builder()
+			.id(paymentLog.getId())
+			.status(paymentLog.getStatus())
+			.reason(paymentLog.getReason())
+			.paymentStatus(payment.getStatus())
+			.paymentAmount(payment.getAmount())
+			.createdAt(paymentLog.getCreatedAt())
+			.createdBy(paymentLog.getCreatedBy())
+			.build();
 	}
 
 	public PaymentLog getPaymentLogInnerWithException(UUID paymentLogId) {
@@ -131,6 +123,14 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 			.build();
 	}
 
+	@Override
+	public PaymentLog getPaymentLogByPayment(UUID paymentId) {
+		List<PaymentLog> paymentLogs = paymentLogRepository.getPaymentLogByPayment(paymentId);
+		if (paymentLogs.size() == 0) {
+			throw new PaymentLogNotFoundException();
+		}
+		return paymentLogs.get(0);
+	}
 }
 
 

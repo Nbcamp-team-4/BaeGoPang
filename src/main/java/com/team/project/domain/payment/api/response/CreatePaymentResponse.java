@@ -3,7 +3,7 @@ package com.team.project.domain.payment.api.response;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.team.project.domain.payment.model.vo.PaymentMethod;
+import com.team.project.domain.payment.model.dto.CreatePaymentQuery;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 
 import lombok.Builder;
@@ -13,15 +13,21 @@ import lombok.Getter;
 @Builder
 public class CreatePaymentResponse {
 
-	private UUID id;
+	private UUID orderId;
+	private UUID paymentId;
 	private PaymentStatus status;
-	private PaymentMethod method;
 	private Integer amount;
-	private String orderNo;
-	private String orderStatus;
-	private String pgCode;
-	private String pgName;
 	private LocalDateTime createdAt;
 	private UUID createdBy;
 
+	public static CreatePaymentResponse from(CreatePaymentQuery query) {
+		return CreatePaymentResponse.builder()
+			.orderId(query.getOrderId())
+			.paymentId(query.getPaymentId())
+			.status(query.getStatus())
+			.amount(query.getAmount())
+			.createdAt(query.getCreatedAt())
+			.createdBy(query.getCreatedBy())
+			.build();
+	}
 }

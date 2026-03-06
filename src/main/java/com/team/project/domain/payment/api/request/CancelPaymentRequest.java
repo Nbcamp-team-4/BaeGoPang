@@ -2,16 +2,13 @@ package com.team.project.domain.payment.api.request;
 
 import java.util.UUID;
 
-import javax.validation.constraints.NotNull;
-
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-public class CreatePaymentRequest {
+@Builder
+public class CancelPaymentRequest {
 
-	@NotNull
 	private UUID orderId;
-	@NotNull
-	private Integer amount;
-
+	private String reason;
 }
