@@ -8,13 +8,17 @@ import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.annotations.Where;
 import org.hibernate.type.SqlTypes;
 
+import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,15 +48,12 @@ public class Payment extends BaseEntity {
 
 	private LocalDateTime paidAt;
 
-	// 추후 order과 연관관계
-	// @ManyToOne(fetch = FetchType.LAZY)
-	// @JoinColumn(name = "order_id")
-	// private Order order;
-	@Column(name = "order_id")
-	private UUID order;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "order_id")
+	private Order order;
 
 	@Builder
-	public Payment(PaymentStatus status, Integer amount, String paymentKey, LocalDateTime paidAt, UUID order) {
+	public Payment(PaymentStatus status, Integer amount, String paymentKey, LocalDateTime paidAt, Order order) {
 		this.status = status;
 		this.amount = amount;
 		this.paymentKey = paymentKey;

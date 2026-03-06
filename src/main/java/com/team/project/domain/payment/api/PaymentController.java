@@ -73,7 +73,7 @@ public class PaymentController {
 	 * 결제 하는 api
 	 */
 	@PostMapping("/confirm")
-	public ResponseEntity<?> confirmPayment(@RequestBody PayPaymentRequest request) {
+	public ResponseEntity<?> confirmPayment(@RequestBody @Valid PayPaymentRequest request) {
 
 		// 1. service dto 변환
 		PayPaymentCommand command = PayPaymentCommand.builder()
@@ -99,7 +99,7 @@ public class PaymentController {
 	 * 결제 취소 요청을 하는 api
 	 */
 	@PostMapping("/cancel/request")
-	public ResponseEntity<?> requestCancelPayment(@RequestBody RequestCancelPaymentRequest request) {
+	public ResponseEntity<?> requestCancelPayment(@RequestBody @Valid RequestCancelPaymentRequest request) {
 
 		// 1. service dto 변환
 		RequestCancelPaymentCommand command = RequestCancelPaymentCommand.builder()
@@ -124,7 +124,7 @@ public class PaymentController {
 	 * 결제 취소하는 api
 	 */
 	@PostMapping("/cancel")
-	public ResponseEntity<?> cancelPayment(@RequestBody CancelPaymentRequest request) {
+	public ResponseEntity<?> cancelPayment(@RequestBody @Valid CancelPaymentRequest request) {
 
 		// 1. service dto 변환
 		CancelPaymentCommand command = CancelPaymentCommand.builder()
@@ -174,7 +174,7 @@ public class PaymentController {
 
 		// 1. service 호출
 		paymentService.deletePayment(paymentId);
-		
+
 		return ResponseEntity.ok().body(
 			BaseResponse.ofSuccess(
 				null

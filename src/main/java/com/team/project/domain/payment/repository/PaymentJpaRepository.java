@@ -1,7 +1,6 @@
 package com.team.project.domain.payment.repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
@@ -13,7 +12,6 @@ import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 
 public interface PaymentJpaRepository extends JpaRepository<Payment, UUID> {
-	Optional<Payment> findByOrder(UUID orderId);
 
 	@Query(value = """
 			SELECT *
@@ -27,7 +25,7 @@ public interface PaymentJpaRepository extends JpaRepository<Payment, UUID> {
 	@Query("""
 		    SELECT p
 		    FROM Payment p
-		    WHERE p.order = :orderId AND p.status = :status
+		    WHERE p.order.id = :orderId AND p.status = :status
 		    ORDER BY p.createdAt DESC
 		""")
 	List<Payment> findLatestByOrderAndStatus(@Param("orderId") UUID orderId, @Param("status") PaymentStatus status,
