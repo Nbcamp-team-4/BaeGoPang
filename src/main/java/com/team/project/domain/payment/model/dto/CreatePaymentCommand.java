@@ -4,11 +4,11 @@ import java.util.UUID;
 
 import javax.validation.constraints.NotNull;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@Builder
+@AllArgsConstructor
 public class CreatePaymentCommand {
 
 	@NotNull
@@ -16,4 +16,7 @@ public class CreatePaymentCommand {
 	@NotNull
 	private Integer amount;
 
+	public static CreatePaymentCommand of(UUID orderId, Integer amount) {
+		return new CreatePaymentCommand(orderId, amount);
+	}
 }
