@@ -14,8 +14,9 @@ import lombok.Getter;
 @Getter
 @Builder
 public class PayPaymentResponse {
-	private UUID id;
-	private PaymentStatus status;
+
+	private UUID paymentId;
+	private PaymentStatus paymentStatus;
 	private Integer amount;
 	private LocalDateTime paidAt;
 	private LocalDateTime updatedAt;
@@ -23,12 +24,12 @@ public class PayPaymentResponse {
 
 	public static PayPaymentResponse from(@MonotonicNonNull PayPaymentQuery payment) {
 		return PayPaymentResponse.builder()
-			.id(payment.getId())
-			.status(payment.getStatus())
-			.amount(payment.getAmount())
-			.paidAt(payment.getPaidAt())
-			.updatedAt(payment.getUpdatedAt())
-			.updatedBy(payment.getUpdatedBy())
-			.build();
+				.paymentId(payment.getId())
+				.paymentStatus(payment.getStatus())
+				.amount(payment.getAmount())
+				.paidAt(payment.getPaidAt())
+				.updatedAt(payment.getUpdatedAt())
+				.updatedBy(payment.getUpdatedBy())
+				.build();
 	}
 }

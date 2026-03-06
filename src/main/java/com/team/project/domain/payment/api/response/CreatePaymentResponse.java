@@ -15,19 +15,19 @@ public class CreatePaymentResponse {
 
 	private UUID orderId;
 	private UUID paymentId;
-	private PaymentStatus status;
+	private PaymentStatus paymentStatus;
 	private Integer amount;
 	private LocalDateTime createdAt;
 	private UUID createdBy;
 
 	public static CreatePaymentResponse from(CreatePaymentQuery query) {
 		return CreatePaymentResponse.builder()
-			.orderId(query.getOrderId())
-			.paymentId(query.getPaymentId())
-			.status(query.getStatus())
-			.amount(query.getAmount())
-			.createdAt(query.getCreatedAt())
-			.createdBy(query.getCreatedBy())
-			.build();
+				.orderId(query.getOrderId())
+				.paymentId(query.getPaymentId())
+				.paymentStatus(query.getStatus())
+				.amount(query.getAmount())
+				.createdAt(query.getCreatedAt())
+				.createdBy(query.getCreatedBy())
+				.build();
 	}
 }

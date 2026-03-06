@@ -45,7 +45,7 @@ public class Order extends BaseEntity {
 
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status", nullable = false)
-    private OrderStatus status = OrderStatus.PENDING;
+    private OrderStatus status = OrderStatus.PENDING_PAYMENT;
 
     @Column(name = "request_memo", length = 255)
     private String requestMemo;
@@ -74,7 +74,7 @@ public class Order extends BaseEntity {
         this.orderNo = orderNo;
         this.totalAmount = totalAmount;
         this.requestMemo = requestMemo;
-        this.status = OrderStatus.PENDING;
+        this.status = OrderStatus.PENDING_PAYMENT;
         this.orderDate = LocalDateTime.now();
     }
 
@@ -85,21 +85,88 @@ public class Order extends BaseEntity {
     }
 
     // ====== 도메인 메서드 ======
+
+    /**
+     * 결제 완료 처리
+     * - 주문 생성 직후(PENDING_PAYMENT) 상태에서만 결제 완료로 변경 가능
+     */
     public void markPaid() {
+        validateStatus(OrderStatus.PENDING_PAYMENT);
         this.status = OrderStatus.PAID;
     }
 
-    public void cancel(String reason) {
-        this.status = OrderStatus.CANCELED;
+    /**
+     * 가게 주문 수락 처리
+     * - 결제 완료(PAID) 상태에서만 수락 가능
+     */
+    public void accept() {
+        validateStatus(OrderStatus.PAID);
+        this.status = OrderStatus.ACCEPTED;
+    }
+
+    /**
+     * 가게 주문 거절 처리
+     * - 결제 완료(PAID) 상태에서만 거절 가능
+     * - 현재 별도 rejectedReason 컬럼이 없으므로 canceledReason 컬럼을 임시 재사용
+     */
+    public void reject(String reason) {
+        validateStatus(OrderStatus.PAID);
+        this.status = OrderStatus.REJECTED;
         this.canceledReason = reason;
     }
 
+    /**
+     * 조리 시작 처리
+     * - 수락(ACCEPTED) 상태에서만 조리중(COOKING)으로 변경 가능
+     */
+    public void startCooking() {
+        validateStatus(OrderStatus.ACCEPTED);
+        this.status = OrderStatus.COOKING;
+    }
+
+    /**
+     * 배달 시작 처리
+     * - 조리중(COOKING) 상태에서만 배달중(DELIVERING)으로 변경 가능
+     */
+    public void startDelivering() {
+        validateStatus(OrderStatus.COOKING);
+        this.status = OrderStatus.DELIVERING;
+    }
+
+    /**
+     * 주문 완료 처리
+     * - 배달중(DELIVERING) 상태에서만 완료(COMPLETED) 처리 가능
+     */
     public void complete() {
+        validateStatus(OrderStatus.DELIVERING);
         this.status = OrderStatus.COMPLETED;
         this.completedAt = LocalDateTime.now();
     }
 
+    /**
+     * 주문 취소 처리
+     * - 현재 정책상 결제대기 / 결제완료 / 수락 상태까지만 취소 허용
+     * - 조리중 이후 취소 정책은 팀 룰에 맞게 추후 조정 가능
+     */
+    public void cancel(String reason) {
+        validateStatus(OrderStatus.PENDING_PAYMENT, OrderStatus.PAID, OrderStatus.ACCEPTED);
+        this.status = OrderStatus.CANCELED;
+        this.canceledReason = reason;
+    }
+
     public void markDeleted(UUID deletedBy) {
         super.markDeleted(deletedBy);
+    }
+
+    /**
+     * 현재 주문 상태가 허용된 상태 중 하나인지 검증
+     */
+    private void validateStatus(OrderStatus... allowedStatuses) {
+        for (OrderStatus allowedStatus : allowedStatuses) {
+            if (this.status == allowedStatus) {
+                return;
+            }
+        }
+        throw new IllegalStateException("허용되지 않은 주문 상태 변경입니다. currentStatus=" + this.status);
     }
 }

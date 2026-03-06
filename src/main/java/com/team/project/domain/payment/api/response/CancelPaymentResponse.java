@@ -12,19 +12,20 @@ import lombok.Getter;
 @Getter
 @Builder
 public class CancelPaymentResponse {
-	private UUID id;
-	private PaymentStatus status;
+
+	private UUID paymentId;
+	private PaymentStatus paymentStatus;
 	private Integer amount;
 	private String paymentKey;
 	private LocalDateTime paidAt;
 
 	public static CancelPaymentResponse from(CancelPaymentQuery query) {
 		return CancelPaymentResponse.builder()
-			.id(query.getId())
-			.status(query.getStatus())
-			.amount(query.getAmount())
-			.paymentKey(query.getPaymentKey())
-			.paidAt(query.getPaidAt())
-			.build();
+				.paymentId(query.getId())
+				.paymentStatus(query.getStatus())
+				.amount(query.getAmount())
+				.paymentKey(query.getPaymentKey())
+				.paidAt(query.getPaidAt())
+				.build();
 	}
 }
