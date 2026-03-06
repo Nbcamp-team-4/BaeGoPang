@@ -1,18 +1,15 @@
 package com._team._project.domain.store.service;
 
-import java.util.List;
-import java.util.UUID;
-
-import com._team._project.domain.store.api.request.CreateStoreRequest;
-import com._team._project.domain.store.api.request.UpdateStoreRequest;
-import com._team._project.domain.store.api.response.StoreResponse;
+import com._team._project.domain.store.service.command.CreateStoreCommand;
+import com._team._project.domain.store.service.result.StoreResult;
 
 public interface StoreService {
 
        //가게 생성
-        StoreResponse createStore(CreateStoreRequest request);
+       StoreResult createStore(CreateStoreCommand command);
 
-        //가게수정
+       /*
+       //가게수정
         StoreResponse updateStore(UUID storeId, UpdateStoreRequest request);
 
         //가게 삭제 (Soft Delete)
@@ -23,7 +20,7 @@ public interface StoreService {
 
         //가게 단건 조회
         StoreResponse getStore(UUID storeId);
-
+        */
 }
 
 /*

@@ -1,20 +1,18 @@
 package com._team._project.domain.store.service;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com._team._project.domain.store.api.request.CreateStoreRequest;
-import com._team._project.domain.store.api.request.UpdateStoreRequest;
-import com._team._project.domain.store.api.response.StoreResponse;
+import com._team._project.domain.region.entity.Region;
+import com._team._project.domain.region.repository.RegionRepository;
 import com._team._project.domain.store.entity.Store;
-import com._team._project.domain.store.exception.StoreNotFoundException;
 import com._team._project.domain.store.repository.StoreRepository;
+import com._team._project.domain.store.service.command.CreateStoreCommand;
+import com._team._project.domain.store.service.result.StoreResult;
 import com._team._project.domain.store.util.GeometryUtil;
+import com._team._project.domain.user.entity.User;
+import com._team._project.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,50 +22,55 @@ import lombok.RequiredArgsConstructor;
 public class StoreServiceImpl implements StoreService {
 
 	private final StoreRepository storeRepository;
-
+	private final UserRepository userRepository;
+	private final RegionRepository regionRepository;
 
 	/*
 	 * 가게 생성
 	 */
 	@Override
 	@Transactional
-	public StoreResponse createStore(CreateStoreRequest request) {
+	public StoreResult createStore(CreateStoreCommand command) {
 
 		// 1) 좌표 생성
-		Point location = GeometryUtil.createPoint(
-			request.getLongitude(),
-			request.getLatitude()
-		);
+		Point location = GeometryUtil.createPoint(command.getLongitude(), command.getLatitude());
+		location.setSRID(4326);
 
-		// 2) 엔티티 생성
+
+		// 2. 유저, 지역 확인
+		User user = userRepository.findById(command.getUserId())
+			.orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+
+		// 3. 해당 좌표를 포함하고 있는 활성 지역(Region)을 DB에서 조회
+		// 기존에 location(Point)을 넘기던 부분을 위도/경도 숫자로 변경
+		Region region = regionRepository.findActiveRegionContaining(command.getLongitude(), command.getLatitude())
+			.orElseThrow(() -> new IllegalArgumentException("AREA_NOT_SUPPORTED"));
+
+		// 4. 엔티티 생성 및 저장
 		Store store = new Store(
-			request.getUserId(),
-			request.getRegionId(),
-			request.getName(),
-			request.getDescription(),
-			request.getAddress(),
+			user,
+			region, // DB에서 찾은 검증된 region 객체 사용
+			command.getName(),
+			command.getDescription(),
+			command.getAddress(),
 			location,
-			request.getPhone(),
-			request.getImageUrl(),
-			request.getOpenTime(),
-			request.getCloseTime(),
-			request.getDeliveryMinMinutes(),
-			request.getDeliveryMaxMinutes(),
-			request.getDeliveryFee(),
-			request.getMinimumOrderAmount()
+			command.getPhone(),
+			command.getImageUrl(),
+			command.getOpenTime(),
+			command.getCloseTime(),
+			command.getDeliveryMinMinutes(),
+			command.getDeliveryMaxMinutes(),
+			command.getDeliveryFee(),
+			command.getMinimumOrderAmount()
 		);
 
-		// 3) 저장
-		Store savedStore = storeRepository.save(store);
-
-		// 4) 응답 변환
-		return StoreResponse.from(savedStore);
+		return StoreResult.from(storeRepository.save(store));
 	}
 
 
 	/*
 	 * 가게 전체 조회
-	 */
+
 	@Override
 	public List<StoreResponse> getStores() {
 
@@ -81,9 +84,9 @@ public class StoreServiceImpl implements StoreService {
 	}
 
 
-	/*
-	 * 가게 상세 조회
-	 */
+
+	 //가게 상세 조회
+
 	@Override
 	public StoreResponse getStore(UUID storeId) {
 
@@ -96,9 +99,8 @@ public class StoreServiceImpl implements StoreService {
 	}
 
 
-	/*
-	 * 가게 수정
-	 */
+	//가게 수정
+
 	@Override
 	@Transactional
 	public StoreResponse updateStore(UUID storeId, UpdateStoreRequest request) {
@@ -128,9 +130,9 @@ public class StoreServiceImpl implements StoreService {
 	}
 
 
-	/*
-	 * 가게 삭제
-	 */
+
+	//가게 삭제
+
 	@Override
 	@Transactional
 	public void deleteStore(UUID storeId, UUID userId) {
@@ -142,5 +144,6 @@ public class StoreServiceImpl implements StoreService {
 		// 2) Soft Delete
 		store.delete(userId);
 	}
+	 */
 
 }
