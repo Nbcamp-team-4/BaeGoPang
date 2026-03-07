@@ -1,13 +1,7 @@
 package com.team.project.domain.payment.model.vo;
 
 public enum PaymentStatus {
-	READY,
-	PENDING,
-	COMPLETED,
-	FAILED,
-	CANCEL_REQUESTED,
-	CANCELED,
-	REFUND_FAILED;
+	READY, PAID, CANCEL_REQUESTED, CANCELED;
 
 	// READY -> PAID -> CANCEL_REQUESTED -> CANCELED
 

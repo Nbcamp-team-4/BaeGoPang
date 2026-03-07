@@ -61,76 +61,31 @@ public class Payment extends BaseEntity {
 		this.order = order;
 	}
 
-	/**
-	 * 결제 승인 대기 상태로 변경
-	 * - 외부 PG 승인 직전/직후 중간 상태가 필요할 때 사용
-	 * - 현재 서비스에서 바로 승인 완료 처리한다면 사용하지 않아도 됨
-	 */
-	public void markPending() {
+	public void pay(String paymentKey) {
 		validateStatus(PaymentStatus.READY);
-		this.status = PaymentStatus.PENDING;
-	}
-
-	/**
-	 * 결제 완료 처리
-	 * - READY 또는 PENDING 상태에서만 완료(COMPLETED) 처리 가능
-	 */
-	public void complete(String paymentKey) {
-		validateStatus(PaymentStatus.READY, PaymentStatus.PENDING);
-		this.status = PaymentStatus.COMPLETED;
+		this.status = PaymentStatus.PAID;
 		this.paidAt = LocalDateTime.now();
 		this.paymentKey = paymentKey;
 	}
 
-	/**
-	 * 결제 실패 처리
-	 * - READY 또는 PENDING 상태에서만 실패 처리 가능
-	 */
-	public void fail() {
-		validateStatus(PaymentStatus.READY, PaymentStatus.PENDING);
-		this.status = PaymentStatus.FAILED;
-	}
-
-	/**
-	 * 결제 취소 요청 처리
-	 * - 결제 완료(COMPLETED) 상태에서만 취소 요청 가능
-	 */
 	public void requestCancel() {
-		validateStatus(PaymentStatus.COMPLETED);
+		validateStatus(PaymentStatus.PAID);
 		this.status = PaymentStatus.CANCEL_REQUESTED;
 	}
 
-	/**
-	 * 결제 취소 완료 처리
-	 * - 취소 요청(CANCEL_REQUESTED) 상태에서만 취소 완료 가능
-	 */
 	public void cancel() {
 		validateStatus(PaymentStatus.CANCEL_REQUESTED);
 		this.status = PaymentStatus.CANCELED;
-	}
-
-	/**
-	 * 환불 실패 처리
-	 * - 취소 요청(CANCEL_REQUESTED) 상태에서만 환불 실패 처리 가능
-	 */
-	public void markRefundFailed() {
-		validateStatus(PaymentStatus.CANCEL_REQUESTED);
-		this.status = PaymentStatus.REFUND_FAILED;
 	}
 
 	public void markDeleted(UUID deletedBy) {
 		super.markDeleted(deletedBy);
 	}
 
-	/**
-	 * 현재 결제 상태가 허용된 상태 중 하나인지 검증
-	 */
-	private void validateStatus(PaymentStatus... allowedStatuses) {
-		for (PaymentStatus allowedStatus : allowedStatuses) {
-			if (this.status == allowedStatus) {
-				return;
-			}
+	private void validateStatus(PaymentStatus expected) {
+		if (this.status != expected) {
+			throw new InvalidPaymentRequestException();
 		}
-		throw new InvalidPaymentRequestException();
 	}
+
 }
