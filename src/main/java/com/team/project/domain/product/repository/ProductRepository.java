@@ -16,8 +16,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
 	List<Product> findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalse(UUID storeId);
 
-	@Modifying
-	@Query("update Product p set p.deletedAt = CURRENT_TIMESTAMP, p.deletedBy = :userId where p.storeId = :storeId and p.deletedAt is null")
+	@Modifying(clearAutomatically = true) // UPDATE 쿼리 필수 어노테이션
+	@Query("UPDATE Product p SET p.deletedAt = CURRENT_TIMESTAMP, p.deletedBy = :userId WHERE p.store.id = :storeId AND p.deletedAt IS NULL")
 	void softDeleteByStoreId(@Param("storeId") UUID storeId, @Param("userId") UUID userId);
 
 	// 목록/상세 조회 시 deletedAt IS NULL 조건 필요함

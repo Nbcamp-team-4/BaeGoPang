@@ -10,6 +10,7 @@ import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.Point;
 
+import com.team.project.domain.category.entity.Category;
 import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.region.entity.Region;
 import com.team.project.domain.store.exception.InvalidDeliveryFeeException;
@@ -32,6 +33,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -41,6 +43,9 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_store")
 public class Store extends BaseEntity {
 
+	/* ============================================================================
+	 * 1. 필드 영역
+	 * ============================================================================ */
 	@Id
 	@UuidGenerator
 	@Column(name = "id", updatable = false, nullable = false)
@@ -67,16 +72,13 @@ public class Store extends BaseEntity {
 	private Point location;
 
 	private String phone;
-
 	private String imageUrl;
-
 	private LocalTime openTime;
-
 	private LocalTime closeTime;
 
 	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
 	@Column(name = "status", nullable = false)
-	private StoreStatus status = StoreStatus.INACTIVE;
+	private StoreStatus status;
 
 	@Column(nullable = false)
 	private Integer deliveryMinMinutes;
@@ -89,32 +91,72 @@ public class Store extends BaseEntity {
 
 	@Column(nullable = false)
 	private Integer minimumOrderAmount;
+
 	@OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
-	private List<Product> products = new ArrayList<>(); // 명세서의 상품 테이블과 연결
+	private List<Product> products = new ArrayList<>();
+
+	@OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<StoreCategory> storeCategories = new ArrayList<>();
 
 
+	/* ============================================================================
+	 * 2. 생성자 및 정적 팩토리 메서드 영역 (1번 방식 핵심)
+	 * ============================================================================ */
 
-	// === [생성 로직] 서비스에서 Store.create(command, user, region, location)으로 호출 ===
-	// 정적 팩토리 메서드: 빌더 대신 "new"를 직접 컨트롤!
-	public static Store create(CreateStoreCommand command, User user, Region region, Point location) {
-		Store store = new Store();
-		store.user = user;
-		store.region = region;
-		store.location = location;
-		store.name = command.getName();
-		store.description = command.getDescription();
-		store.address = command.getAddress();
-		store.phone = command.getPhone();
-		store.imageUrl = command.getImageUrl();
-		store.openTime = command.getOpenTime();
-		store.closeTime = command.getCloseTime();
-		store.deliveryMinMinutes = command.getDeliveryMinMinutes() != null ? command.getDeliveryMinMinutes() : 0;
-		store.deliveryMaxMinutes = command.getDeliveryMaxMinutes() != null ? command.getDeliveryMaxMinutes() : 0;
-		store.deliveryFee = command.getDeliveryFee() != null ? command.getDeliveryFee() : 0;
-		store.minimumOrderAmount = command.getMinimumOrderAmount() != null ? command.getMinimumOrderAmount() : 0;
-		store.status = StoreStatus.INACTIVE;
+	// 빌더는 '필수 초기화가 필요한 필드'만 받도록 생성자에 지정합니다.
+	@Builder
+	public Store(User user, Region region, Point location, String name, String description,
+		String address, String phone, String imageUrl, LocalTime openTime,
+		LocalTime closeTime, Integer deliveryMinMinutes, Integer deliveryMaxMinutes,
+		Integer deliveryFee, Integer minimumOrderAmount) {
+		this.user = user;
+		this.region = region;
+		this.location = location;
+		this.name = name;
+		this.description = description;
+		this.address = address;
+		this.phone = phone;
+		this.imageUrl = imageUrl;
+		this.openTime = openTime;
+		this.closeTime = closeTime;
+		// null 방지 기본값 세팅
+		this.deliveryMinMinutes = deliveryMinMinutes != null ? deliveryMinMinutes : 0;
+		this.deliveryMaxMinutes = deliveryMaxMinutes != null ? deliveryMaxMinutes : 0;
+		this.deliveryFee = deliveryFee != null ? deliveryFee : 0;
+		this.minimumOrderAmount = minimumOrderAmount != null ? minimumOrderAmount : 0;
+		// 신규 가게는 무조건 승인 대기 상태
+		this.status = StoreStatus.INACTIVE;
+	}
+
+	// 서비스 계층에서 호출할 정적 팩토리 메서드 (내부에서 빌더 사용)
+	public static Store create(CreateStoreCommand command, User user, Region region, Point location, List<Category> categories) {
+		Store store = Store.builder()
+			.user(user)
+			.region(region)
+			.location(location)
+			.name(command.getName())
+			.description(command.getDescription())
+			.address(command.getAddress())
+			.phone(command.getPhone())
+			.imageUrl(command.getImageUrl())
+			.openTime(command.getOpenTime())
+			.closeTime(command.getCloseTime())
+			.deliveryMinMinutes(command.getDeliveryMinMinutes())
+			.deliveryMaxMinutes(command.getDeliveryMaxMinutes())
+			.deliveryFee(command.getDeliveryFee())
+			.minimumOrderAmount(command.getMinimumOrderAmount())
+			.build();
+
+		// 생성 직후 카테고리 매핑
+		if (categories != null && !categories.isEmpty()) {
+			store.addCategories(categories);
+		}
 		return store;
 	}
+
+	/* ============================================================================
+	 * 3. 비즈니스 로직 (Public 메서드)
+	 * ============================================================================ */
 
 	// 1. OWNER용: 본인 매장 정보 수정
 	public void updateByOwner(UpdateOwnerFieldsCommand command) {
@@ -123,7 +165,7 @@ public class Store extends BaseEntity {
 
 		// 이미지 처리 로직
 		this.imageUrl = (command.getImageUrl() == null || command.getImageUrl().isBlank())
-			? "https://raw.githubusercontent.com/.../default-store.png"
+			? "https://raw.githubusercontent.com/.../default-store.png" // 실제 디폴트 URL로 교체 필요
 			: command.getImageUrl();
 
 		this.openTime = command.getOpenTime();
@@ -137,38 +179,77 @@ public class Store extends BaseEntity {
 		validateBusinessHours();
 	}
 
-	/*
-	 * =========================
-	 * 검증 로직 (필드 그룹화 대신 메서드로 깔끔하게)
-	 * =========================
-	 */
-
 	// 2. ADMIN용: 모든 정보 수정 (Command와 변경된 Region을 통째로 받음)
 	public void updateByAdmin(UpdateStoreByAdminCommand command, Region region) {
-		// 관리자 전용 필드 및 지역 변경
-		if (command.getName() != null)
-			this.name = command.getName();
-		if (command.getStatus() != null)
-			this.status = command.getStatus();
-		this.region = region;
+		if (command.getName() != null) this.name = command.getName();
+		if (command.getStatus() != null) this.status = command.getStatus();
 
-		// 배달 및 운영 정보 업데이트 (Command에서 추출)
+		this.region = region;
 		this.deliveryMinMinutes = command.getDeliveryMinMinutes();
 		this.deliveryMaxMinutes = command.getDeliveryMaxMinutes();
 		this.deliveryFee = command.getDeliveryFee();
 		this.minimumOrderAmount = command.getMinimumOrderAmount();
-
 		this.description = command.getDescription();
 		this.phone = command.getPhone();
 		this.imageUrl = command.getImageUrl();
 		this.openTime = command.getOpenTime();
 		this.closeTime = command.getCloseTime();
 
-		// 검증 로직 호출
 		validateDeliveryTime();
 		validateBusinessHours();
 		validateFees();
 	}
+
+	public void updateStatus(StoreStatus newStatus) {
+		if (this.status == newStatus) return;
+
+		// 공통 규칙: 이미 승인 대기인 상태로 되돌릴 수는 없음
+		if (newStatus == StoreStatus.INACTIVE) {
+			throw new IllegalStateException("승인 대기 상태로 되돌릴 수 없습니다.");
+		}
+
+		this.status = newStatus;
+	}
+
+	@Override
+	public void markDeleted(UUID deletedBy) {
+		// 1. 부모(BaseEntity) 로직으로 Store의 삭제 시간/삭제자 기록
+		super.markDeleted(deletedBy);
+
+		// 2. 가게 상태를 CLOSED로 변경
+		this.status = StoreStatus.CLOSED;
+
+       /* Todo-추후 상품 작업 끝나면 주석 해제
+       if (this.products != null && !this.products.isEmpty()) {
+          this.products.forEach(product -> product.markDeleted(deletedBy));
+       }*/
+	}
+
+
+	/* ============================================================================
+	 * 4. 연관관계 편의 메서드
+	 * ============================================================================ */
+
+	// 연관관계 편의 메서드 (Category 엔티티를 통째로 받아서 매핑 객체 생성 후 리스트에 추가)
+	public void addCategories(List<Category> categories) {
+		for (Category category : categories) {
+			StoreCategory storeCategory = StoreCategory.builder()
+				.store(this)
+				.category(category)
+				.build();
+			this.storeCategories.add(storeCategory);
+		}
+	}
+
+	// 카테고리 수정 (기존 매핑을 싹 비우고 새롭게 추가)
+	public void updateCategories(List<Category> newCategories) {
+		this.storeCategories.clear(); // orphanRemoval = true 덕분에 기존 데이터는 DB에서 자동 삭제됨!
+		addCategories(newCategories); // 기존에 만들어둔 편의 메서드 재사용
+	}
+
+	/* ============================================================================
+	 * 5. 내부 검증 로직 (Private 메서드)
+	 * ============================================================================ */
 
 	private void validateFees() {
 		if (this.deliveryFee != null && this.deliveryFee < 0)
@@ -188,31 +269,8 @@ public class Store extends BaseEntity {
 	private void validateBusinessHours() {
 		if (this.openTime != null && this.closeTime != null) {
 			if (!this.closeTime.isAfter(this.openTime)) {
-				throw new InvalidDeliveryTimeException(); // 또는 별도의 InvalidBusinessHoursException
+				throw new InvalidDeliveryTimeException(); // 또는 InvalidBusinessHoursException
 			}
 		}
-	}
-
-	// 상태 변경 메서드들 (기존 유지)
-	public void approve() {
-		if (this.status != StoreStatus.INACTIVE) {
-			throw new IllegalStateException("승인 대기 상태인 가게만 수락할 수 있습니다.");
-		}
-		this.status = StoreStatus.OPEN;
-	}
-
-	@Override
-	public void markDeleted(UUID deletedBy) {
-		// 1. 부모(BaseEntity) 로직으로 Store의 삭제 시간/삭제자 기록
-		super.markDeleted(deletedBy);
-
-		// 2. 가게 상태를 CLOSED로 변경 (운영 정책상 선택)
-		this.status = StoreStatus.CLOSED;
-
-		/* Todo-추후 상품 작업 끝나면 주석 해제
-		/ 3. 연관된 모든 상품들도 함께 Soft Delete 전파
-		if (this.products != null && !this.products.isEmpty()) {
-			this.products.forEach(product -> product.markDeleted(deletedBy));
-		}*/
 	}
 }

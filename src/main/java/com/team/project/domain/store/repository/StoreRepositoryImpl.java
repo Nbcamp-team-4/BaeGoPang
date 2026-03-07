@@ -18,65 +18,68 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
 	private final EntityManager em;
 
-	// 1. 상세 조회 (Fetch Join)
 	@Override
 	public Optional<Store> findDetailById(UUID storeId) {
 		return em.createQuery("""
-                select distinct s
-                from Store s
+                select distinct s from Store s
                 join fetch s.region r
-                where s.id = :storeId
-                  and s.deletedAt is null
+                where s.id = :storeId and s.deletedAt is null
             """, Store.class)
 			.setParameter("storeId", storeId)
-			.getResultStream()
-			.findFirst();
+			.getResultStream().findFirst();
 	}
 
-	// 2. 점주용 목록 조회 (메서드 명 통일)
-	// 명세서에 user_id라고 되어 있으니, 엔티티 필드가 user라면 s.user.id로 비교해야 합니다.
 	@Override
 	public List<Store> findAllByUserIdWithDetails(UUID userId) {
 		return em.createQuery("""
-                select s
-                from Store s
+                select s from Store s
                 join fetch s.region r
-                where s.user.id = :userId
-                  and s.deletedAt is null
+                where s.user.id = :userId and s.deletedAt is null
                 order by s.createdAt desc
             """, Store.class)
 			.setParameter("userId", userId)
 			.getResultList();
 	}
 
-	// 3. 관리자용 상태별 조회 (INACTIVE 등)
 	@Override
-	public List<Store> findAllByStatus(StoreStatus status) {
+	public List<Store> findAllWithFilters(StoreStatus status, UUID regionId, UUID userId) {
+		// JPQL로 동적 필터 처리 (단순화를 위해 null 체크 로직 포함)
 		return em.createQuery("""
-                select s
-                from Store s
-                join fetch s.region r
-                where s.status = :status
+                select s from Store s
+                where (:status is null or s.status = :status)
+                  and (:regionId is null or s.region.id = :regionId)
+                  and (:userId is null or s.user.id = :userId)
                   and s.deletedAt is null
                 order by s.createdAt desc
             """, Store.class)
 			.setParameter("status", status)
+			.setParameter("regionId", regionId)
+			.setParameter("userId", userId)
 			.getResultList();
 	}
 
-	// 4. 사용자용 지역별 검색 (명세서 기준 OPEN 상태만)
 	@Override
-	public List<Store> findByRegionAndCategory(UUID regionId, UUID categoryId) {
-		return em.createQuery("""
-                select s
-                from Store s
-                join fetch s.region r
-                where s.region.id = :regionId
-                  and s.status = 'OPEN'
-                  and s.deletedAt is null
-                order by s.createdAt desc
-            """, Store.class)
-			.setParameter("regionId", regionId)
+	@SuppressWarnings("unchecked")
+	public List<Store> findNearbyStores(double longitude, double latitude, double distanceInMeters, UUID categoryId) {
+		// PostGIS 공간 검색용 Native Query
+		String sql = """
+            SELECT s.* FROM p_store s
+            LEFT JOIN p_store_category sc ON s.id = sc.store_id
+            WHERE s.status = 'OPEN' 
+              AND s.deleted_at IS NULL
+              AND ST_DWithin(s.location::geography, 
+                             ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, 
+                             :distance)
+              AND (:categoryId IS NULL OR sc.category_id = :categoryId)
+            ORDER BY ST_Distance(s.location::geography, 
+                                ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) ASC
+        """;
+
+		return em.createNativeQuery(sql, Store.class)
+			.setParameter("lng", longitude)
+			.setParameter("lat", latitude)
+			.setParameter("distance", distanceInMeters)
+			.setParameter("categoryId", categoryId)
 			.getResultList();
 	}
 }

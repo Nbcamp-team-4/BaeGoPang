@@ -1,6 +1,7 @@
 package com.team.project.domain.store.service.command;
 
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 import com.team.project.domain.store.model.vo.StoreStatus;
@@ -15,7 +16,6 @@ import lombok.Getter;
 public class UpdateStoreByAdminCommand {
 	private final UUID storeId;
 	private final UUID regionId;
-	//private final UUID categoryId;
 	private final String name;
 	private final String description;
 	private final String address;
@@ -30,4 +30,5 @@ public class UpdateStoreByAdminCommand {
 	private final Integer deliveryFee;
 	private final Integer minimumOrderAmount;
 	private final StoreStatus status;         // OPEN, CLOSED, PENDING, BANNED 등 상태 제어
+	List<UUID> categoryIds;
 }

@@ -1,11 +1,13 @@
 package com.team.project.domain.store.api.request;
 
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 import com.team.project.domain.store.service.command.CreateStoreCommand;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +21,9 @@ public class CreateStoreRequest {
 
     @NotNull(message = "지역 ID는 필수입니다.")
     private UUID regionId;
+
+    @NotEmpty(message = "최소 1개 이상의 카테고리를 선택해야 합니다.")
+    private List<UUID> categoryIds;
 
     @NotBlank(message = "가게 이름은 필수입니다.")
     private String name;
@@ -53,22 +58,23 @@ public class CreateStoreRequest {
      * Request DTO를 Service용 Command로 변환
      */
     public CreateStoreCommand toCommand() {
-        return new CreateStoreCommand(
-            this.userId,
-            this.regionId,
-            this.name,
-            this.description,
-            this.address,
-            this.longitude,
-            this.latitude,
-            this.phone,
-            this.imageUrl,
-            this.openTime,
-            this.closeTime,
-            this.deliveryMinMinutes,
-            this.deliveryMaxMinutes,
-            this.deliveryFee,
-            this.minimumOrderAmount
-        );
+        return CreateStoreCommand.builder()
+            .userId(this.userId)      // TODO: 추후 @AuthenticationPrincipal 적용 시 제거 가능
+            .regionId(this.regionId)
+            .name(this.name)
+            .description(this.description)
+            .address(this.address)
+            .longitude(this.longitude)
+            .latitude(this.latitude)
+            .phone(this.phone)
+            .imageUrl(this.imageUrl)
+            .openTime(this.openTime)
+            .closeTime(this.closeTime)
+            .deliveryMinMinutes(this.deliveryMinMinutes)
+            .deliveryMaxMinutes(this.deliveryMaxMinutes)
+            .deliveryFee(this.deliveryFee)
+            .minimumOrderAmount(this.minimumOrderAmount)
+            .categoryIds(this.categoryIds)
+            .build();
     }
 }

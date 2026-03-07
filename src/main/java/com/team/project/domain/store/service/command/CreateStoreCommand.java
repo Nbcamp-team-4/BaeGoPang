@@ -1,6 +1,7 @@
 package com.team.project.domain.store.service.command;
 
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -26,4 +27,5 @@ public class CreateStoreCommand {
 	private final Integer deliveryMaxMinutes;
 	private final Integer deliveryFee;
 	private final Integer minimumOrderAmount;
+	List<UUID> categoryIds;
 }
