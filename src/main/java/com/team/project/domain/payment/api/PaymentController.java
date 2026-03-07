@@ -92,7 +92,7 @@ public class PaymentController {
 	public ResponseEntity<?> cancelPayment(@RequestBody @Valid CancelPaymentRequest request) {
 
 		// 1. service dto 변환
-		CancelPaymentCommand command = CancelPaymentCommand.of(request.getOrderId(), request.getReason());
+		CancelPaymentCommand command = CancelPaymentCommand.ofCancel(request.getOrderId(), request.getReason());
 
 		// 2. service 호출
 		CancelPaymentQuery query = paymentService.cancelPayment(command);
