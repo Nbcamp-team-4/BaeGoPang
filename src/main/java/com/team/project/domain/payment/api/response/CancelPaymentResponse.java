@@ -3,8 +3,7 @@ package com.team.project.domain.payment.api.response;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.team.project.domain.payment.entity.Payment;
-import com.team.project.domain.payment.model.vo.PaymentMethod;
+import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 
 import lombok.Builder;
@@ -13,22 +12,19 @@ import lombok.Getter;
 @Getter
 @Builder
 public class CancelPaymentResponse {
-
 	private UUID id;
 	private PaymentStatus status;
-	private PaymentMethod method;
 	private Integer amount;
-	private LocalDateTime updatedAt;
-	private UUID updatedBy;
+	private String paymentKey;
+	private LocalDateTime paidAt;
 
-	public static CancelPaymentResponse from(Payment payment) {
+	public static CancelPaymentResponse from(CancelPaymentQuery query) {
 		return CancelPaymentResponse.builder()
-			.id(payment.getId())
-			.status(payment.getStatus())
-			.method(payment.getMethod())
-			.amount(payment.getAmount())
-			.updatedAt(payment.getUpdatedAt())
-			.updatedBy(payment.getUpdatedBy())
+			.id(query.getId())
+			.status(query.getStatus())
+			.amount(query.getAmount())
+			.paymentKey(query.getPaymentKey())
+			.paidAt(query.getPaidAt())
 			.build();
 	}
 }

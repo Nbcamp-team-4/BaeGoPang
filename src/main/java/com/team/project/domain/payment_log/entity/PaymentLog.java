@@ -8,7 +8,6 @@ import org.hibernate.type.SqlTypes;
 
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment_log.model.vo.PaymentLogStatus;
-import com.team.project.domain.pg_provider.entity.PgProvider;
 import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
@@ -34,8 +33,8 @@ public class PaymentLog extends BaseEntity {
 	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
 
-	@Column(name = "p_tid")
-	private String tid;
+	@Column(name = "payment_key")
+	private String paymentKey;
 
 	@Column(name = "status", nullable = false)
 	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
@@ -49,21 +48,12 @@ public class PaymentLog extends BaseEntity {
 	@JoinColumn(name = "payment_id", nullable = false)
 	private Payment payment;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = true)
-	@JoinColumn(name = "pg_provider_id", nullable = true)
-	private PgProvider pgProvider;
-
 	@Builder
-	public PaymentLog(String tid, PaymentLogStatus status, String reason, Payment payment, PgProvider pgProvider) {
-		this.tid = tid;
+	public PaymentLog(String paymentKey, PaymentLogStatus status, String reason, Payment payment) {
+		this.paymentKey = paymentKey;
 		this.status = status;
 		this.reason = reason;
 		this.payment = payment;
-		this.pgProvider = pgProvider;
-	}
-
-	public void updateStatus(PaymentLogStatus status) {
-		this.status = status;
 	}
 
 	public void markDeleted(UUID deletedBy) {

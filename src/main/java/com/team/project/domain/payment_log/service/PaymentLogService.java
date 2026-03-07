@@ -2,17 +2,17 @@ package com.team.project.domain.payment_log.service;
 
 import java.util.UUID;
 
-import com.team.project.domain.payment_log.api.request.GetPaymentLogsRequest;
-import com.team.project.domain.payment_log.api.request.GetPaymentLogsResponse;
-import com.team.project.domain.payment_log.api.response.GetPaymentLogResponse;
-import com.team.project.domain.payment_log.entity.PaymentLog;
+import com.team.project.domain.payment_log.model.dto.CreatePaymentLogCommand;
+import com.team.project.domain.payment_log.model.dto.CreatePaymentQuery;
+import com.team.project.domain.payment_log.model.dto.GetPaymentLogQuery;
+import com.team.project.domain.payment_log.model.dto.GetPaymentLogsCommand;
+import com.team.project.domain.payment_log.model.dto.GetPaymentLogsQuery;
 
 public interface PaymentLogService {
-	PaymentLog createPaymentLog(PaymentLog paymentLog);
+	CreatePaymentQuery createPaymentLog(CreatePaymentLogCommand paymentLogCommand);
 
-	void deletePaymentLog(UUID paymentLogId);
+	GetPaymentLogQuery getPaymentLog(UUID paymentLogId);
 
-	GetPaymentLogResponse getPaymentLog(UUID paymentLogId);
+	GetPaymentLogsQuery getPaymentLogs(GetPaymentLogsCommand command);
 
-	GetPaymentLogsResponse getPaymentLogs(GetPaymentLogsRequest request);
 }
