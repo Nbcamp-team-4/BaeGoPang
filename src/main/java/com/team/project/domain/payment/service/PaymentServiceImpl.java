@@ -150,8 +150,6 @@ public class PaymentServiceImpl implements PaymentService {
 				CreatePaymentLogCommand.of(pgProviderQuery.getPaymentKey(), PaymentLogStatus.valueOf(type + "_SUCCESS"),
 					command.getReason(), payment.getId()));
 
-			return CancelPaymentQuery.from(payment);
-
 		} catch (PgProviderBaseException e) {
 			// 2-1. PG 통신 실패 경우 로그 생성
 			paymentLogService.createPaymentFailureLog(
@@ -159,9 +157,11 @@ public class PaymentServiceImpl implements PaymentService {
 					command.getReason(), payment.getId())
 			);
 
-			throw e;
+			// 2-2. 결제 취소 실패
+			payment.cancelFailed();
 		}
 
+		return CancelPaymentQuery.from(payment);
 	}
 
 	/**

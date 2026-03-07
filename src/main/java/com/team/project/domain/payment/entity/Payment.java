@@ -73,6 +73,11 @@ public class Payment extends BaseEntity {
 		this.status = PaymentStatus.CANCELED;
 	}
 
+	public void cancelFailed() {
+		validateStatus(PaymentStatus.CANCELED);
+		this.status = PaymentStatus.CANCEL_FAILED;
+	}
+
 	public void markDeleted(UUID deletedBy) {
 		super.markDeleted(deletedBy);
 	}

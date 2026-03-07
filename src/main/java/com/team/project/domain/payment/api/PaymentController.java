@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.team.project.domain.payment.api.request.CancelPaymentRequest;
 import com.team.project.domain.payment.api.request.CreatePaymentRequest;
+import com.team.project.domain.payment.api.request.GetPaymentsRequest;
 import com.team.project.domain.payment.api.request.PayPaymentRequest;
 import com.team.project.domain.payment.api.response.CancelPaymentResponse;
 import com.team.project.domain.payment.api.response.CreatePaymentResponse;
@@ -127,6 +128,10 @@ public class PaymentController {
 	/**
 	 * 결제 데이터를 전체 조회하는 api
 	 */
+	@GetMapping
+	public ResponseEntity<?> getPayments(GetPaymentsRequest request) {
+
+	}
 
 	/**
 	 * 결제 데이터를 삭제하는 api
