@@ -58,6 +58,9 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 		return CreatePaymentQuery.from(saved);
 	}
 
+	/**
+	 * 결제 실패 로그 생성하기
+	 */
 	@Transactional(propagation = Propagation.REQUIRES_NEW)
 	@Override
 	public CreatePaymentQuery createPaymentFailureLog(CreatePaymentLogCommand command) {

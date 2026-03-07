@@ -3,6 +3,10 @@ package com.team.project.domain.payment.service;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,8 @@ import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
 import com.team.project.domain.payment.model.dto.CreatePaymentCommand;
 import com.team.project.domain.payment.model.dto.CreatePaymentQuery;
 import com.team.project.domain.payment.model.dto.GetPaymentQuery;
+import com.team.project.domain.payment.model.dto.GetPaymentsCommand;
+import com.team.project.domain.payment.model.dto.GetPaymentsQuery;
 import com.team.project.domain.payment.model.dto.PayPaymentCommand;
 import com.team.project.domain.payment.model.dto.PayPaymentQuery;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
@@ -194,6 +200,31 @@ public class PaymentServiceImpl implements PaymentService {
 		Payment payment = getPaymentInnerWithException(paymentId);
 
 		return GetPaymentQuery.from(payment);
+	}
+
+	/**
+	 * 결제 데이터 조회하는 메서드
+	 */
+	@Override
+	public GetPaymentsQuery getPayments(GetPaymentsCommand command) {
+
+		// 1. 페이징 객체 생성
+		Pageable pageable = PageRequest.of(
+			command.getPage(),
+			command.getSize(),
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		// 2. 여러 조건을 기준으로 결제를 조회
+		Page<Payment> pageResult = paymentRepository.getPayments(
+			command.getPaymentStatus(),
+			command.getRangeAmount(),
+			command.getRangePaidAt(),
+			command.getOrderId(),
+			pageable
+		);
+
+		return GetPaymentsQuery.from(pageResult);
 	}
 
 	/**
