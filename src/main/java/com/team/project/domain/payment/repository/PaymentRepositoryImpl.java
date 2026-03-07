@@ -24,7 +24,8 @@ public class PaymentRepositoryImpl implements PaymentRepository {
 	 */
 	@Override
 	public Payment createPayment(Payment payment) {
-		return paymentJpaRepository.save(payment);
+		Payment save = paymentJpaRepository.save(payment);
+		return save;
 	}
 
 	/**
@@ -36,37 +37,38 @@ public class PaymentRepositoryImpl implements PaymentRepository {
 	}
 
 	/**
-	 * 주문 ID 기준 최신 결제 조회 (삭제 제외)
-	 * - 주문 응답에 paymentId, paymentStatus를 붙일 때 사용
-	 */
-	@Override
-	public Optional<Payment> getLatestPaymentByOrderId(UUID orderId) {
-		return paymentJpaRepository
-				.findLatestByOrder(orderId, PageRequest.of(0, 1))
-				.stream()
-				.findFirst();
-	}
-
-	/**
-	 * 주문 ID 기준 최신 결제 조회 (삭제 포함)
-	 * - 기존 결제 이력까지 포함해서 가장 최신 결제를 확인할 때 사용
+	 * 주문 ID로 최신 결제 조회(삭제 포함)
+	 *
+	 * 주문 ID를 받아서 삭제된 것을 포함하여 가장 최신 결제를 반환합니다.
 	 */
 	@Override
 	public Optional<Payment> getLatestPaymentByOrderContainsDeleted(UUID orderId) {
 		return paymentJpaRepository
-				.findLatestByOrderContainsDeleted(orderId)
-				.stream()
-				.findFirst();
+			.findLatestByOrderContainsDeleted(orderId)
+			.stream()
+			.findFirst();
 	}
 
 	/**
-	 * 주문 ID + 결제 상태 기준 최신 결제 조회 (삭제 제외)
+	 * 주문 ID, 결제 상태로 최신 결제 조회(삭제 제외)
+	 *
+	 * 주문 ID와 결제 상태를 받아서 조건에 맞는 가장 최신 결제를 반환합니다.
 	 */
 	@Override
 	public Optional<Payment> getLatestPaymentByOrderAndStatus(UUID orderId, PaymentStatus status) {
 		return paymentJpaRepository
-				.findLatestByOrderAndStatus(orderId, status, PageRequest.of(0, 1))
-				.stream()
-				.findFirst();
+			.findLatestByOrderAndStatus(orderId, status, PageRequest.of(0, 1))
+			.stream()
+			.findFirst();
+	}
+
+	/**
+	 * 주문 ID를 받아서 삭제된 것을 제외하여 가장 최신 결제를 반환합니다.
+	 */
+	@Override
+	public Optional<Payment> getLatestPaymentByOrderId(UUID orderId) {
+		return paymentJpaRepository.findLatestByOrder(orderId)
+			.stream()
+			.findFirst();
 	}
 }

@@ -101,7 +101,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 3. 결제 상태 변경
 		String paymentKey = command.getPaymentKey();
-		payment.complete(paymentKey);
+		payment.pay(paymentKey);
 
 		// 4. 결제 로그 생성
 		CreatePaymentLogCommand paymentLogCommand = CreatePaymentLogCommand.builder()
@@ -124,10 +124,8 @@ public class PaymentServiceImpl implements PaymentService {
 	public RequestCancelPaymentQuery requestCancelPayment(RequestCancelPaymentCommand command) {
 
 		// 1. 가장 최신 결제 가져오기
-		Payment payment = getLatestPaymentByOrderAndOrderStatusInnerWithException(
-				command.getOrderId(),
-				PaymentStatus.COMPLETED
-		);
+		Payment payment = getLatestPaymentByOrderAndOrderStatusInnerWithException(command.getOrderId(),
+			PaymentStatus.PAID);
 
 		// 2. 결제 상태 변경
 		payment.requestCancel();
@@ -151,13 +149,7 @@ public class PaymentServiceImpl implements PaymentService {
 			.paymentKey(payment.getPaymentKey())
 			.reason(command.getReason())
 			.build();
-		try {
-			CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(pgProviderCommand);
-			payment.cancel();
-		} catch (Exception e) {
-			payment.markRefundFailed();
-			throw e;
-		}
+		CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(pgProviderCommand);
 
 		// 3. 결제 상태 변경
 		payment.cancel();
