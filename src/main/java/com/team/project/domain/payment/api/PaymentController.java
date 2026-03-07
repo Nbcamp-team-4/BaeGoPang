@@ -14,12 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.team.project.domain.payment.api.request.CancelPaymentRequest;
 import com.team.project.domain.payment.api.request.CreatePaymentRequest;
 import com.team.project.domain.payment.api.request.PayPaymentRequest;
-import com.team.project.domain.payment.api.request.RequestCancelPaymentRequest;
 import com.team.project.domain.payment.api.response.CancelPaymentResponse;
 import com.team.project.domain.payment.api.response.CreatePaymentResponse;
 import com.team.project.domain.payment.api.response.GetPaymentResponse;
 import com.team.project.domain.payment.api.response.PayPaymentResponse;
-import com.team.project.domain.payment.api.response.RequestCancelPaymentResponse;
 import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
 import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
 import com.team.project.domain.payment.model.dto.CreatePaymentCommand;
@@ -27,8 +25,6 @@ import com.team.project.domain.payment.model.dto.CreatePaymentQuery;
 import com.team.project.domain.payment.model.dto.GetPaymentQuery;
 import com.team.project.domain.payment.model.dto.PayPaymentCommand;
 import com.team.project.domain.payment.model.dto.PayPaymentQuery;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentCommand;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentQuery;
 import com.team.project.domain.payment.service.PaymentService;
 import com.team.project.global.common.dto.BaseResponse;
 
@@ -81,28 +77,6 @@ public class PaymentController {
 
 		// 3. dto 변환
 		PayPaymentResponse response = PayPaymentResponse.from(query);
-
-		return ResponseEntity.ok().body(
-			BaseResponse.ofSuccess(
-				response
-			)
-		);
-	}
-
-	/**
-	 * 결제 취소 요청을 하는 api
-	 */
-	@PostMapping("/cancel/request")
-	public ResponseEntity<?> requestCancelPayment(@RequestBody @Valid RequestCancelPaymentRequest request) {
-
-		// 1. service dto 변환
-		RequestCancelPaymentCommand command = RequestCancelPaymentCommand.of(request.getOrderId(), request.getReason());
-
-		// 2. service 호출
-		RequestCancelPaymentQuery query = paymentService.requestCancelPayment(command);
-
-		// 3. dto 변환
-		RequestCancelPaymentResponse response = RequestCancelPaymentResponse.from(query);
 
 		return ResponseEntity.ok().body(
 			BaseResponse.ofSuccess(

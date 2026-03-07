@@ -7,6 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.exception.PaymentNotFoundException;
@@ -21,7 +23,6 @@ import com.team.project.domain.payment_log.model.dto.GetPaymentLogsQuery;
 import com.team.project.domain.payment_log.model.vo.PaymentLogStatus;
 import com.team.project.domain.payment_log.repository.PaymentLogRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,6 +40,28 @@ public class PaymentLogServiceImpl implements PaymentLogService {
 	@Transactional
 	@Override
 	public CreatePaymentQuery createPaymentLog(CreatePaymentLogCommand command) {
+		// 1. 결제 조회
+		Payment payment = paymentRepository.getPayment(command.getPaymentId())
+			.orElseThrow(PaymentNotFoundException::new);
+
+		// 2. 결제 로그 생성
+		PaymentLog paymentLog = PaymentLog.builder()
+			.paymentKey(command.getPaymentKey())
+			.status(command.getStatus())
+			.reason(command.getReason())
+			.payment(payment)
+			.build();
+
+		// 2. 결제 로그 저장
+		PaymentLog saved = paymentLogRepository.createPaymentLog(paymentLog);
+
+		return CreatePaymentQuery.from(saved);
+	}
+
+	@Transactional(propagation = Propagation.REQUIRES_NEW)
+	@Override
+	public CreatePaymentQuery createPaymentFailureLog(CreatePaymentLogCommand command) {
+
 		// 1. 결제 조회
 		Payment payment = paymentRepository.getPayment(command.getPaymentId())
 			.orElseThrow(PaymentNotFoundException::new);

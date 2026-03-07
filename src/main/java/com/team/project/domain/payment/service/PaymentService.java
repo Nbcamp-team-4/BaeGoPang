@@ -9,15 +9,11 @@ import com.team.project.domain.payment.model.dto.CreatePaymentQuery;
 import com.team.project.domain.payment.model.dto.GetPaymentQuery;
 import com.team.project.domain.payment.model.dto.PayPaymentCommand;
 import com.team.project.domain.payment.model.dto.PayPaymentQuery;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentCommand;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentQuery;
 
 public interface PaymentService {
 	CreatePaymentQuery createPayment(CreatePaymentCommand command);
 
 	PayPaymentQuery payPayment(PayPaymentCommand command);
-
-	RequestCancelPaymentQuery requestCancelPayment(RequestCancelPaymentCommand command);
 
 	CancelPaymentQuery cancelPayment(CancelPaymentCommand command);
 
