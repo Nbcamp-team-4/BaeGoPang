@@ -198,7 +198,7 @@ public class OrderServiceImpl implements OrderService {
 		// 1. 결제 취소할 수 없을 때 주문 취소도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
 		try {
 			CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-				CancelPaymentCommand.of(order.getId(), request.getReason()));
+				CancelPaymentCommand.ofCancel(order.getId(), request.getReason()));
 			return CancelOrderResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
 		} catch (Exception e) {
 			throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
@@ -296,7 +296,7 @@ public class OrderServiceImpl implements OrderService {
 		// 1. 결제 취소할 수 없을 때 주문 거절도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
 		try {
 			CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-				CancelPaymentCommand.of(order.getId(), reason));
+				CancelPaymentCommand.ofCancel(order.getId(), reason));
 			return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
 		} catch (Exception e) {
 			throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
@@ -345,7 +345,7 @@ public class OrderServiceImpl implements OrderService {
 			// 1. 결제 취소할 수 없을 때 주문 거절도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
 			try {
 				CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-					CancelPaymentCommand.of(order.getId(), reason));
+					CancelPaymentCommand.ofRefund(order.getId(), reason));
 				return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(),
 					cancelPaymentQuery.getStatus());
 			} catch (Exception e) {
