@@ -109,7 +109,7 @@ public class StoreController {
 
 	// === [MANAGER/MASTER/OWNER] 가게 삭제 ===
 	@DeleteMapping("/{storeId}")
-	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 권한 유지!
+	//@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 권한 유지!
 	public ResponseEntity<Void> deleteStore(
 		@PathVariable UUID storeId,
 		@RequestParam UUID userId) { // TODO: @AuthenticationPrincipal 적용 예정

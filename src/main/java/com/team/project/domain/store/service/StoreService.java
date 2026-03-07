@@ -34,7 +34,7 @@ public interface StoreService {
 	// 좌표 직접 입력 검색 (3km)
 	List<StoreResult> searchNearbyStores(Double latitude, Double longitude, UUID categoryId);
 	// 유저 주소 기반 검색 (addressId + userId 검증 포함)
-	List<StoreResult> searchByUserIdAddress(UUID userId, UUID addressId, UUID categoryId);
+	List<StoreResult> searchByUserIdAddress(UUID addressId, UUID userId, UUID categoryId);
 
 	// === [삭제] Soft Delete ===
 	@Transactional

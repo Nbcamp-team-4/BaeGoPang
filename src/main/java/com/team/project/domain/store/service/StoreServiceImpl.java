@@ -133,12 +133,14 @@ public class StoreServiceImpl implements StoreService {
 	// === [사용자] 내 주소(단일 주소) 기반 주변 3km 가게 조회 ===
 	@Override
 	@Transactional(readOnly = true)
-	public List<StoreResult> searchByUserIdAddress(UUID userId,UUID addressId, UUID categoryId) {
+	public List<StoreResult> searchByUserIdAddress(UUID addressId, UUID userId, UUID categoryId) {
+		System.out.println("입력받은 addressId: " + addressId);
 		// 1. 주소 테이블(p_user_address)에서 좌표 정보 조회
 		// TODO: SecurityContext (@AuthenticationPrincipal) 적용 후, 해당 주소가 로그인한 유저의 주소가 맞는지 검증 로직 추가 예정
 		UserAddress address = userAddressRepository.findById(addressId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주소입니다."));
-
+		System.out.println("찾은 주소의 위도: " + address.getLatitude());
+		System.out.println("찾은 주소의 경도: " + address.getLongitude());
 		/// 2. BigDecimal을 Double로 변환하여 추출
 		// address.getLatitude()가 BigDecimal을 반환하므로 .doubleValue()를 붙여줍니다.
 		Double latitude = address.getLatitude().doubleValue();

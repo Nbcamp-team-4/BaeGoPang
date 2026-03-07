@@ -59,7 +59,6 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public List<Store> findNearbyStores(double longitude, double latitude, double distanceInMeters, UUID categoryId) {
 		// PostGIS 공간 검색용 Native Query
 		String sql = """
@@ -70,7 +69,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
               AND ST_DWithin(s.location::geography, 
                              ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, 
                              :distance)
-              AND (:categoryId IS NULL OR sc.category_id = :categoryId)
+              AND (:categoryId::uuid IS NULL OR sc.category_id = :categoryId)
             ORDER BY ST_Distance(s.location::geography, 
                                 ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) ASC
         """;
