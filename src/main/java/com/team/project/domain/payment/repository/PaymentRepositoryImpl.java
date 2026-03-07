@@ -61,4 +61,14 @@ public class PaymentRepositoryImpl implements PaymentRepository {
 			.stream()
 			.findFirst();
 	}
+
+	/**
+	 * 주문 ID를 받아서 삭제된 것을 제외하여 가장 최신 결제를 반환합니다.
+	 */
+	@Override
+	public Optional<Payment> getLatestPaymentByOrderId(UUID orderId) {
+		return paymentJpaRepository.findLatestByOrder(orderId)
+			.stream()
+			.findFirst();
+	}
 }

@@ -14,4 +14,6 @@ public interface PaymentRepository {
 	Optional<Payment> getLatestPaymentByOrderContainsDeleted(UUID orderId);
 
 	Optional<Payment> getLatestPaymentByOrderAndStatus(UUID orderId, PaymentStatus paymentStatus);
+
+	Optional<Payment> getLatestPaymentByOrderId(UUID orderId);
 }

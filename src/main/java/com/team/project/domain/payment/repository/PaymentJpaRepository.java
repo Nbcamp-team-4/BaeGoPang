@@ -30,4 +30,12 @@ public interface PaymentJpaRepository extends JpaRepository<Payment, UUID> {
 		""")
 	List<Payment> findLatestByOrderAndStatus(@Param("orderId") UUID orderId, @Param("status") PaymentStatus status,
 		Pageable pageable);
+
+	@Query("""
+			SELECT p
+			FROM Payment p
+			WHERE p.order.id = :orderId
+			ORDER BY p.createdAt DESC
+		""")
+	List<Payment> findLatestByOrder(UUID orderId);
 }
