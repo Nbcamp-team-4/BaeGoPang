@@ -1,4 +1,4 @@
-package com.team.project.domain.auth.service;
+package com.team.project.global.service;
 
 import java.util.HashMap;
 

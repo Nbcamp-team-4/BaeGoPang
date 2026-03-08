@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.team.project.domain.auth.api.request.KakaoLogin;
 import com.team.project.domain.auth.api.request.KakaoToken;
 import com.team.project.domain.auth.api.response.JwtAuthResponse;
-import com.team.project.domain.auth.service.OAuthService;
+import com.team.project.global.service.OAuthService;
 import com.team.project.global.common.dto.BaseResponse;
 
 import lombok.AllArgsConstructor;
