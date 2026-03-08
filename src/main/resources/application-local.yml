@@ -17,6 +17,11 @@ spring:
   jpa:
     show-sql: true
 
+toss:
+  payments:
+    secret-key: test_sk_dummy
+    base-url: https://api.tosspayments.com
+
 logging:
   level:
     org.flywaydb: DEBUG

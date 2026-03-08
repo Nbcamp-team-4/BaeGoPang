@@ -291,17 +291,17 @@ INSERT INTO p_payment (
     ON CONFLICT DO NOTHING;
 
 -- 18. 결제 로그
-INSERT INTO p_payment_log (
-    id, payment_id, payment_key, status, reason, created_at
-) VALUES (
-             gen_random_uuid(),
-             'ffffffff-ffff-ffff-ffff-ffffffffffff',
-             NULL,
-             'SUCCESS',
-             '초기 결제 생성 로그',
-             CURRENT_TIMESTAMP
-         )
-    ON CONFLICT DO NOTHING;
+-- INSERT INTO p_payment_log (
+--     id, payment_id, payment_key, status, reason, created_at
+-- ) VALUES (
+--              gen_random_uuid(),
+--              'ffffffff-ffff-ffff-ffff-ffffffffffff',
+--              NULL,
+--              'SUCCESS',
+--              '초기 결제 생성 로그',
+--              CURRENT_TIMESTAMP
+--          )
+--     ON CONFLICT DO NOTHING;
 
 -- 19. PG 제공자
 INSERT INTO p_pg_provider (
