@@ -1,4 +1,4 @@
-package com._team._project.domain.user.service;
+package com.team.project.domain.user.service;
 
 public class UserServiceImpl {
 }

@@ -1,21 +1,20 @@
-package com._team._project.domain.auth.api.request;
+package com.team.project.domain.auth.api.request;
 
 import lombok.Getter;
 
 @Getter
 public class KakaoLogin {
 
-    private String nickname;
+	private String nickname;
 
-    private Long id;
-    private String tokenAuthScheme;
+	private Long id;
+	private String tokenAuthScheme;
 
-    private String accessToken;
+	private String accessToken;
 
-
-    public KakaoLogin(String nickname, Long id) {
-        this.nickname = nickname;
-        this.id = id;
-    }
+	public KakaoLogin(String nickname, Long id) {
+		this.nickname = nickname;
+		this.id = id;
+	}
 }
 

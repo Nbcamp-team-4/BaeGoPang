@@ -1,6 +1,10 @@
-package com._team._project.domain.auth.entity;
+package com.team.project.domain.auth.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,16 +14,16 @@ import lombok.NoArgsConstructor;
 @Table(name = "oauth")
 public class OAuth {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    private String name;
+	private String name;
 
-    private Long password;
+	private Long password;
 
-    public OAuth(String name, Long password) {
-        this.name = name;
-        this.password = password;
-    }
+	public OAuth(String name, Long password) {
+		this.name = name;
+		this.password = password;
+	}
 }

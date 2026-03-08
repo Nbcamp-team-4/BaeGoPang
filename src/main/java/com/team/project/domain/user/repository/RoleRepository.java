@@ -1,12 +1,13 @@
-package com._team._project.domain.user.repository;
-
-import com._team._project.domain.user.entity.Role;
-import com._team._project.domain.user.entity.RoleType;
-import org.springframework.data.jpa.repository.JpaRepository;
+package com.team.project.domain.user.repository;
 
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.team.project.domain.user.entity.Role;
+import com.team.project.domain.user.entity.RoleType;
+
 public interface RoleRepository extends JpaRepository<Role, UUID> {
-    Optional<Role> findByRole(RoleType role);
+	Optional<Role> findByRole(RoleType role);
 }

@@ -1,17 +1,18 @@
-package com._team._project.domain.user.repository;
-
-import com._team._project.domain.user.entity.Role;
-import com._team._project.domain.user.entity.User;
-import com._team._project.domain.user.entity.UserRole;
-import org.springframework.data.jpa.repository.JpaRepository;
+package com.team.project.domain.user.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.team.project.domain.user.entity.Role;
+import com.team.project.domain.user.entity.User;
+import com.team.project.domain.user.entity.UserRole;
+
 public interface UserRoleRepository extends JpaRepository<UserRole, User> {
 
-   Optional<UserRole> findByUser(User user);
+	Optional<UserRole> findByUser(User user);
 
-    boolean existsByUserAndRole(User user, Role role);
+	boolean existsByUserAndRole(User user, Role role);
 
-    void deleteByUserAndRole(User user, Role role);
+	void deleteByUserAndRole(User user, Role role);
 }
