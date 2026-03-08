@@ -33,7 +33,7 @@ public class JwtProvider {
 
 	private final UserRepository userRepository;
 
-	@Value("${jwt.secret}")
+	@Value("${jwt.secret.key}")
 	private String secret;
 
 	@Getter
