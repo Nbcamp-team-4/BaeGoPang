@@ -18,9 +18,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -72,7 +69,7 @@ public class User extends BaseEntity {
 		this.status = status;
 	}
 
-	public User(String loginId, String email, String password, String name, String phone, UserStatus status) {
+	public User(String loginId, String email, String password, String name, String phone,UserStatus status) {
 		this.loginId = loginId;
 		this.email = email;
 		this.password = password;
