@@ -3,6 +3,7 @@ package com.team.project.domain.store.entity;
 import java.util.UUID;
 
 import com.team.project.domain.category.entity.Category;
+import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,7 +23,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "p_store_category")
-public class StoreCategory {
+public class StoreCategory extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -44,4 +45,8 @@ public class StoreCategory {
 		this.store = store;
 		this.category = category;
 	}
+	public void delete(UUID userId) {
+		markDeleted(userId);
+	}
+
 }
