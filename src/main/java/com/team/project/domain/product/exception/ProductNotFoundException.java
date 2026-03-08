@@ -1,7 +1,11 @@
 package com.team.project.domain.product.exception;
 
-public class ProductNotFoundException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+import com.team.project.global.common.exception.BaseException;
+
+public class ProductNotFoundException extends BaseException {
 	public ProductNotFoundException() {
-		super("해당 상품을 찾을 수 없습니다.");
+		super("PRODUCT_NOT_FOUND", HttpStatus.NOT_FOUND);
 	}
 }
