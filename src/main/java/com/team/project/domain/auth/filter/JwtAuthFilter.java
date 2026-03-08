@@ -2,6 +2,7 @@ package com.team.project.domain.auth.filter;
 
 import java.io.IOException;
 
+import com.team.project.domain.auth.entity.AuthenticationScheme;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,19 +27,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j(topic = "Security::JwtAuthFilter")
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-	/**
-	 * JWT 토큰 제공자.
-	 */
+	//JWT 토큰 제공자.
+
 	private final JwtProvider jwtProvider;
 
-	/**
-	 * UserDetailsService.
-	 */
+	//UserDetailsService.
+
 	private final UserDetailsService userDetailsService;
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 		FilterChain filterChain) throws ServletException, IOException {
@@ -47,11 +43,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 
-	/**
-	 * request를 이용해 인증을 처리한다.
-	 *
-	 * @param request {@link HttpServletRequest}
-	 */
+	//request를 이용해 인증을 처리한다.
+
 	private void authenticate(HttpServletRequest request) {
 		log.info("인증 처리.");
 
@@ -71,12 +64,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 		this.setAuthentication(request, userDetails);
 	}
 
-	/**
-	 * request의 Authorization 헤더에서 토큰 값을 추출.
-	 *
-	 * @param request {@link HttpServletRequest}
-	 * @return 토큰 값 (찾지 못한 경우 {@code null})
-	 */
+	//request의 Authorization 헤더에서 토큰 값을 추출.
+
 	private String getTokenFromRequest(HttpServletRequest request) {
 		final String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
 		final String headerPrefix = AuthenticationScheme.generateType(AuthenticationScheme.BEARER);
@@ -90,12 +79,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 		return null;
 	}
 
-	/**
-	 * {@code SecurityContext}에 인증 객체를 저장한다.
-	 *
-	 * @param request     {@link HttpServletRequest}
-	 * @param userDetails 찾아온 사용자 정보
-	 */
+	//{@code SecurityContext}에 인증 객체를 저장한다.
+
 	private void setAuthentication(HttpServletRequest request, UserDetails userDetails) {
 		log.info("SecurityContext에 Authentication 저장.");
 
