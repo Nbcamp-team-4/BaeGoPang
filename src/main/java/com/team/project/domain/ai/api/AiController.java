@@ -1,13 +1,12 @@
 package com.team.project.domain.ai.api;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.team.project.domain.ai.api.request.ProcessAiRecommendRequest;
+import com.team.project.domain.ai.api.response.SearchAiRecommendResponse;
 import com.team.project.domain.ai.service.AiService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -16,8 +15,9 @@ public class AiController {
 
 	private final AiService aiService;
 
-	@GetMapping("/recommend")
-	public String getRecommend(@RequestParam(name = "q") String query) {
-		return aiService.recommendMenu(query);
+	@PostMapping("/recommend")
+	public List<SearchAiRecommendResponse> getRecommend(@RequestBody ProcessAiRecommendRequest request) {
+		// 내부적으로 SearchAiRecommendQuery 등을 활용하여 로직 수행
+		return aiService.recommendMenu(request);
 	}
 }
