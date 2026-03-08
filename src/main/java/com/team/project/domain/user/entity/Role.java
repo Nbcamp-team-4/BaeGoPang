@@ -2,6 +2,8 @@ package com.team.project.domain.user.entity;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;

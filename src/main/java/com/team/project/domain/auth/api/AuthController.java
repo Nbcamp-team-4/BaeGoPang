@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.team.project.domain.auth.util.JwtUtil;
 import com.team.project.domain.user.entity.RoleType;
 
 import io.jsonwebtoken.Claims;

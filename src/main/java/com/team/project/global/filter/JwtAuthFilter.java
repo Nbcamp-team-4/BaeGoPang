@@ -2,7 +2,6 @@ package com.team.project.global.filter;
 
 import java.io.IOException;
 
-import com.team.project.domain.auth.entity.AuthenticationScheme;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,72 +23,73 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j(topic = "Security::JwtAuthFilter")
+@Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-	//JWT 토큰 제공자.
+	private static final String BEARER_PREFIX = "Bearer ";
 
 	private final JwtProvider jwtProvider;
-
-	//UserDetailsService.
-
 	private final UserDetailsService userDetailsService;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
 		FilterChain filterChain) throws ServletException, IOException {
-		log.info("URI: {}", request.getRequestURI());
-		this.authenticate(request);
+
+		// 1. 검증
+		authenticate(request);
+
+		// 2. 필터 통과
 		filterChain.doFilter(request, response);
 	}
 
-	//request를 이용해 인증을 처리한다.
-
 	private void authenticate(HttpServletRequest request) {
-		log.info("인증 처리.");
+		if (SecurityContextHolder.getContext().getAuthentication() != null) {
+			return;
+		}
 
-		// 토큰 검증.
-		String token = this.getTokenFromRequest(request);
+		// 1. 요청에서 토큰 추출
+		String token = getTokenFromRequest(request);
+
+		// 2. 토큰 검증
 		if (!jwtProvider.validToken(token)) {
 			return;
 		}
 
-		// 토큰으로부텨 username을 추출.
-		String username = this.jwtProvider.getUsername(token);
+		// 3. 로그인 아이디 뽑기
+		String loginId = jwtProvider.getLoginId(token);
 
-		// username에 해당되는 사용자를 찾는다.
-		UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+		// 4. 로그인 아이디로 UserDetails 뽑기
+		UserDetails userDetails = userDetailsService.loadUserByUsername(loginId);
 
-		// SecurityContext에 인증 객체 저장.
-		this.setAuthentication(request, userDetails);
+		// 5. 시큐리티 컨텍스트에 저장
+		setAuthentication(request, userDetails);
 	}
 
-	//request의 Authorization 헤더에서 토큰 값을 추출.
-
+	/**
+	 *  요청에서 토큰 뽑기
+	 */
 	private String getTokenFromRequest(HttpServletRequest request) {
-		final String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
-		final String headerPrefix = AuthenticationScheme.generateType(AuthenticationScheme.BEARER);
+		String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-		boolean tokenFound =
-			StringUtils.hasText(bearerToken) && bearerToken.startsWith(headerPrefix);
-		if (tokenFound) {
-			return bearerToken.substring(headerPrefix.length());
+		if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
+			return bearerToken.substring(BEARER_PREFIX.length());
 		}
 
 		return null;
 	}
 
-	//{@code SecurityContext}에 인증 객체를 저장한다.
-
+	/**
+	 *  시큐리티 컨텍스트에 저장
+	 */
 	private void setAuthentication(HttpServletRequest request, UserDetails userDetails) {
-		log.info("SecurityContext에 Authentication 저장.");
+		UsernamePasswordAuthenticationToken authentication =
+			new UsernamePasswordAuthenticationToken(
+				userDetails,
+				null,
+				userDetails.getAuthorities()
+			);
 
-		// 찾아온 사용자 정보로 인증 객체를 생성.
-		UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-			userDetails, userDetails.getPassword(), userDetails.getAuthorities());
 		authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-		// SecurityContext에 인증 객체 저장.
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 }

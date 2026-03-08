@@ -3,7 +3,7 @@ package com.team.project.domain.auth.util;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
-import java.util.function.Function;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.team.project.domain.user.entity.User;
+import com.team.project.domain.user.exception.UserNotFoundException;
 import com.team.project.domain.user.repository.UserRepository;
 
 import io.jsonwebtoken.Claims;
@@ -21,7 +22,6 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,19 +41,18 @@ public class JwtProvider {
 	private long expiryMillis;
 
 	public String generateToken(Authentication authentication) {
-		String username = authentication.getName();
-		return generateTokenBy(username);
+		String loginId = authentication.getName();
+		return generateTokenBy(loginId);
 	}
 
-	public String getUsername(String token) {
-		Claims claims = getClaims(token);
-		return claims.getSubject();
+	public String getLoginId(String token) {
+		return getClaims(token).getSubject();
 	}
 
 	public boolean validToken(String token) {
 		try {
 			getClaims(token);
-			return !tokenExpired(token);
+			return true;
 		} catch (MalformedJwtException e) {
 			log.error("Invalid JWT token: {}", e.getMessage());
 		} catch (ExpiredJwtException e) {
@@ -68,18 +67,22 @@ public class JwtProvider {
 		return false;
 	}
 
-	private String generateTokenBy(String email) {
-		User user = userRepository.findByEmail(email)
-			.orElseThrow(() -> new EntityNotFoundException("해당 email에 맞는 값이 존재하지 않습니다."));
+	private String generateTokenBy(String loginId) {
+		User user = userRepository.findByLoginId(loginId)
+			.orElseThrow(UserNotFoundException::new);
 
-		Date currentDate = new Date();
-		Date expireDate = new Date(currentDate.getTime() + expiryMillis);
+		Date now = new Date();
+		Date expiry = new Date(now.getTime() + expiryMillis);
+
+		List<String> roles = user.getUserRoles().stream()
+			.map(userRole -> userRole.getRole().getRole().name())
+			.toList();
 
 		return Jwts.builder()
-			.setSubject(email)
-			.setIssuedAt(currentDate)
-			.setExpiration(expireDate)
-			.claim("roles", user.getUserRoles())
+			.setSubject(loginId)
+			.setIssuedAt(now)
+			.setExpiration(expiry)
+			.claim("roles", roles)
 			.signWith(getSigningKey(), SignatureAlgorithm.HS256)
 			.compact();
 	}
@@ -96,22 +99,11 @@ public class JwtProvider {
 			.getBody();
 	}
 
-	private boolean tokenExpired(String token) {
-		Date expiration = getExpirationDateFromToken(token);
-		return expiration.before(new Date());
-	}
-
-	private Date getExpirationDateFromToken(String token) {
-		return resolveClaims(token, Claims::getExpiration);
-	}
-
-	private <T> T resolveClaims(String token, Function<Claims, T> claimsResolver) {
-		Claims claims = getClaims(token);
-		return claimsResolver.apply(claims);
-	}
-
 	private Key getSigningKey() {
 		byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+		if (keyBytes.length < 32) {
+			throw new IllegalArgumentException("JWT secret key는 최소 32바이트 이상이어야 합니다.");
+		}
 		return Keys.hmacShaKeyFor(keyBytes);
 	}
 }
