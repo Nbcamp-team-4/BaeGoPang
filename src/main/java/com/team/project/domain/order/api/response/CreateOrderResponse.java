@@ -32,17 +32,6 @@ public class CreateOrderResponse {
 
     private List<OrderItemSummary> items;
 
-    @Getter
-    @Builder
-    public static class OrderItemSummary {
-        private UUID id;
-        private UUID productId;
-        private String productName;
-        private Integer unitPrice;
-        private Integer quantity;
-        private Integer lineTotalAmount;
-    }
-
     public static CreateOrderResponse from(Order order) {
         return CreateOrderResponse.builder()
                 .id(order.getId())
@@ -67,5 +56,16 @@ public class CreateOrderResponse {
                                 .build())
                         .collect(Collectors.toList()))
                 .build();
+    }
+
+    @Getter
+    @Builder
+    public static class OrderItemSummary {
+        private UUID id;
+        private UUID productId;
+        private String productName;
+        private Integer unitPrice;
+        private Integer quantity;
+        private Integer lineTotalAmount;
     }
 }

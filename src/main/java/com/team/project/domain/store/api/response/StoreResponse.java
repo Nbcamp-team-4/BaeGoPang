@@ -1,77 +1,58 @@
 package com.team.project.domain.store.api.response;
 
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
-import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.model.vo.StoreStatus;
+import com.team.project.domain.store.service.result.StoreResult;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-@AllArgsConstructor(access = AccessLevel.PUBLIC)
 public class StoreResponse {
 
     private UUID id;
-    private UUID userId;
-    private UUID regionId;
-
     private String name;
     private String description;
     private String address;
-
-    private double latitude;
-    private double longitude;
-
+    private Double longitude;
+    private Double latitude;
     private String phone;
     private String imageUrl;
-
     private LocalTime openTime;
     private LocalTime closeTime;
-
     private StoreStatus status;
-
     private Integer deliveryMinMinutes;
     private Integer deliveryMaxMinutes;
     private Integer deliveryFee;
     private Integer minimumOrderAmount;
+    private List<StoreProductResponse> products;
 
-    private LocalDateTime createdAt;
+    public static StoreResponse from(StoreResult result) {
+        return from(result, List.of());
+    }
 
-    public static StoreResponse from(Store store) {
-
+    public static StoreResponse from(StoreResult result, List<StoreProductResponse> products) {
         return StoreResponse.builder()
-            .id(store.getId())
-            .userId(store.getUserId())
-            .regionId(store.getRegionId())
-
-            .name(store.getName())
-            .description(store.getDescription())
-            .address(store.getAddress())
-
-            // PostGIS Point → 위도 / 경도
-            .latitude(store.getLocation().getY())
-            .longitude(store.getLocation().getX())
-
-            .phone(store.getPhone())
-            .imageUrl(store.getImageUrl())
-
-            .openTime(store.getOpenTime())
-            .closeTime(store.getCloseTime())
-
-            .status(store.getStatus())
-
-            .deliveryMinMinutes(store.getDeliveryMinMinutes())
-            .deliveryMaxMinutes(store.getDeliveryMaxMinutes())
-            .deliveryFee(store.getDeliveryFee())
-            .minimumOrderAmount(store.getMinimumOrderAmount())
-
-            .createdAt(store.getCreatedAt())
+            .id(result.getId())
+            .name(result.getName())
+            .description(result.getDescription())
+            .address(result.getAddress())
+            .longitude(result.getLongitude())
+            .latitude(result.getLatitude())
+            .phone(result.getPhone())
+            .imageUrl(result.getImageUrl())
+            .openTime(result.getOpenTime())
+            .closeTime(result.getCloseTime())
+            .status(result.getStatus())
+            .deliveryMinMinutes(result.getDeliveryMinMinutes())
+            .deliveryMaxMinutes(result.getDeliveryMaxMinutes())
+            .deliveryFee(result.getDeliveryFee())
+            .minimumOrderAmount(result.getMinimumOrderAmount())
+            .products(products)
             .build();
     }
 }

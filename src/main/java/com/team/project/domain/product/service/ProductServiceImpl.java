@@ -13,7 +13,10 @@ import com.team.project.domain.product.api.response.ProductResponse;
 import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.product.exception.ProductNotFoundException;
 import com.team.project.domain.product.repository.ProductRepository;
+import com.team.project.domain.store.entity.Store;
+import com.team.project.domain.store.repository.StoreRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -22,13 +25,18 @@ import lombok.RequiredArgsConstructor;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final StoreRepository storeRepository;
 
     // ===== 생성 =====
     @Override
     public ProductResponse createProduct(CreateProductRequest request) {
 
+        // 1. UUID를 이용해 DB에서 Store 엔티티를 조회한다.
+        Store store = storeRepository.findById(request.getStoreId())
+            .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
+
         Product product = new Product(
-            request.getStoreId(),
+            store,
             request.getName(),
             request.getPrice(),
             request.getDescription(),
@@ -151,7 +159,7 @@ public class ProductServiceImpl implements ProductService {
     private ProductResponse toResponse(Product product) {
         return new ProductResponse(
             product.getId(),
-            product.getStoreId(),
+            product.getStore().getId(),
             product.getName(),
             product.getPrice(),
             product.getDescription(),
