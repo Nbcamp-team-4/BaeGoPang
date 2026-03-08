@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "p_user")
@@ -42,8 +43,8 @@ public class User extends BaseEntity {
 	private String phone;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private UserStatus status = UserStatus.ACTIVE;
+	@ColumnDefault("ACTIVE")
+	private UserStatus status;
 
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	private List<UserRole> userRoles = new ArrayList<>();
@@ -55,5 +56,4 @@ public class User extends BaseEntity {
 		this.name = name;
 		this.phone = phone;
 	}
-
 }

@@ -14,6 +14,10 @@ public enum AuthenticationScheme {
         this.name = name;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     public static String generateType(AuthenticationScheme scheme) {
         return scheme.getName();
     }

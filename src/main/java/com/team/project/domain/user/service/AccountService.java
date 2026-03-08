@@ -1,5 +1,8 @@
 package com.team.project.domain.user.service;
 
+import com.team.project.domain.auth.api.response.JwtAuthResponse;
+import com.team.project.domain.auth.entity.AuthenticationScheme;
+import com.team.project.domain.user.api.request.AccountRequest;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,12 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.team.project.domain.auth.entity.AuthenticationScheme;
 import com.team.project.domain.auth.util.JwtProvider;
-import com.team.project.domain.user.api.request.AccountRequestDto;
 import com.team.project.domain.user.api.request.JoinRequest;
 import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.model.dto.JwtAuthResponseDto;
 import com.team.project.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -54,16 +54,16 @@ public class AccountService {
 	 * 로그인.
 	 *
 	 */
-	public JwtAuthResponseDto login(AccountRequestDto accountRequest) {    // 사용자 확인.
+	public JwtAuthResponse login(AccountRequest accountRequest) {    // 사용자 확인.
 		// 사용자 확인.
-		User user = this.userRepository.findByEmail(accountRequest.getEmail())
+		User user = this.userRepository.findByLoginId(accountRequest.getLoginId())
 			.orElseThrow(() -> new UsernameNotFoundException("이메일에 해당하는 사용자를 찾을 수 없습니다."));
 		this.validatePassword(accountRequest.getPassword(), user.getPassword());
 
 		// 사용자 인증 후 인증 객체를 저장
 		Authentication authentication = this.authenticationManager.authenticate(
 			new UsernamePasswordAuthenticationToken(
-				accountRequest.getEmail(),
+				accountRequest.getLoginId(),
 				accountRequest.getPassword())
 		);
 		log.info("SecurityContext에 Authentication 저장.");
@@ -72,7 +72,7 @@ public class AccountService {
 		// 토큰 생성
 		String accessToken = this.jwtProvider.generateToken(authentication);
 		log.info("토큰 생성: {}", accessToken);
-		return new JwtAuthResponseDto(AuthenticationScheme.BEARER.getName(), accessToken);
+		return new JwtAuthResponse(AuthenticationScheme.BEARER.getName(), accessToken);
 	}
 
 	/**
