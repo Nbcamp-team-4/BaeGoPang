@@ -1,10 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/baegopang
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
-
   autoconfigure:
     exclude:
       - org.springframework.ai.model.google.genai.autoconfigure.chat.GoogleGenAiChatAutoConfiguration
@@ -16,9 +10,17 @@ spring:
 
   jpa:
     hibernate:
+<<<<<<< HEAD
       ddl-auto: none   # Flyway 쓰면 none(또는 validate) 권장
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect
+=======
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+>>>>>>> ec5f68d (🚀 Deploy: 운영 프로필 및 환경변수 설정 분리)

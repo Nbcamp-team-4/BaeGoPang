@@ -1,0 +1,23 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/baegopang
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    locations:
+      - classpath:db/migration
+      - classpath:db/dev-seed
+
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    org.flywaydb: DEBUG
+    org.springframework.boot.context.config: DEBUG
