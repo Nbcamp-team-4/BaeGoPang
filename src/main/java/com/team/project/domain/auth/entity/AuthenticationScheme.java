@@ -5,20 +5,19 @@ import lombok.Getter;
 @Getter
 public enum AuthenticationScheme {
 
-    BEARER("Bearer ");
+	BEARER("Bearer ");
 
+	private final String name;
 
-    private final String name;
+	AuthenticationScheme(String name) {
+		this.name = name;
+	}
 
-    AuthenticationScheme(String name) {
-        this.name = name;
-    }
+	public String getName() {
+		return this.name;
+	}
 
-    public String getName() {
-        return this.name;
-    }
-
-    public static String generateType(AuthenticationScheme scheme) {
-        return scheme.getName();
-    }
+	public static String generateType(AuthenticationScheme scheme) {
+		return scheme.getName();
+	}
 }

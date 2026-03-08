@@ -2,8 +2,11 @@ package com.team.project.domain.user.entity;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import com.team.project.global.common.entity.BaseEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
@@ -20,6 +23,8 @@ import lombok.NoArgsConstructor;
 public class UserRole extends BaseEntity {
 
 	@Id
+	@UuidGenerator
+	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
 
 	@ManyToOne(fetch = FetchType.LAZY)

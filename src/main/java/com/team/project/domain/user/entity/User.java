@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.UuidGenerator;
+
 import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
@@ -16,7 +19,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "p_user")
@@ -25,6 +27,8 @@ import org.hibernate.annotations.ColumnDefault;
 public class User extends BaseEntity {
 
 	@Id
+	@UuidGenerator
+	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
 
 	@Column(nullable = false, unique = true)
