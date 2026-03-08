@@ -1,4 +1,4 @@
-package com._team._project.domain.ai.service;
+package com.team.project.domain.ai.service;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Bean;

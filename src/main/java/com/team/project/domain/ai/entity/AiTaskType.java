@@ -1,4 +1,4 @@
-package com._team._project.domain.ai.entity;
+package com.team.project.domain.ai.entity;
 
 
 public enum AiTaskType {

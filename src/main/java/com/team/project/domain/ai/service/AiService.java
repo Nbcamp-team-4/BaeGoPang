@@ -1,12 +1,12 @@
-package com._team._project.domain.ai.service;
+package com.team.project.domain.ai.service;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com._team._project.domain.ai.entity.AiLog;
-import com._team._project.domain.ai.entity.AiTaskType;
-import com._team._project.domain.ai.repository.AiLogRepository;
+import com.team.project.domain.ai.entity.AiLog;
+import com.team.project.domain.ai.entity.AiTaskType;
+import com.team.project.domain.ai.repository.AiLogRepository;
 
 import lombok.RequiredArgsConstructor;
 

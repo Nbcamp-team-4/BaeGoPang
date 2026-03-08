@@ -1,10 +1,10 @@
-package com._team._project.domain.ai.entity;
+package com.team.project.domain.ai.entity;
 
 import java.util.UUID;
 
 import org.hibernate.annotations.UuidGenerator;
 
-import com._team._project.global.common.entity.BaseEntity;
+import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
