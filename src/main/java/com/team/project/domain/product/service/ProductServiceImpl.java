@@ -31,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductOptionRepository productOptionRepository;
     private final ProductOptionItemRepository productOptionItemRepository;
     private final StoreRepository storeRepository;
+    private final ProductOptionManager productOptionManager;
 
     @Override
     public ProductResult createProduct(CreateProductCommand command) {
@@ -63,6 +64,8 @@ public class ProductServiceImpl implements ProductService {
             command.getImageUrl()
         );
 
+        productOptionManager.syncOptionGroups(product, command.getOptions());
+
         return ProductResult.from(product);
     }
 
@@ -70,6 +73,13 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProduct(UUID productId, UUID userId) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
+
+        List<ProductOption> optionGroups =
+            productOptionRepository.findAllByProductIdAndDeletedAtIsNull(productId);
+
+        for (ProductOption optionGroup : optionGroups) {
+            productOptionManager.deleteOptionGroup(optionGroup, userId);
+        }
 
         product.delete(userId);
     }

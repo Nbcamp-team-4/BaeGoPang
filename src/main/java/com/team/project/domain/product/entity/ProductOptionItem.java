@@ -38,16 +38,12 @@ public class ProductOptionItem extends BaseEntity {
     @Column(nullable = false)
     private Integer additionalPrice;
 
-    public static ProductOptionItem create(
-        ProductOption productOption,
-        String name,
-        Integer additionalPrice
-    ) {
-        ProductOptionItem productOptionItem = new ProductOptionItem();
-        productOptionItem.productOption = productOption;
-        productOptionItem.name = name;
-        productOptionItem.additionalPrice = additionalPrice;
-        return productOptionItem;
+    public static ProductOptionItem create(ProductOption productOption, String name, Integer additionalPrice) {
+        ProductOptionItem item = new ProductOptionItem();
+        item.productOption = productOption;
+        item.name = name;
+        item.additionalPrice = additionalPrice;
+        return item;
     }
 
     public void update(String name, Integer additionalPrice) {
