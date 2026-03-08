@@ -10,9 +10,9 @@ version = '0.0.1-SNAPSHOT'
 description = '배민어플만들어보기'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
@@ -44,6 +44,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.hibernate.orm:hibernate-spatial:6.4.4.Final'
+
+    // swagger 관련 의존성 추가
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
 }
 
