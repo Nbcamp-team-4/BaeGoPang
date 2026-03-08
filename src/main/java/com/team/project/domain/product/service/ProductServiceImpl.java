@@ -6,10 +6,13 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.ai.service.AiService;
 import com.team.project.domain.product.entity.Product;
+import com.team.project.domain.product.entity.ProductAiLog;
 import com.team.project.domain.product.entity.ProductOption;
 import com.team.project.domain.product.entity.ProductOptionItem;
 import com.team.project.domain.product.exception.ProductNotFoundException;
+import com.team.project.domain.product.repository.ProductAiLogRepository;
 import com.team.project.domain.product.repository.ProductOptionItemRepository;
 import com.team.project.domain.product.repository.ProductOptionRepository;
 import com.team.project.domain.product.repository.ProductRepository;
@@ -32,43 +35,106 @@ public class ProductServiceImpl implements ProductService {
     private final ProductOptionItemRepository productOptionItemRepository;
     private final StoreRepository storeRepository;
     private final ProductOptionManager productOptionManager;
+    private final ProductAiLogRepository productAiLogRepository;
+    private final AiService aiService;
 
     @Override
     public ProductResult createProduct(CreateProductCommand command) {
         Store store = storeRepository.findById(command.getStoreId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 가게입니다."));
 
+        String description = command.getDescription();
+        String prompt = null;
+        String aiResponse = null;
+
+        if (Boolean.TRUE.equals(command.getUseAiDescription())) {
+            prompt = """
+            다음 메뉴의 상품 설명을 작성해줘.
+            메뉴명: %s
+            조건:
+            - 배달앱 메뉴 설명
+            - 한글
+            - 50자 이하
+            - 설명만 출력
+            """.formatted(command.getName());
+
+            aiResponse = aiService.recommendMenu(prompt);
+            description = normalizeDescription(aiResponse);
+        }
+
         Product product = Product.create(
             store,
             command.getName(),
             command.getPrice(),
-            command.getDescription(),
+            description,
             command.getUseAiDescription(),
             command.getImageUrl()
         );
 
         Product savedProduct = productRepository.save(product);
+
+        if (Boolean.TRUE.equals(command.getUseAiDescription()) && aiResponse != null) {
+            productAiLogRepository.save(
+                ProductAiLog.create(
+                    savedProduct.getId(),
+                    prompt,
+                    aiResponse,
+                    "spring-ai-chatclient",
+                    null
+                )
+            );
+        }
+
         return ProductResult.from(savedProduct);
     }
-
     @Override
     public ProductResult updateProduct(UpdateProductCommand command) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(command.getProductId())
             .orElseThrow(ProductNotFoundException::new);
 
+        String description = command.getDescription();
+        String prompt = null;
+        String aiResponse = null;
+
+        if (Boolean.TRUE.equals(command.getUseAiDescription())) {
+            prompt = """
+            다음 메뉴의 상품 설명을 작성해줘.
+            메뉴명: %s
+            조건:
+            - 배달앱 메뉴 설명
+            - 한글
+            - 50자 이하
+            - 설명만 출력
+            """.formatted(command.getName());
+
+            aiResponse = aiService.recommendMenu(prompt);
+            description = normalizeDescription(aiResponse);
+        }
+
         product.update(
             command.getName(),
             command.getPrice(),
-            command.getDescription(),
+            description,
             command.getUseAiDescription(),
             command.getImageUrl()
         );
 
         productOptionManager.syncOptionGroups(product, command.getOptions());
 
+        if (Boolean.TRUE.equals(command.getUseAiDescription()) && aiResponse != null) {
+            productAiLogRepository.save(
+                ProductAiLog.create(
+                    product.getId(),
+                    prompt,
+                    aiResponse,
+                    "spring-ai-chatclient",
+                    null
+                )
+            );
+        }
+
         return ProductResult.from(product);
     }
-
     @Override
     public void deleteProduct(UUID productId, UUID userId) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
@@ -194,5 +260,20 @@ public class ProductServiceImpl implements ProductService {
             .isHidden(product.isHidden())
             .options(options)
             .build();
+    }
+
+    private String normalizeDescription(String text) {
+
+        if (text == null || text.isBlank()) {
+            return "상품 설명이 준비 중입니다.";
+        }
+
+        String normalized = text.replace("\n", " ").trim();
+
+        if (normalized.length() > 50) {
+            normalized = normalized.substring(0, 50);
+        }
+
+        return normalized;
     }
 }
