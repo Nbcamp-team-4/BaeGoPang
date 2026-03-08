@@ -68,14 +68,14 @@ public class Payment extends BaseEntity {
 		this.paymentKey = paymentKey;
 	}
 
-	public void requestCancel() {
+	public void cancel() {
 		validateStatus(PaymentStatus.PAID);
-		this.status = PaymentStatus.CANCEL_REQUESTED;
+		this.status = PaymentStatus.CANCELED;
 	}
 
-	public void cancel() {
-		validateStatus(PaymentStatus.CANCEL_REQUESTED);
-		this.status = PaymentStatus.CANCELED;
+	public void cancelFailed() {
+		validateStatus(PaymentStatus.CANCELED);
+		this.status = PaymentStatus.CANCEL_FAILED;
 	}
 
 	public void markDeleted(UUID deletedBy) {

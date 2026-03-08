@@ -1,13 +1,17 @@
 package com.team.project.domain.payment.repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
+import com.team.project.global.common.dto.BaseRangeRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,5 +64,26 @@ public class PaymentRepositoryImpl implements PaymentRepository {
 			.findLatestByOrderAndStatus(orderId, status, PageRequest.of(0, 1))
 			.stream()
 			.findFirst();
+	}
+
+	/**
+	 * 주문 ID를 받아서 삭제된 것을 제외하여 가장 최신 결제를 반환합니다.
+	 */
+	@Override
+	public Optional<Payment> getLatestPaymentByOrderId(UUID orderId) {
+		return paymentJpaRepository.findLatestByOrder(orderId)
+			.stream()
+			.findFirst();
+	}
+
+	/**
+	 * 여러 조건을 받아서 결제 리스트를 조회합니다.
+	 */
+	@Override
+	public Page<Payment> getPayments(PaymentStatus paymentStatus, BaseRangeRequest<Integer> rangeAmount,
+		BaseRangeRequest<LocalDateTime> rangePaidAt, UUID orderId, Pageable pageable) {
+
+		return paymentJpaRepository.findPayments(paymentStatus, orderId, rangeAmount.getMin(), rangeAmount.getMax(),
+			rangePaidAt.getMin(), rangePaidAt.getMax(), pageable);
 	}
 }

@@ -1,15 +1,15 @@
 package com.team.project.domain.payment.model.vo;
 
 public enum PaymentStatus {
-	READY, PAID, CANCEL_REQUESTED, CANCELED;
+	READY, PAID, CANCELED, CANCEL_FAILED;
 
-	// READY -> PAID -> CANCEL_REQUESTED -> CANCELED
+	// READY -> PAID -> CANCELED -> CANCEL_FAILED
 
 	public boolean isReady() {
 		return this == READY;
 	}
 
 	public boolean isInProgress() {
-		return this == READY || this == CANCEL_REQUESTED;
+		return this == READY;
 	}
 }

@@ -6,33 +6,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.team.project.domain.payment.api.request.CancelPaymentRequest;
-import com.team.project.domain.payment.api.request.CreatePaymentRequest;
-import com.team.project.domain.payment.api.request.PayPaymentRequest;
-import com.team.project.domain.payment.api.request.RequestCancelPaymentRequest;
-import com.team.project.domain.payment.api.response.CancelPaymentResponse;
-import com.team.project.domain.payment.api.response.CreatePaymentResponse;
+import com.team.project.domain.payment.api.request.GetPaymentsRequest;
 import com.team.project.domain.payment.api.response.GetPaymentResponse;
-import com.team.project.domain.payment.api.response.PayPaymentResponse;
-import com.team.project.domain.payment.api.response.RequestCancelPaymentResponse;
-import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
-import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
-import com.team.project.domain.payment.model.dto.CreatePaymentCommand;
-import com.team.project.domain.payment.model.dto.CreatePaymentQuery;
+import com.team.project.domain.payment.api.response.GetPaymentsResponse;
 import com.team.project.domain.payment.model.dto.GetPaymentQuery;
-import com.team.project.domain.payment.model.dto.PayPaymentCommand;
-import com.team.project.domain.payment.model.dto.PayPaymentQuery;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentCommand;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentQuery;
+import com.team.project.domain.payment.model.dto.GetPaymentsCommand;
+import com.team.project.domain.payment.model.dto.GetPaymentsQuery;
 import com.team.project.domain.payment.service.PaymentService;
 import com.team.project.global.common.dto.BaseResponse;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,93 +28,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentController {
 
 	private final PaymentService paymentService;
-
-	/**
-	 * 결제 준비 api
-	 */
-	@PostMapping
-	public ResponseEntity<?> createPayment(@RequestBody @Valid CreatePaymentRequest request) {
-
-		// 1. service dto 변환
-		CreatePaymentCommand command = CreatePaymentCommand.of(request.getOrderId(), request.getAmount());
-
-		// 2. service 호출
-		CreatePaymentQuery query = paymentService.createPayment(command);
-
-		// 3. dto 변환
-		CreatePaymentResponse response = CreatePaymentResponse.from(query);
-
-		return ResponseEntity.ok().body(
-			BaseResponse.ofSuccess(
-				response
-			)
-		);
-	}
-
-	/**
-	 * 결제 하는 api
-	 */
-	@PostMapping("/confirm")
-	public ResponseEntity<?> confirmPayment(@RequestBody @Valid PayPaymentRequest request) {
-
-		// 1. service dto 변환
-		PayPaymentCommand command = PayPaymentCommand.of(request.getOrderId(), request.getPaymentKey(),
-			request.getAmount());
-
-		// 2. service 호출
-		PayPaymentQuery query = paymentService.payPayment(command);
-
-		// 3. dto 변환
-		PayPaymentResponse response = PayPaymentResponse.from(query);
-
-		return ResponseEntity.ok().body(
-			BaseResponse.ofSuccess(
-				response
-			)
-		);
-	}
-
-	/**
-	 * 결제 취소 요청을 하는 api
-	 */
-	@PostMapping("/cancel/request")
-	public ResponseEntity<?> requestCancelPayment(@RequestBody @Valid RequestCancelPaymentRequest request) {
-
-		// 1. service dto 변환
-		RequestCancelPaymentCommand command = RequestCancelPaymentCommand.of(request.getOrderId(), request.getReason());
-
-		// 2. service 호출
-		RequestCancelPaymentQuery query = paymentService.requestCancelPayment(command);
-
-		// 3. dto 변환
-		RequestCancelPaymentResponse response = RequestCancelPaymentResponse.from(query);
-
-		return ResponseEntity.ok().body(
-			BaseResponse.ofSuccess(
-				response
-			)
-		);
-	}
-
-	/**
-	 * 결제 취소하는 api
-	 */
-	@PostMapping("/cancel")
-	public ResponseEntity<?> cancelPayment(@RequestBody @Valid CancelPaymentRequest request) {
-
-		// 1. service dto 변환
-		CancelPaymentCommand command = CancelPaymentCommand.of(request.getOrderId(), request.getReason());
-
-		// 2. service 호출
-		CancelPaymentQuery query = paymentService.cancelPayment(command);
-
-		// 3. dto 변환
-		CancelPaymentResponse response = CancelPaymentResponse.from(query);
-
-		return ResponseEntity.ok().body(
-			BaseResponse.ofSuccess(response)
-		);
-	}
 
 	/**
 	 * 결제 데이터를 단건조회하는 api
@@ -153,6 +51,23 @@ public class PaymentController {
 	/**
 	 * 결제 데이터를 전체 조회하는 api
 	 */
+	@GetMapping
+	public ResponseEntity<?> getPayments(GetPaymentsRequest request) {
+
+		// 1. service dto 변환
+		GetPaymentsCommand command = GetPaymentsCommand.of(request.getPage(), request.getSize(),
+			request.getPaymentStatus(), request.getRangeAmount(), request.getRangePaidAt(), request.getOrderId());
+
+		// 2. service 호출
+		GetPaymentsQuery query = paymentService.getPayments(command);
+
+		// 3. dto 변환
+		GetPaymentsResponse response = GetPaymentsResponse.from(query);
+
+		return ResponseEntity.ok().body(
+			BaseResponse.ofSuccess(response)
+		);
+	}
 
 	/**
 	 * 결제 데이터를 삭제하는 api

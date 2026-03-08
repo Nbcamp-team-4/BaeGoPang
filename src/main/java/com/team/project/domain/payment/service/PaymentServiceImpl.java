@@ -3,7 +3,12 @@ package com.team.project.domain.payment.service;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.exception.OrderNotFoundException;
@@ -16,22 +21,23 @@ import com.team.project.domain.payment.infrastructure.PgProviderService;
 import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymentCommand;
 import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymentQuery;
 import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentCommand;
+import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentQuery;
+import com.team.project.domain.payment.infrastructure.exception.PgProviderBaseException;
 import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
 import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
 import com.team.project.domain.payment.model.dto.CreatePaymentCommand;
 import com.team.project.domain.payment.model.dto.CreatePaymentQuery;
 import com.team.project.domain.payment.model.dto.GetPaymentQuery;
+import com.team.project.domain.payment.model.dto.GetPaymentsCommand;
+import com.team.project.domain.payment.model.dto.GetPaymentsQuery;
 import com.team.project.domain.payment.model.dto.PayPaymentCommand;
 import com.team.project.domain.payment.model.dto.PayPaymentQuery;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentCommand;
-import com.team.project.domain.payment.model.dto.RequestCancelPaymentQuery;
 import com.team.project.domain.payment.model.vo.PaymentStatus;
 import com.team.project.domain.payment.repository.PaymentRepository;
 import com.team.project.domain.payment_log.model.dto.CreatePaymentLogCommand;
 import com.team.project.domain.payment_log.model.vo.PaymentLogStatus;
 import com.team.project.domain.payment_log.service.PaymentLogService;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -92,45 +98,31 @@ public class PaymentServiceImpl implements PaymentService {
 			PaymentStatus.READY);
 
 		// 2. PG사 승인 호출
-		ConfirmPgProviderPaymentCommand confirmPaymentCommand = ConfirmPgProviderPaymentCommand.builder()
-			.paymentKey(command.getPaymentKey())
-			.amount(command.getAmount())
-			.orderId(command.getOrderId().toString())
-			.build();
-		pgProviderService.confirmPayment(confirmPaymentCommand);
+		try {
+			ConfirmPgProviderPaymentQuery pgProviderQuery = pgProviderService.confirmPayment(
+				ConfirmPgProviderPaymentCommand.of(command.getPaymentKey(), command.getOrderId().toString(),
+					command.getAmount()));
 
-		// 3. 결제 상태 변경
-		String paymentKey = command.getPaymentKey();
-		payment.pay(paymentKey);
+			// 3. 결제 상태 변경
+			String paymentKey = command.getPaymentKey();
+			payment.pay(paymentKey);
 
-		// 4. 결제 로그 생성
-		CreatePaymentLogCommand paymentLogCommand = CreatePaymentLogCommand.builder()
-			.paymentKey(paymentKey)
-			.status(PaymentLogStatus.SUCCESS)
-			.paymentId(payment.getId())
-			.build();
+			// 2-2. PG사 통신 성공 경우 로그 생성
+			paymentLogService.createPaymentLog(
+				CreatePaymentLogCommand.of(pgProviderQuery.getPaymentKey(), PaymentLogStatus.PAY_SUCCESS,
+					null, payment.getId()));
 
-		// 5. 결제 로그 저장
-		paymentLogService.createPaymentLog(paymentLogCommand);
+			return PayPaymentQuery.from(payment);
+		} catch (PgProviderBaseException e) {
+			// 2-1. PG사 통신 실패 경우 로그 생성
+			paymentLogService.createPaymentFailureLog(
+				CreatePaymentLogCommand.of(command.getPaymentKey(), PaymentLogStatus.PAY_FAILURE,
+					null, payment.getId())
+			);
 
-		return PayPaymentQuery.from(payment);
-	}
+			throw e;
+		}
 
-	/**
-	 * 결제 취소 요청하는 메서드
-	 */
-	@Override
-	@Transactional
-	public RequestCancelPaymentQuery requestCancelPayment(RequestCancelPaymentCommand command) {
-
-		// 1. 가장 최신 결제 가져오기
-		Payment payment = getLatestPaymentByOrderAndOrderStatusInnerWithException(command.getOrderId(),
-			PaymentStatus.PAID);
-
-		// 2. 결제 상태 변경
-		payment.requestCancel();
-
-		return RequestCancelPaymentQuery.from(payment);
 	}
 
 	/**
@@ -142,17 +134,38 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 1. 가장 최신 결제 가져오기
 		Payment payment = getLatestPaymentByOrderAndOrderStatusInnerWithException(command.getOrderId(),
-			PaymentStatus.CANCEL_REQUESTED);
+			PaymentStatus.PAID);
+
+		// 2. 검증
+		String type = command.getType();
+		if (!"REFUND".equals(type) && !"CANCEL".equals(type)) {
+			throw new InvalidPaymentRequestException();
+		}
 
 		// 2. PG사 결제 취소
-		CancelPgProviderPaymentCommand pgProviderCommand = CancelPgProviderPaymentCommand.builder()
-			.paymentKey(payment.getPaymentKey())
-			.reason(command.getReason())
-			.build();
-		CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(pgProviderCommand);
+		try {
+			CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(
+				CancelPgProviderPaymentCommand.of(payment.getPaymentKey(),
+					command.getReason()));
 
-		// 3. 결제 상태 변경
-		payment.cancel();
+			// 3. 결제 상태 변경
+			payment.cancel();
+
+			// 2-2. PG 통신 성공 경우 로그 생성
+			paymentLogService.createPaymentLog(
+				CreatePaymentLogCommand.of(pgProviderQuery.getPaymentKey(), PaymentLogStatus.valueOf(type + "_SUCCESS"),
+					command.getReason(), payment.getId()));
+
+		} catch (PgProviderBaseException e) {
+			// 2-1. PG 통신 실패 경우 로그 생성
+			paymentLogService.createPaymentFailureLog(
+				CreatePaymentLogCommand.of(payment.getPaymentKey(), PaymentLogStatus.valueOf(type + "_FAILURE"),
+					command.getReason(), payment.getId())
+			);
+
+			// 2-2. 결제 취소 실패
+			payment.cancelFailed();
+		}
 
 		return CancelPaymentQuery.from(payment);
 	}
@@ -187,6 +200,31 @@ public class PaymentServiceImpl implements PaymentService {
 		Payment payment = getPaymentInnerWithException(paymentId);
 
 		return GetPaymentQuery.from(payment);
+	}
+
+	/**
+	 * 결제 데이터 조회하는 메서드
+	 */
+	@Override
+	public GetPaymentsQuery getPayments(GetPaymentsCommand command) {
+
+		// 1. 페이징 객체 생성
+		Pageable pageable = PageRequest.of(
+			command.getPage(),
+			command.getSize(),
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		// 2. 여러 조건을 기준으로 결제를 조회
+		Page<Payment> pageResult = paymentRepository.getPayments(
+			command.getPaymentStatus(),
+			command.getRangeAmount(),
+			command.getRangePaidAt(),
+			command.getOrderId(),
+			pageable
+		);
+
+		return GetPaymentsQuery.from(pageResult);
 	}
 
 	/**

@@ -52,23 +52,23 @@ public class OrderController {
      * - 인증 적용 전 임시로 userId를 query param으로 받음
      */
     @GetMapping
-    public ResponseEntity<?> getMyOrders(@RequestParam(value = "userId", required = true) UUID userId,
-                                         @RequestParam(value = "storeId", required = true) UUID storeId) {
+    public ResponseEntity<?> getMyOrders(@RequestParam(value = "userId", required = false) UUID userId,
+                                         @RequestParam(value = "storeId", required = false) UUID storeId) {
 
-        // 고객: userId로 조회 / 매니저: storeId로 조회를 같은 엔드포인트에서 분기 (API 명세 기준)
+        // 가게 주문 목록 조회
         if (storeId != null) {
-            // [가게] 가게 주문 목록 조회
-            // GET /api/orders?storeId={storeId}
-            // TODO: manager 권한 체크
             List<GetOrderSummaryResponse> response = orderService.getStoreOrders(storeId);
             return ResponseEntity.ok().body(BaseResponse.ofSuccess(response));
         }
 
-        // [고객] 내 주문 목록 조회
-        // GET /api/orders
-        // TODO: 인증 붙이면 userId는 SecurityContext로 대체
-        List<GetOrderSummaryResponse> response = orderService.getMyOrders(userId);
-        return ResponseEntity.ok().body(BaseResponse.ofSuccess(response));
+        // 고객 주문 목록 조회
+        if (userId != null) {
+            List<GetOrderSummaryResponse> response = orderService.getMyOrders(userId);
+            return ResponseEntity.ok().body(BaseResponse.ofSuccess(response));
+        }
+
+        // 둘 다 없으면 잘못된 요청
+        throw new IllegalArgumentException("userId 또는 storeId 중 하나는 반드시 전달해야 합니다.");
     }
 
     /**
