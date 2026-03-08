@@ -10,10 +10,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.auth.entity.AuthenticationScheme;
 import com.team.project.domain.auth.util.JwtProvider;
 import com.team.project.domain.user.api.request.AccountRequestDto;
 import com.team.project.domain.user.api.request.JoinRequest;
-import com.team.project.domain.user.entity.Role;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.model.dto.JwtAuthResponseDto;
 import com.team.project.domain.user.repository.UserRepository;
@@ -42,9 +42,9 @@ public class AccountService {
 		}
 
 		this.userRepository.save(new User(
+			dto.getLoginId(),
 			dto.getEmail(),
 			passwordEncoder.encode(dto.getPassword()),
-			Role.of(role),
 			dto.getName(),
 			dto.getPhone()
 		));
@@ -72,7 +72,6 @@ public class AccountService {
 		// 토큰 생성
 		String accessToken = this.jwtProvider.generateToken(authentication);
 		log.info("토큰 생성: {}", accessToken);
-
 		return new JwtAuthResponseDto(AuthenticationScheme.BEARER.getName(), accessToken);
 	}
 

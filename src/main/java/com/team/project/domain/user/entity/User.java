@@ -43,19 +43,17 @@ public class User extends BaseEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private UserStatus status;
+	private UserStatus status = UserStatus.ACTIVE;
 
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	private List<UserRole> userRoles = new ArrayList<>();
 
-	public User(UUID id, String loginId, String email, String password, String name, String phone, UserStatus status) {
-		this.id = id;
+	public User(String loginId, String email, String password, String name, String phone) {
 		this.loginId = loginId;
 		this.email = email;
 		this.password = password;
 		this.name = name;
 		this.phone = phone;
-		this.status = status;
 	}
 
 }
