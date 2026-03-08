@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.store.model.vo.StoreStatus;
 import com.team.project.domain.store.service.command.CreateStoreCommand;
 import com.team.project.domain.store.service.command.SearchStoreCommand;
@@ -29,7 +30,8 @@ public interface StoreService {
 	List<StoreResult> searchStores(SearchStoreCommand command);   // 전체 가게 목록
 
 	// === [사용자/공통] 조회 ===
-	StoreResult getStoreDetail(UUID storeId); // 상세 조회 (메뉴 포함용)
+	StoreResult getStoreDetail(UUID storeId);
+	List<Product> getStoreProducts(UUID storeId);// 상세 조회 (메뉴)
 
 	// 좌표 직접 입력 검색 (3km)
 	List<StoreResult> searchNearbyStores(Double latitude, Double longitude, UUID categoryId);

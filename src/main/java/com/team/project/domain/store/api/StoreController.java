@@ -22,6 +22,7 @@ import com.team.project.domain.store.api.request.CreateStoreRequest;
 import com.team.project.domain.store.api.request.GetStoresRequest;
 import com.team.project.domain.store.api.request.UpdateOwnerFieldsRequest;
 import com.team.project.domain.store.api.response.GetStoresResponse;
+import com.team.project.domain.store.api.response.StoreProductResponse;
 import com.team.project.domain.store.api.response.StoreResponse;
 import com.team.project.domain.store.model.vo.StoreStatus;
 import com.team.project.domain.store.service.StoreService;
@@ -50,8 +51,14 @@ public class StoreController {
 	// === [공통] 가게 단건 상세 조회 ===
 	@GetMapping("/{storeId}")
 	public ResponseEntity<StoreResponse> getStoreDetail(@PathVariable UUID storeId) {
+
 		StoreResult result = storeService.getStoreDetail(storeId);
-		return ResponseEntity.ok(StoreResponse.from(result));
+
+		List<StoreProductResponse> products = storeService.getStoreProducts(storeId).stream()
+			.map(StoreProductResponse::from)
+			.toList();
+
+		return ResponseEntity.ok(StoreResponse.from(result, products));
 	}
 
 	// === [MANAGER/MASTER] 가게 전체 조회 ===

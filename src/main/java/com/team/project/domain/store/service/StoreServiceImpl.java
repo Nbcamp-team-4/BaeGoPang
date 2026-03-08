@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.category.entity.Category;
 import com.team.project.domain.category.repository.CategoryRepository;
+import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.product.repository.ProductRepository;
 import com.team.project.domain.region.entity.Region;
 import com.team.project.domain.region.repository.RegionRepository;
@@ -247,7 +248,12 @@ public class StoreServiceImpl implements StoreService {
 
 		return StoreResult.from(store);
 	}
-
+	// === 메뉴 메서드 ===
+	@Override
+	@Transactional(readOnly = true)
+	public List<Product> getStoreProducts(UUID storeId) {
+		return productRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
+	}
 	// === [삭제] Soft Delete ===
 	@Override
 	@Transactional
