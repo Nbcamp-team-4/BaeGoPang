@@ -14,6 +14,8 @@ import com.team.project.domain.review.entity.Review;
 import com.team.project.domain.review.entity.ReviewImage;
 import com.team.project.domain.review.repository.ReviewImageRepository;
 import com.team.project.domain.review.repository.ReviewRepository;
+import com.team.project.domain.store.entity.Store;
+import com.team.project.domain.store.repository.StoreRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -26,15 +28,21 @@ public class ReviewServiceImpl implements ReviewService {
 
 	private final ReviewRepository reviewRepository;
 	private final ReviewImageRepository reviewImageRepository;
+	private final StoreRepository storeRepository; // <--- 이 줄이 반드시 있어야 합니다.
 
 	// CREATE (하나로 합친 버전)
 	@Override
 	public ReviewResponse createReview(UUID orderId, CreateReviewRequest request) {
+
+
+		Store store = storeRepository.findById(request.getStoreId())
+			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 가게입니다."));
+
 		// 1. 리뷰 엔티티 생성 (Request DTO의 데이터를 사용)
 		Review review = Review.builder()
 			.orderId(orderId)
 			.userId(request.getUserId())
-			.storeId(request.getStoreId())
+			.store(store)
 			.rating(request.getRating())
 			.content(request.getContent())
 			.isHidden(false)

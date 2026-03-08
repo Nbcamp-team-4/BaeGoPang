@@ -11,13 +11,18 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import com.team.project.domain.store.entity.Store;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -39,11 +44,19 @@ public class Review {
 	private UUID id;
 	private UUID orderId;
 	private UUID userId;
-	private UUID storeId;
+	//private UUID storeId;
 	private Integer rating;
 	private String content;
 	private Boolean isHidden;
 
+
+	// 이 부분이 있어야 review.getStore()를 사용할 수 있습니다.
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "store_id")
+	private Store store;
+
+	// 리뷰 이미지
 	@Builder.Default
 	@OneToMany(mappedBy = "review", cascade = CascadeType.ALL)
 	private List<ReviewImage> reviewImages = new ArrayList<>();
