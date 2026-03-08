@@ -20,7 +20,6 @@ public class GetStoresResponse extends BasePageResponse<GetStoresResponse.Item> 
         super(content, page, size, totalElements, totalPages);
     }
 
-    // [방법 A] 정적 팩토리 메서드: 복잡한 변환 로직을 이 안으로 격리!
     public static GetStoresResponse of(List<StoreResult> results, BasePageRequest pageRequest) {
         // 1. Result -> Item 변환
         List<Item> items = results.stream()
@@ -41,6 +40,26 @@ public class GetStoresResponse extends BasePageResponse<GetStoresResponse.Item> 
             .size(pageRequest.getSize())
             .totalElements((long) items.size()) // 실제로는 DB count 쿼리 결과가 들어갈 자리
             .totalPages(1) // 실제로는 계산 로직이 들어갈 자리
+            .build();
+    }
+    public static GetStoresResponse of(List<StoreResult> results) {
+        List<Item> items = results.stream()
+            .map(result -> Item.builder()
+                .id(result.getId())
+                .name(result.getName())
+                .imageUrl(result.getImageUrl())
+                .status(result.getStatus())
+                .deliveryFee(result.getDeliveryFee())
+                .minimumOrderAmount(result.getMinimumOrderAmount())
+                .build())
+            .toList();
+
+        return GetStoresResponse.builder()
+            .content(items)
+            .page(0)
+            .size(items.size())
+            .totalElements((long) items.size())
+            .totalPages(1)
             .build();
     }
 

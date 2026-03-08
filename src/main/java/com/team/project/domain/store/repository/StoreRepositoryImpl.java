@@ -30,7 +30,7 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 	}
 
 	@Override
-	public List<Store> findAllByUserIdWithDetails(UUID userId) {
+	public List<Store> findByUser_IdAndDeletedAtIsNull(UUID userId) {
 		return em.createQuery("""
                 select s from Store s
                 join fetch s.region r
@@ -60,19 +60,30 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
 	@Override
 	public List<Store> findNearbyStores(double longitude, double latitude, double distanceInMeters, UUID categoryId) {
-		// PostGIS 공간 검색용 Native Query
 		String sql = """
-            SELECT s.* FROM p_store s
-            LEFT JOIN p_store_category sc ON s.id = sc.store_id
-            WHERE s.status = 'OPEN' 
-              AND s.deleted_at IS NULL
-              AND ST_DWithin(s.location::geography, 
-                             ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, 
-                             :distance)
-              AND (:categoryId::uuid IS NULL OR sc.category_id = :categoryId)
-            ORDER BY ST_Distance(s.location::geography, 
-                                ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography) ASC
-        """;
+        SELECT s.*
+        FROM p_store s
+        WHERE s.status = 'OPEN'
+          AND s.deleted_at IS NULL
+          AND ST_DWithin(
+              s.location::geography,
+              ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+              :distance
+          )
+          AND (
+              :categoryId::uuid IS NULL
+              OR EXISTS (
+                  SELECT 1
+                  FROM p_store_category sc
+                  WHERE sc.store_id = s.id
+                    AND sc.category_id = :categoryId
+              )
+          )
+        ORDER BY ST_Distance(
+            s.location::geography,
+            ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+        ) ASC
+    """;
 
 		return em.createNativeQuery(sql, Store.class)
 			.setParameter("lng", longitude)

@@ -13,7 +13,7 @@ public interface StoreRepositoryCustom {
 	Optional<Store> findDetailById(UUID storeId);
 
 	// 2. [점주] 내 가게 목록 조회
-	List<Store> findAllByUserIdWithDetails(UUID userId);
+	List<Store> findByUser_IdAndDeletedAtIsNull(UUID userId);
 
 	// 3. [관리자] 통합 필터 조회 (상태, 지역, 유저별)
 	List<Store> findAllWithFilters(StoreStatus status, UUID regionId, UUID userId);

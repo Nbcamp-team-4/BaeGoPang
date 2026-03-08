@@ -130,31 +130,31 @@ public class StoreServiceImpl implements StoreService {
 		return StoreResult.from(store);
 	}
 
-	// === [사용자] 내 주소(단일 주소) 기반 주변 3km 가게 조회 ===
+	// === [사용자] 내 주소(단일 주소) 기준 주변 3km 가게 조회 ===
+	// TODO: Security 적용 후, addressId가 로그인한 사용자의 주소인지 검증 로직 추가
 	@Override
 	@Transactional(readOnly = true)
-	public List<StoreResult> searchByUserIdAddress(UUID addressId, UUID userId, UUID categoryId) {
-		System.out.println("입력받은 addressId: " + addressId);
-		// 1. 주소 테이블(p_user_address)에서 좌표 정보 조회
-		// TODO: SecurityContext (@AuthenticationPrincipal) 적용 후, 해당 주소가 로그인한 유저의 주소가 맞는지 검증 로직 추가 예정
+	public List<StoreResult> searchByUserIdAddress(UUID addressId, SearchStoreCommand command) {
+
+		// 1. 사용자 주소 조회
 		UserAddress address = userAddressRepository.findById(addressId)
 			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주소입니다."));
-		System.out.println("찾은 주소의 위도: " + address.getLatitude());
-		System.out.println("찾은 주소의 경도: " + address.getLongitude());
-		/// 2. BigDecimal을 Double로 변환하여 추출
-		// address.getLatitude()가 BigDecimal을 반환하므로 .doubleValue()를 붙여줍니다.
+
+		// 2. 주소의 위도/경도를 Double 값으로 변환
 		Double latitude = address.getLatitude().doubleValue();
 		Double longitude = address.getLongitude().doubleValue();
 
-		// 3. 3km(3000m) 반경 내 영업 중인 가게 검색
-		// 가이드에 따라 geography 캐스팅을 활용하여 미터 단위로 계산합니다.
+		// 3. 반경 3km 이내 가게 조회
+		// - categoryId가 null이면 전체 조회
+		// - categoryId가 있으면 해당 카테고리 가게만 조회
 		List<Store> stores = storeRepository.findNearbyStores(
-			longitude, //
+			longitude,
 			latitude,
 			3000.0,
-			categoryId
+			command.getCategoryId()
 		);
 
+		// 4. Entity -> Result 변환 후 반환
 		return stores.stream()
 			.map(StoreResult::from)
 			.toList();
@@ -209,12 +209,11 @@ public class StoreServiceImpl implements StoreService {
 
 	// === [점주] 내 가게 목록 조회 ===
 	@Override
+	@Transactional(readOnly = true)
 	public List<StoreResult> getMyStores(UUID userId) {
-		userRepository.findById(userId)
-			.orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+		List<Store> stores = storeRepository.findByUser_IdAndDeletedAtIsNull(userId);
 
-		// Impl에서 구현한 fetch join 메서드 호출 (성능 최적화)
-		return storeRepository.findAllByUserIdWithDetails(userId).stream()
+		return stores.stream()
 			.map(StoreResult::from)
 			.toList();
 	}
@@ -232,7 +231,6 @@ public class StoreServiceImpl implements StoreService {
 			.map(StoreResult::from)
 			.toList();
 	}
-
 
 
 	// === [공통] 가게 단건 조회 (메뉴 포함용) ===

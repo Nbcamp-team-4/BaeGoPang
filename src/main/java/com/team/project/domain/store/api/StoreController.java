@@ -19,13 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.team.project.domain.store.api.request.AdminUpdateStoreRequest;
 import com.team.project.domain.store.api.request.CreateStoreRequest;
+import com.team.project.domain.store.api.request.GetStoresRequest;
 import com.team.project.domain.store.api.request.UpdateOwnerFieldsRequest;
 import com.team.project.domain.store.api.response.GetStoresResponse;
 import com.team.project.domain.store.api.response.StoreResponse;
 import com.team.project.domain.store.model.vo.StoreStatus;
 import com.team.project.domain.store.service.StoreService;
+import com.team.project.domain.store.service.command.SearchStoreCommand;
 import com.team.project.domain.store.service.result.StoreResult;
-import com.team.project.global.common.dto.BasePageRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +54,28 @@ public class StoreController {
 		return ResponseEntity.ok(StoreResponse.from(result));
 	}
 
+	// === [MANAGER/MASTER] 가게 전체 조회 ===
+	@GetMapping
+	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 관리자 권한 유지!
+	public ResponseEntity<GetStoresResponse> getStores(
+		@RequestParam UUID userId,
+		@ModelAttribute GetStoresRequest request
+	) {
+		SearchStoreCommand command = request.toCommand(userId);
+		List<StoreResult> results = storeService.searchStores(command);
+		return ResponseEntity.ok(GetStoresResponse.of(results, request));
+	}
+
+	// === [OWNER] 내 가게 목록 조회 ===
+	@GetMapping("/my")
+	@PreAuthorize("hasRole('OWNER')")
+	public ResponseEntity<GetStoresResponse> getMyStores(
+		@RequestParam UUID userId // TODO: Security 적용 후 제거
+	) {
+		List<StoreResult> results = storeService.getMyStores(userId);
+		return ResponseEntity.ok(GetStoresResponse.of(results));
+	}
+
 	// === [OWNER] 가게 정보 수정 ===
 	// URL: PATCH /api/stores/{storeId}?userId=...
 	@PatchMapping("/{storeId}")
@@ -67,9 +90,9 @@ public class StoreController {
 	}
 
 	// === [MANAGER/MASTER] 가게 전체 정보 수정 ===
-	// URL: PATCH /api/stores/{storeId}/admin?userId=...
+	// URL: PATCH /api/stores/{storeId}?userId=...
 	@PatchMapping("/{storeId}/admin")
-	//@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 관리자 권한 유지!
+	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 관리자 권한 유지!
 	public ResponseEntity<StoreResponse> updateStoreByAdmin(
 		@PathVariable UUID storeId,
 		@RequestParam UUID userId, // TODO: @AuthenticationPrincipal 적용 예정
@@ -82,34 +105,32 @@ public class StoreController {
 	// === [공통/관리자] 가게 상태 변경 ===
 	// URL: PATCH /api/stores/{storeId}/status?status=OPEN&userId=...&role=...
 	@PatchMapping("/{storeId}/status")
-	//@PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')") // 점주(OPEN/CLOSED) 및 관리자 권한 유지!
+	@PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')") // 점주(OPEN/CLOSED) 및 관리자 권한 유지!
 	public ResponseEntity<StoreResponse> updateStoreStatus(
 		@PathVariable UUID storeId,
 		@RequestParam UUID userId, // TODO: @AuthenticationPrincipal 적용 예정
-		@RequestParam String role,
+		@RequestParam String role, // TODO: User/Role 구조 확정 후 제거
 		@RequestParam StoreStatus status) { // ?status=OPEN
 
 		StoreResult result = storeService.updateStatus(storeId, userId, status, role);
 		return ResponseEntity.ok(StoreResponse.from(result));
 	}
 
-	// === [사용자] 내 주소 기반 주변 가게 조회 ===
-	// GET /api/stores/search/address?addressId=...&categoryId=...
-	@GetMapping("/search/address")
+	// === [사용자] 내 주소 기준 주변 가게 조회 ===
+	@GetMapping("/nearby")
 	public ResponseEntity<GetStoresResponse> searchByMyAddress(
 		@RequestParam UUID addressId,
-		@RequestParam UUID userId, // TODO: SecurityContext 적용 후 제거 대상
-		@RequestParam(required = false) UUID categoryId,
-		@ModelAttribute BasePageRequest pageRequest // 페이징 요청 객체
-		) {
-		// 서비스의 파라미터 순서에 맞춰 전달
-		List<StoreResult> results = storeService.searchByUserIdAddress(addressId, userId, categoryId);
-		return ResponseEntity.ok(GetStoresResponse.of(results, pageRequest));
+		@RequestParam UUID userId, // TODO: Security 적용 후 제거
+		@ModelAttribute GetStoresRequest request
+	) {
+		SearchStoreCommand command = request.toCommand(userId);
+		List<StoreResult> results = storeService.searchByUserIdAddress(addressId, command);
+		return ResponseEntity.ok(GetStoresResponse.of(results, request));
 	}
 
-	// === [MANAGER/MASTER/OWNER] 가게 삭제 ===
+	// === [MANAGER/MASTER] 가게 삭제 ===
 	@DeleteMapping("/{storeId}")
-	//@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 권한 유지!
+	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 권한 유지!
 	public ResponseEntity<Void> deleteStore(
 		@PathVariable UUID storeId,
 		@RequestParam UUID userId) { // TODO: @AuthenticationPrincipal 적용 예정
