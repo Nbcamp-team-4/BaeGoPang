@@ -4,17 +4,15 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.team.project.domain.order.api.request.ConfirmOrderPaymentRequest;
+import com.team.project.domain.order.api.response.*;
+import com.team.project.domain.payment.model.dto.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.team.project.domain.order.api.request.CancelOrderRequest;
 import com.team.project.domain.order.api.request.CreateOrderRequest;
 import com.team.project.domain.order.api.request.UpdateOrderStatusRequest;
-import com.team.project.domain.order.api.response.CancelOrderResponse;
-import com.team.project.domain.order.api.response.CreateOrderResponse;
-import com.team.project.domain.order.api.response.GetOrderDetailResponse;
-import com.team.project.domain.order.api.response.GetOrderSummaryResponse;
-import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.entity.OrderItem;
 import com.team.project.domain.order.entity.OrderItemOption;
@@ -26,10 +24,6 @@ import com.team.project.domain.order.exception.OrderNotFoundException;
 import com.team.project.domain.order.model.vo.OrderStatus;
 import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.payment.entity.Payment;
-import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
-import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
-import com.team.project.domain.payment.model.dto.CreatePaymentCommand;
-import com.team.project.domain.payment.model.dto.CreatePaymentQuery;
 import com.team.project.domain.payment.repository.PaymentRepository;
 import com.team.project.domain.payment.service.PaymentService;
 import com.team.project.domain.product.entity.Product;
@@ -140,6 +134,25 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
+	@Transactional
+	public ConfirmOrderPaymentResponse confirmOrderPayment(UUID orderId, ConfirmOrderPaymentRequest request) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(OrderNotFoundException::new);
+
+		if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
+			throw new InvalidOrderStatusException();
+		}
+
+		PayPaymentQuery payPaymentQuery = paymentService.payPayment(
+				PayPaymentCommand.of(orderId, request.getPaymentKey(), request.getAmount())
+		);
+
+		order.markPaid();
+
+		return ConfirmOrderPaymentResponse.from(order, payPaymentQuery);
+	}
+
+	@Override
 	public GetOrderDetailResponse getOrderDetail(UUID orderId, UUID userId) {
 		Order order = orderRepository.findDetailByIdAndUserId(orderId, userId)
 			.orElseThrow(OrderNotFoundException::new);
@@ -189,8 +202,8 @@ public class OrderServiceImpl implements OrderService {
 		}
 
 		// 취소 사유는 항상 들어와야 합니다.
-		if (StringUtils.hasText(request.getReason())) {
-			throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
+		if (request == null || !StringUtils.hasText(request.getReason())) {
+			throw new InvalidOrderStatusException(); // 추후 더 적절한 예외로 변경 가능
 		}
 
 		// 결제를 취소합니다.
@@ -198,10 +211,13 @@ public class OrderServiceImpl implements OrderService {
 		// 1. 결제 취소할 수 없을 때 주문 취소도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
 		try {
 			CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-				CancelPaymentCommand.ofCancel(order.getId(), request.getReason()));
+					CancelPaymentCommand.ofCancel(order.getId(), request.getReason()));
+
+			order.cancel(request.getReason());
+
 			return CancelOrderResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
 		} catch (Exception e) {
-			throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
+			throw new InvalidOrderStatusException(); // 추후 결제 취소 실패 전용 예외로 변경 가능
 		}
 
 		// 2. 결제 취소할 수 없든 말든 주문 취소는 하고 싶은 경우 -> try, catch로 에러를 잡고 finally에서 cancel을 호출하면 됩니다. 이경우 결제 취소는 안되므로 toss에 결제 취소가 안들어갑니다.
@@ -296,10 +312,13 @@ public class OrderServiceImpl implements OrderService {
 		// 1. 결제 취소할 수 없을 때 주문 거절도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
 		try {
 			CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-				CancelPaymentCommand.ofCancel(order.getId(), reason));
+					CancelPaymentCommand.ofRefund(order.getId(), reason));
+
+			order.reject(reason);
+
 			return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
 		} catch (Exception e) {
-			throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
+			throw new InvalidOrderStatusException(); // 추후 결제 환불 실패 전용 예외로 변경 가능
 		}
 
 		// 2. 결제 취소할 수 없든 말든 주문 거절을 하고 싶은 경우 -> try, catch로 에러를 잡고 finally에서 reject를 호출하면 됩니다. 이경우 결제 취소는 안되므로 toss에 결제 취소가 안들어갑니다.
@@ -345,11 +364,14 @@ public class OrderServiceImpl implements OrderService {
 			// 1. 결제 취소할 수 없을 때 주문 거절도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
 			try {
 				CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-					CancelPaymentCommand.ofRefund(order.getId(), reason));
+						CancelPaymentCommand.ofRefund(order.getId(), reason));
+
+				order.reject(reason);
+
 				return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(),
-					cancelPaymentQuery.getStatus());
+						cancelPaymentQuery.getStatus());
 			} catch (Exception e) {
-				throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
+				throw new InvalidOrderStatusException(); // 추후 결제 환불 실패 전용 예외로 변경 가능
 			}
 
 			// 2. 결제 취소할 수 없든 말든 주문 거절을 하고 싶은 경우 -> try, catch로 에러를 잡고 finally에서 reject를 호출하면 됩니다. 이경우 결제 취소는 안되므로 toss에 결제 취소가 안들어갑니다.

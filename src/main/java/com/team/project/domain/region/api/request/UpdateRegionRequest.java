@@ -1,7 +1,6 @@
 package com.team.project.domain.region.api.request;
 
 import jakarta.validation.constraints.NotBlank;
-
 import lombok.Data;
 
 

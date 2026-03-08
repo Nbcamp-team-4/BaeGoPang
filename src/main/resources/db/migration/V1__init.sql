@@ -45,7 +45,14 @@ CREATE TYPE payment_status AS ENUM ('READY','PAID','CANCELED','CANCEL_FAILED');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_log_status') THEN
-CREATE TYPE payment_log_status AS ENUM ('SUCCESS','FAIL');
+CREATE TYPE payment_log_status AS ENUM (
+  'PAY_SUCCESS',
+  'PAY_FAILURE',
+  'CANCEL_SUCCESS',
+  'CANCEL_FAILURE',
+  'REFUND_SUCCESS',
+  'REFUND_FAILURE'
+);
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pg_provider_status') THEN
