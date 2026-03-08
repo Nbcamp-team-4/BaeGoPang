@@ -8,7 +8,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserRole;
 
@@ -35,10 +34,8 @@ public class UserDetailsImpl implements UserDetails {
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return userRoles.stream()
-			.map(userRole -> userRole.getRole().getRole())
-			.map(RoleType::getAuthority)
-			.distinct()
-			.map(SimpleGrantedAuthority::new)
+			.map(userRole -> userRole.getRole().getType())
+			.map(roleType -> new SimpleGrantedAuthority(roleType.name()))
 			.collect(Collectors.toList());
 	}
 

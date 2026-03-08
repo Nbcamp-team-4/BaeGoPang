@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import com.team.project.global.common.entity.BaseEntity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,19 +17,14 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Table(name = "p_user")
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
 	@Id
@@ -37,11 +35,11 @@ public class User extends BaseEntity {
 	@Column(nullable = false, unique = true)
 	private String loginId;
 
-	@Column(nullable = false, unique = true)
-	private String email;
-
 	@Column(nullable = false)
 	private String password;
+
+	@Column(nullable = false, unique = true)
+	private String email;
 
 	@Column(nullable = false)
 	private String name;
@@ -50,10 +48,12 @@ public class User extends BaseEntity {
 	private String phone;
 
 	@Enumerated(EnumType.STRING)
-	@ColumnDefault("ACTIVE")
-	private UserStatus status;
+	private UserStatus status = UserStatus.ACTIVE;
 
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	@Column(length = 500)
+	private String refreshToken;
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<UserRole> userRoles = new ArrayList<>();
 
 	public User(String loginId, String email, String password, String name, String phone) {
@@ -63,6 +63,7 @@ public class User extends BaseEntity {
 		this.name = name;
 		this.phone = phone;
 	}
+
 	public User(String loginId, String email, String password, String name, String phone, UserStatus status) {
 		this.loginId = loginId;
 		this.email = email;
@@ -70,5 +71,24 @@ public class User extends BaseEntity {
 		this.name = name;
 		this.phone = phone;
 		this.status = status;
+	}
+
+	public void updateRefreshToken(String refreshToken) {
+		this.refreshToken = refreshToken;
+	}
+
+	public void clearRefreshToken() {
+		this.refreshToken = null;
+	}
+
+	public List<String> getRoleNames() {
+		return userRoles.stream()
+			.map(userRole -> userRole.getRole().getType().name())
+			.distinct()
+			.toList();
+	}
+
+	public void addUserRole(UserRole userRole) {
+		userRoles.add(userRole);
 	}
 }
