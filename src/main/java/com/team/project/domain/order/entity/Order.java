@@ -24,6 +24,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -31,6 +32,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_order")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class Order extends BaseEntity {
 
     @Id
