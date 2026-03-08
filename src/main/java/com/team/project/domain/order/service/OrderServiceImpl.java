@@ -4,15 +4,19 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.team.project.domain.order.api.request.ConfirmOrderPaymentRequest;
-import com.team.project.domain.order.api.response.*;
-import com.team.project.domain.payment.model.dto.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.team.project.domain.order.api.request.CancelOrderRequest;
+import com.team.project.domain.order.api.request.ConfirmOrderPaymentRequest;
 import com.team.project.domain.order.api.request.CreateOrderRequest;
 import com.team.project.domain.order.api.request.UpdateOrderStatusRequest;
+import com.team.project.domain.order.api.response.CancelOrderResponse;
+import com.team.project.domain.order.api.response.ConfirmOrderPaymentResponse;
+import com.team.project.domain.order.api.response.CreateOrderResponse;
+import com.team.project.domain.order.api.response.GetOrderDetailResponse;
+import com.team.project.domain.order.api.response.GetOrderSummaryResponse;
+import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.entity.OrderItem;
 import com.team.project.domain.order.entity.OrderItemOption;
@@ -24,7 +28,10 @@ import com.team.project.domain.order.exception.OrderNotFoundException;
 import com.team.project.domain.order.model.vo.OrderStatus;
 import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.payment.entity.Payment;
-import com.team.project.domain.payment.repository.PaymentRepository;
+import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
+import com.team.project.domain.payment.model.dto.CreatePaymentCommand;
+import com.team.project.domain.payment.model.dto.PayPaymentCommand;
+import com.team.project.domain.payment.model.dto.PayPaymentQuery;
 import com.team.project.domain.payment.service.PaymentService;
 import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.product.repository.ProductRepository;
@@ -50,71 +57,81 @@ public class OrderServiceImpl implements OrderService {
 	private final UserAddressRepository userAddressRepository;
 
 	private final PaymentService paymentService;
-	private final PaymentRepository paymentRepository;
+	private final OrderPaymentProcessor orderPaymentProcessor;
 
 	@Override
 	@Transactional
 	public CreateOrderResponse createOrder(CreateOrderRequest request) {
 
-		// 1) 유저/가게 존재 확인
+		// 1. 유저 존재 확인
 		User user = userRepository.findById(request.getUserId())
-			.orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+				.orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
 
+		// 2. 가게 존재 확인
 		Store store = storeRepository.findById(request.getStoreId())
-			.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
+				.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
 
-		// 2) 주문번호 생성
+		// 3. 주문번호 생성
 		String orderNo = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
-		// 3) 총액 계산
+		// 4. 총 주문 금액 계산
 		int totalAmount = request.getItems().stream()
-			.mapToInt(item -> {
-				int optionSum = 0;
-				if (item.getOptions() != null) {
-					optionSum = item.getOptions().stream()
-						.mapToInt(opt -> opt.getExtraPrice() == null ? 0 : opt.getExtraPrice())
-						.sum();
-				}
-				return (item.getUnitPrice() + optionSum) * item.getQuantity();
-			})
-			.sum();
+				.mapToInt(item -> {
+					int optionSum = 0;
+					if (item.getOptions() != null) {
+						optionSum = item.getOptions().stream()
+								.mapToInt(opt -> opt.getExtraPrice() == null ? 0 : opt.getExtraPrice())
+								.sum();
+					}
+					return (item.getUnitPrice() + optionSum) * item.getQuantity();
+				})
+				.sum();
 
-		// 4) 배송지 조회
+		// 5. 배송지 조회
 		UserAddress deliveryAddress = null;
 		if (request.getDeliveryAddressId() != null) {
 			deliveryAddress = userAddressRepository
-				.findByIdAndUserId(request.getDeliveryAddressId(), request.getUserId())
-				.orElseThrow(() -> new IllegalArgumentException("DELIVERY_ADDRESS_NOT_FOUND"));
+					.findByIdAndUserId(request.getDeliveryAddressId(), request.getUserId())
+					.orElseThrow(() -> new IllegalArgumentException("DELIVERY_ADDRESS_NOT_FOUND"));
 		}
 
-		// 5) 주문 생성
+		// 6. 주문 엔티티 생성
 		Order order = new Order(
-			user,
-			store,
-			deliveryAddress,
-			orderNo,
-			totalAmount,
-			request.getRequestMemo()
+				user,
+				store,
+				deliveryAddress,
+				orderNo,
+				totalAmount,
+				request.getRequestMemo()
 		);
 
-		// 6) 주문 아이템/옵션 생성
+		// 7. 주문 아이템 / 옵션 생성 및 주문에 연결
 		for (CreateOrderRequest.CreateOrderItemRequest itemReq : request.getItems()) {
 			Product product = productRepository.findById(itemReq.getProductId())
-				.orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
+					.orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
+
+			/*
+			 * TODO
+			 * Product 엔티티에 store 연관관계가 있다면 아래 검증을 활성화하는 것이 좋습니다.
+			 *
+			 * if (!product.getStore().getId().equals(store.getId())) {
+			 *     throw new IllegalArgumentException("해당 가게의 상품만 주문할 수 있습니다.");
+			 * }
+			 */
 
 			OrderItem orderItem = new OrderItem(
-				product,
-				itemReq.getProductName(),
-				itemReq.getUnitPrice(),
-				itemReq.getQuantity()
+					product,
+					itemReq.getProductName(),
+					itemReq.getUnitPrice(),
+					itemReq.getQuantity()
 			);
 
 			if (itemReq.getOptions() != null) {
 				for (CreateOrderRequest.CreateOrderItemOptionRequest optReq : itemReq.getOptions()) {
 					OrderItemOption option = new OrderItemOption(
-						optReq.getOptionName(),
-						optReq.getOptionItemName(),
-						optReq.getExtraPrice()
+							optReq.getOptionName(),
+							optReq.getOptionItemName(),
+							optReq.getExtraPrice()
 					);
 					orderItem.addOption(option);
 				}
@@ -123,275 +140,285 @@ public class OrderServiceImpl implements OrderService {
 			order.addItem(orderItem);
 		}
 
-		// 7) 저장
-		Order saved = orderRepository.save(order);
+		// 8. 주문 저장
+		Order savedOrder = orderRepository.save(order);
 
-		// 8) 결제 생성
-		CreatePaymentQuery paymentQuery = paymentService.createPayment(
-			CreatePaymentCommand.of(saved.getId(), saved.getTotalAmount())); // 응답에 사용하시면 payment 상태까지 같이 보낼수 있습니다.
+		// 9. 결제 준비 데이터 생성
+		// 주문 생성 직후 READY 상태의 결제 데이터를 미리 생성해둡니다.
+		paymentService.createPayment(
+				CreatePaymentCommand.of(savedOrder.getId(), savedOrder.getTotalAmount())
+		);
 
-		return CreateOrderResponse.from(saved);
+		// 10. 응답 반환
+		return CreateOrderResponse.from(savedOrder);
 	}
 
 	@Override
 	@Transactional
 	public ConfirmOrderPaymentResponse confirmOrderPayment(UUID orderId, ConfirmOrderPaymentRequest request) {
+
+		// 1. 주문 조회
 		Order order = orderRepository.findById(orderId)
 				.orElseThrow(OrderNotFoundException::new);
 
+		// 2. 결제 대기 상태인지 확인
 		if (order.getStatus() != OrderStatus.PENDING_PAYMENT) {
 			throw new InvalidOrderStatusException();
 		}
 
+		// 3. 주문 총 금액과 결제 승인 요청 금액이 일치하는지 검증
+		if (!order.getTotalAmount().equals(request.getAmount())) {
+			throw new IllegalArgumentException("주문 금액과 결제 승인 금액이 일치하지 않습니다.");
+		}
+
+		// 4. 결제 승인 처리
 		PayPaymentQuery payPaymentQuery = paymentService.payPayment(
 				PayPaymentCommand.of(orderId, request.getPaymentKey(), request.getAmount())
 		);
 
+		// 5. 주문 상태를 결제 완료로 변경
 		order.markPaid();
 
+		// 6. 응답 반환
 		return ConfirmOrderPaymentResponse.from(order, payPaymentQuery);
 	}
 
 	@Override
 	public GetOrderDetailResponse getOrderDetail(UUID orderId, UUID userId) {
+
+		// 1. 사용자 기준 주문 상세 조회
 		Order order = orderRepository.findDetailByIdAndUserId(orderId, userId)
-			.orElseThrow(OrderNotFoundException::new);
+				.orElseThrow(OrderNotFoundException::new);
 
-		Payment payment = paymentRepository.getLatestPaymentByOrderId(order.getId())
-			.orElse(null);
+		// 2. 최신 결제 정보 조회
+		Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
 
+		// 3. 응답 반환
 		return GetOrderDetailResponse.from(order, payment);
 	}
 
 	@Override
 	public List<GetOrderSummaryResponse> getMyOrders(UUID userId) {
+
+		// 1. 사용자 주문 목록 조회
 		List<Order> orders = orderRepository.findAllByUserIdOrderByOrderDateDesc(userId);
 
+		// 2. 각 주문별 최신 결제 정보와 함께 응답 변환
 		return orders.stream()
-			.map(order -> {
-				Payment payment = paymentRepository.getLatestPaymentByOrderId(order.getId())
-					.orElse(null);
-				return GetOrderSummaryResponse.from(order, payment);
-			})
-			.collect(Collectors.toList());
+				.map(order -> {
+					Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
+					return GetOrderSummaryResponse.from(order, payment);
+				})
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	@Transactional
 	public CancelOrderResponse cancelOrder(UUID orderId, UUID userId, CancelOrderRequest request) {
 
+		// 1. 주문 상세 조회
 		Order order = orderRepository.findDetailById(orderId)
-			.orElseThrow(OrderNotFoundException::new);
+				.orElseThrow(OrderNotFoundException::new);
 
+		// 2. 본인 주문인지 확인
 		if (!order.getUser().getId().equals(userId)) {
 			throw new OrderForbiddenException();
 		}
 
+		// 3. 이미 취소된 주문인지 확인
 		if (order.getStatus() == OrderStatus.CANCELED) {
 			throw new OrderAlreadyCanceledException();
 		}
 
+		// 4. 완료된 주문은 취소 불가
 		if (order.getStatus() == OrderStatus.COMPLETED) {
 			throw new OrderCannotCancelException();
 		}
 
+		// 5. 현재 정책상 취소 가능한 주문 상태인지 확인
 		if (order.getStatus() != OrderStatus.PENDING_PAYMENT
-			&& order.getStatus() != OrderStatus.PAID
-			&& order.getStatus() != OrderStatus.ACCEPTED) {
+				&& order.getStatus() != OrderStatus.PAID
+				&& order.getStatus() != OrderStatus.ACCEPTED) {
 			throw new InvalidOrderStatusException();
 		}
 
-		// 취소 사유는 항상 들어와야 합니다.
+		// 6. 취소 사유 필수 검증
 		if (request == null || !StringUtils.hasText(request.getReason())) {
-			throw new InvalidOrderStatusException(); // 추후 더 적절한 예외로 변경 가능
+			throw new IllegalArgumentException("주문 취소 사유는 필수입니다.");
 		}
 
-		// 결제를 취소합니다.
-		// 결제를 취소할 수 없는 상황이라면 두 가지 선택지가 있습니다. (원하시는 상황을 선택하셔서 지우시면 됩니다.)
-		// 1. 결제 취소할 수 없을 때 주문 취소도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
-		try {
-			CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-					CancelPaymentCommand.ofCancel(order.getId(), request.getReason()));
+		// 7. 결제 취소 처리
+		// 실제 결제 취소 / 환불 연동 책임은 OrderPaymentProcessor에 위임
+		CancelPaymentQuery cancelPaymentQuery =
+				orderPaymentProcessor.cancelForOrder(order.getId(), request.getReason());
 
-			order.cancel(request.getReason());
+		// 8. 주문 상태 취소 처리
+		order.cancel(request.getReason());
 
-			return CancelOrderResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
-		} catch (Exception e) {
-			throw new InvalidOrderStatusException(); // 추후 결제 취소 실패 전용 예외로 변경 가능
-		}
-
-		// 2. 결제 취소할 수 없든 말든 주문 취소는 하고 싶은 경우 -> try, catch로 에러를 잡고 finally에서 cancel을 호출하면 됩니다. 이경우 결제 취소는 안되므로 toss에 결제 취소가 안들어갑니다.
-		// CancelPaymentQuery cancelPaymentQuery = null;
-		// try{
-		// 	cancelPaymentQuery = paymentService.cancelPayment(
-		// 		CancelPaymentCommand.of(order.getId(), request.getReason()));
-		// }catch(Exception e){
-		// 	throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
-		// }finally{
-		// 	order.cancel(request.getReason());
-		// 	return CancelOrderResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
-		// }
+		// 9. 응답 반환
+		return CancelOrderResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
 	}
 
 	@Override
 	@Transactional
 	public void deleteOrder(UUID orderId, UUID userId) {
-		Order order = orderRepository.findById(orderId)
-			.orElseThrow(OrderNotFoundException::new);
 
+		// 1. 주문 조회
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(OrderNotFoundException::new);
+
+		// 2. 본인 주문인지 확인
 		if (!order.getUser().getId().equals(userId)) {
 			throw new OrderForbiddenException();
 		}
 
+		// 3. 소프트 삭제 처리
 		order.markDeleted(userId);
 	}
 
 	@Override
 	public List<GetOrderSummaryResponse> getStoreOrders(UUID storeId) {
+
+		// 1. 가게 주문 목록 조회
 		List<Order> orders = orderRepository.findAllByStoreIdOrderByOrderDateDesc(storeId);
 
+		// 2. 각 주문별 최신 결제 정보와 함께 응답 변환
 		return orders.stream()
-			.map(order -> {
-				Payment payment = paymentRepository.getLatestPaymentByOrderId(order.getId())
-					.orElse(null);
-				return GetOrderSummaryResponse.from(order, payment);
-			})
-			.collect(Collectors.toList());
+				.map(order -> {
+					Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
+					return GetOrderSummaryResponse.from(order, payment);
+				})
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public GetOrderDetailResponse getStoreOrderDetail(UUID orderId, UUID storeId) {
+
+		// 1. 가게 기준 주문 상세 조회
 		Order order = orderRepository.findDetailByIdAndStoreId(orderId, storeId)
-			.orElseThrow(OrderNotFoundException::new);
+				.orElseThrow(OrderNotFoundException::new);
 
-		Payment payment = paymentRepository.getLatestPaymentByOrderId(order.getId())
-			.orElse(null);
+		// 2. 최신 결제 정보 조회
+		Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
 
+		// 3. 응답 반환
 		return GetOrderDetailResponse.from(order, payment);
 	}
 
 	@Override
 	@Transactional
 	public UpdateOrderStatusResponse acceptOrder(UUID orderId, UUID storeId) {
-		Order order = orderRepository.findById(orderId)
-			.orElseThrow(OrderNotFoundException::new);
 
+		// 1. 주문 조회
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(OrderNotFoundException::new);
+
+		// 2. 해당 가게 주문인지 확인
 		if (!order.getStore().getId().equals(storeId)) {
 			throw new OrderForbiddenException();
 		}
 
+		// 3. 결제 완료 상태의 주문만 수락 가능
 		if (order.getStatus() != OrderStatus.PAID) {
 			throw new InvalidOrderStatusException();
 		}
 
+		// 4. 주문 수락 처리
 		order.accept();
 
-		Payment payment = paymentRepository.getLatestPaymentByOrderId(order.getId())
-			.orElse(null);
-
+		// 5. 최신 결제 정보 조회 후 응답 반환
+		Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
 		return UpdateOrderStatusResponse.from(order, payment);
 	}
 
 	@Override
 	@Transactional
 	public UpdateOrderStatusResponse rejectOrder(UUID orderId, UUID storeId, String reason) {
-		Order order = orderRepository.findById(orderId)
-			.orElseThrow(OrderNotFoundException::new);
 
+		// 1. 주문 조회
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(OrderNotFoundException::new);
+
+		// 2. 해당 가게 주문인지 확인
 		if (!order.getStore().getId().equals(storeId)) {
 			throw new OrderForbiddenException();
 		}
 
+		// 3. 결제 완료 상태의 주문만 거절 가능
 		if (order.getStatus() != OrderStatus.PAID) {
 			throw new InvalidOrderStatusException();
 		}
 
-		// 결제 완료 상태면 환불 처리까지 연결
-		// 결제를 취소합니다.
-		// 결제를 취소할 수 없는 상황이라면 두 가지 선택지가 있습니다. (원하시는 상황을 선택하셔서 지우시면 됩니다.)
-		// 1. 결제 취소할 수 없을 때 주문 거절도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
-		try {
-			CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-					CancelPaymentCommand.ofRefund(order.getId(), reason));
-
-			order.reject(reason);
-
-			return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
-		} catch (Exception e) {
-			throw new InvalidOrderStatusException(); // 추후 결제 환불 실패 전용 예외로 변경 가능
+		// 4. 거절 사유 필수 검증
+		if (!StringUtils.hasText(reason)) {
+			throw new IllegalArgumentException("주문 거절 사유는 필수입니다.");
 		}
 
-		// 2. 결제 취소할 수 없든 말든 주문 거절을 하고 싶은 경우 -> try, catch로 에러를 잡고 finally에서 reject를 호출하면 됩니다. 이경우 결제 취소는 안되므로 toss에 결제 취소가 안들어갑니다.
-		// CancelPaymentQuery cancelPaymentQuery = null;
-		// try{
-		// 	cancelPaymentQuery = paymentService.cancelPayment(
-		// 		CancelPaymentCommand.of(order.getId(), reason));
-		// }catch(Exception e){
-		// 	throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
-		// }finally{
-		// 	order.reject(reason);
-		// 	return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
-		// }
+		// 5. 환불 처리
+		CancelPaymentQuery cancelPaymentQuery =
+				orderPaymentProcessor.refundForRejectedOrder(order.getId(), reason);
 
+		// 6. 주문 거절 처리
+		order.reject(reason);
+
+		// 7. 응답 반환
+		return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
 	}
 
 	@Override
 	@Transactional
 	public UpdateOrderStatusResponse updateOrderStatusByStore(UUID orderId, UUID storeId,
-		UpdateOrderStatusRequest request) {
-		Order order = orderRepository.findById(orderId)
-			.orElseThrow(OrderNotFoundException::new);
+															  UpdateOrderStatusRequest request) {
 
+		// 1. 주문 조회
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(OrderNotFoundException::new);
+
+		// 2. 해당 가게 주문인지 확인
 		if (!order.getStore().getId().equals(storeId)) {
 			throw new OrderForbiddenException();
 		}
 
+		// 3. 요청된 목표 상태 확인
 		OrderStatus target = request.getStatus();
 
+		// 4. 상태별 주문 처리
 		if (target == OrderStatus.ACCEPTED) {
 			order.accept();
+
 		} else if (target == OrderStatus.COOKING) {
 			order.startCooking();
+
 		} else if (target == OrderStatus.DELIVERING) {
 			order.startDelivering();
+
 		} else if (target == OrderStatus.COMPLETED) {
 			order.complete();
+
 		} else if (target == OrderStatus.REJECTED) {
-			// 결제 완료 상태면 환불 처리까지 연결
-			// 결제를 취소합니다.
-			// 결제를 취소할 수 없는 상황이라면 두 가지 선택지가 있습니다. (원하시는 상황을 선택하셔서 지우시면 됩니다.)
+			// 상태 변경 API에서 거절 처리 시 기본 사유값 사용
 			String reason = "STORE_STATUS_UPDATE";
-			// 1. 결제 취소할 수 없을 때 주문 거절도 못하게 하고 싶은 경우 -> paymentService에서 에러가 나면 에러를 잡지 않거나 잡아서 주문 관련 에러를 던져서 롤백
-			try {
-				CancelPaymentQuery cancelPaymentQuery = paymentService.cancelPayment(
-						CancelPaymentCommand.ofRefund(order.getId(), reason));
 
-				order.reject(reason);
+			// 결제 환불 처리
+			CancelPaymentQuery cancelPaymentQuery =
+					orderPaymentProcessor.refundForRejectedOrder(order.getId(), reason);
 
-				return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(),
-						cancelPaymentQuery.getStatus());
-			} catch (Exception e) {
-				throw new InvalidOrderStatusException(); // 추후 결제 환불 실패 전용 예외로 변경 가능
-			}
+			// 주문 거절 처리
+			order.reject(reason);
 
-			// 2. 결제 취소할 수 없든 말든 주문 거절을 하고 싶은 경우 -> try, catch로 에러를 잡고 finally에서 reject를 호출하면 됩니다. 이경우 결제 취소는 안되므로 toss에 결제 취소가 안들어갑니다.
-			// CancelPaymentQuery cancelPaymentQuery = null;
-			// try{
-			// 	cancelPaymentQuery = paymentService.cancelPayment(
-			// 		CancelPaymentCommand.of(order.getId(), reason));
-			// }catch(Exception e){
-			// 	throw new InvalidOrderStatusException(); // 알맞는 exception으로 변경해주세요.
-			// }finally{
-			// 	order.reject(reason);
-			// 	return UpdateOrderStatusResponse.from(order, cancelPaymentQuery.getId(), cancelPaymentQuery.getStatus());
-			// }
+			// 거절은 여기서 바로 응답 반환
+			return UpdateOrderStatusResponse.from(
+					order,
+					cancelPaymentQuery.getId(),
+					cancelPaymentQuery.getStatus()
+			);
+
 		} else {
 			throw new InvalidOrderStatusException();
 		}
 
-		Payment updatedPayment = paymentRepository.getLatestPaymentByOrderId(order.getId())
-			.orElse(null);
-
+		// 5. 일반 상태 변경은 최신 결제 정보와 함께 응답 반환
+		Payment updatedPayment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
 		return UpdateOrderStatusResponse.from(order, updatedPayment);
 	}
 }
