@@ -11,6 +11,8 @@ import com.team.project.domain.payment_log.model.dto.GetPaymentLogsQuery;
 public interface PaymentLogService {
 	CreatePaymentQuery createPaymentLog(CreatePaymentLogCommand paymentLogCommand);
 
+	CreatePaymentQuery createPaymentFailureLog(CreatePaymentLogCommand paymentLogCommand);
+
 	GetPaymentLogQuery getPaymentLog(UUID paymentLogId);
 
 	GetPaymentLogsQuery getPaymentLogs(GetPaymentLogsCommand command);
