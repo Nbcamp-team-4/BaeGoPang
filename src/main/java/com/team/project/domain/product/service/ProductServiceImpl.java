@@ -7,9 +7,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.product.entity.Product;
+import com.team.project.domain.product.entity.ProductOption;
+import com.team.project.domain.product.entity.ProductOptionItem;
+import com.team.project.domain.product.exception.ProductNotFoundException;
+import com.team.project.domain.product.repository.ProductOptionItemRepository;
+import com.team.project.domain.product.repository.ProductOptionRepository;
 import com.team.project.domain.product.repository.ProductRepository;
 import com.team.project.domain.product.service.command.CreateProductCommand;
 import com.team.project.domain.product.service.command.UpdateProductCommand;
+import com.team.project.domain.product.service.result.GetProductResult;
 import com.team.project.domain.product.service.result.ProductResult;
 import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.repository.StoreRepository;
@@ -22,20 +28,14 @@ import lombok.RequiredArgsConstructor;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductOptionRepository productOptionRepository;
+    private final ProductOptionItemRepository productOptionItemRepository;
     private final StoreRepository storeRepository;
 
-    /**
-     * 상품 생성
-     */
     @Override
     public ProductResult createProduct(CreateProductCommand command) {
-
-        // TODO: Security 적용 후 로그인 사용자 정보에서 userId 추출
-
         Store store = storeRepository.findById(command.getStoreId())
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 가게입니다."));
-
-        // TODO: 가게 소유자(OWNER) 또는 관리자 권한 검증 필요
 
         Product product = Product.create(
             store,
@@ -47,25 +47,13 @@ public class ProductServiceImpl implements ProductService {
         );
 
         Product savedProduct = productRepository.save(product);
-
-        // TODO: useAiDescription == true 인 경우 AI 설명 생성 로직 추가 예정
-
         return ProductResult.from(savedProduct);
     }
 
-
-    /**
-     * 상품 수정
-     */
     @Override
     public ProductResult updateProduct(UpdateProductCommand command) {
-
-        // TODO: Security 적용 후 userId 추출
-
         Product product = productRepository.findByIdAndDeletedAtIsNull(command.getProductId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
-
-        // TODO: 상품 수정 권한 검증 (가게 OWNER / 관리자)
+            .orElseThrow(ProductNotFoundException::new);
 
         product.update(
             command.getName(),
@@ -78,125 +66,123 @@ public class ProductServiceImpl implements ProductService {
         return ProductResult.from(product);
     }
 
-
-    /**
-     * 상품 삭제 (Soft Delete)
-     */
     @Override
     public void deleteProduct(UUID productId, UUID userId) {
-
-        // TODO: Security 적용 후 userId 자동 주입
-
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
-
-        // TODO: 삭제 권한 검증 (가게 OWNER / 관리자)
+            .orElseThrow(ProductNotFoundException::new);
 
         product.delete(userId);
     }
 
-
-    /**
-     * 상품 목록 조회
-     */
     @Override
     @Transactional(readOnly = true)
     public List<ProductResult> getProducts(UUID storeId) {
-
-        // TODO: 관리자/점주 조회 시 hidden 포함 여부 분기 필요
-
         return productRepository
-            .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalse(storeId)
+            .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalseAndIsSoldOutFalse(storeId)
             .stream()
             .map(ProductResult::from)
             .toList();
     }
 
-
-    /**
-     * 상품 상세 조회
-     */
     @Override
     @Transactional(readOnly = true)
-    public ProductResult getProduct(UUID productId) {
-
-        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
-
-        // TODO: 상품 상세 조회 시 옵션 그룹 + 옵션 아이템 조회 추가 예정
-
-        return ProductResult.from(product);
+    public GetProductResult getProduct(UUID productId) {
+        Product product = getActiveProduct(productId);
+        return toGetProductResult(product);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public GetProductResult getProductForAdmin(UUID productId) {
+        Product product = getProductIncludingHiddenAndSoldOut(productId);
+        return toGetProductResult(product);
+    }
 
-    /**
-     * 상품 품절 처리
-     */
     @Override
     public ProductResult markSoldOut(UUID productId, UUID userId) {
-
-        // TODO: Security 적용 후 userId 자동 주입
-        // TODO: OWNER / 관리자 권한 검증 필요
-
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+            .orElseThrow(ProductNotFoundException::new);
 
         product.markSoldOut();
-
         return ProductResult.from(product);
     }
 
-
-    /**
-     * 상품 품절 해제
-     */
     @Override
     public ProductResult markAvailable(UUID productId, UUID userId) {
-
-        // TODO: Security 적용 후 userId 자동 주입
-        // TODO: OWNER / 관리자 권한 검증 필요
-
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+            .orElseThrow(ProductNotFoundException::new);
 
         product.markAvailable();
-
         return ProductResult.from(product);
     }
 
-
-    /**
-     * 상품 숨김 처리
-     */
     @Override
     public ProductResult hideProduct(UUID productId, UUID userId) {
-
-        // TODO: Security 적용 후 userId 자동 주입
-        // TODO: OWNER / 관리자 권한 검증 필요
-
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+            .orElseThrow(ProductNotFoundException::new);
 
         product.hide();
-
         return ProductResult.from(product);
     }
 
-
-    /**
-     * 상품 숨김 해제
-     */
     @Override
     public ProductResult unhideProduct(UUID productId, UUID userId) {
-
-        // TODO: Security 적용 후 userId 자동 주입
-        // TODO: OWNER / 관리자 권한 검증 필요
-
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+            .orElseThrow(ProductNotFoundException::new);
 
         product.unhide();
-
         return ProductResult.from(product);
+    }
+
+    private Product getActiveProduct(UUID productId) {
+        return productRepository
+            .findByIdAndDeletedAtIsNullAndIsHiddenFalseAndIsSoldOutFalse(productId)
+            .orElseThrow(ProductNotFoundException::new);
+    }
+
+    private Product getProductIncludingHiddenAndSoldOut(UUID productId) {
+        return productRepository
+            .findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(ProductNotFoundException::new);
+    }
+
+    private GetProductResult toGetProductResult(Product product) {
+        List<ProductOption> optionGroups =
+            productOptionRepository.findAllByProductIdAndDeletedAtIsNull(product.getId());
+
+        List<GetProductResult.OptionGroup> options = optionGroups.stream()
+            .map(option -> {
+                List<ProductOptionItem> optionItems =
+                    productOptionItemRepository.findAllByProductOptionIdAndDeletedAtIsNull(option.getId());
+
+                List<GetProductResult.OptionItem> items = optionItems.stream()
+                    .map(item -> GetProductResult.OptionItem.builder()
+                        .itemId(item.getId())
+                        .name(item.getName())
+                        .additionalPrice(item.getAdditionalPrice())
+                        .build())
+                    .toList();
+
+                return GetProductResult.OptionGroup.builder()
+                    .optionId(option.getId())
+                    .name(option.getName())
+                    .isRequired(option.isRequired())
+                    .items(items)
+                    .build();
+            })
+            .toList();
+
+        return GetProductResult.builder()
+            .id(product.getId())
+            .storeId(product.getStore().getId())
+            .name(product.getName())
+            .price(product.getPrice())
+            .description(product.getDescription())
+            .useAiDescription(product.isUseAiDescription())
+            .imageUrl(product.getImageUrl())
+            .isSoldOut(product.isSoldOut())
+            .isHidden(product.isHidden())
+            .options(options)
+            .build();
     }
 }
