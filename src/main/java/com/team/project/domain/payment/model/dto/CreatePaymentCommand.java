@@ -1,8 +1,8 @@
 package com.team.project.domain.payment.model.dto;
 
-import java.util.UUID;
-
 import javax.validation.constraints.NotNull;
+
+import com.team.project.domain.order.entity.Order;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,11 +12,11 @@ import lombok.Data;
 public class CreatePaymentCommand {
 
 	@NotNull
-	private UUID orderId;
+	private Order order;
 	@NotNull
 	private Integer amount;
 
-	public static CreatePaymentCommand of(UUID orderId, Integer amount) {
-		return new CreatePaymentCommand(orderId, amount);
+	public static CreatePaymentCommand of(Order order, Integer amount) {
+		return new CreatePaymentCommand(order, amount);
 	}
 }

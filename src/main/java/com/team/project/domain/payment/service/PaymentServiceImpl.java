@@ -11,17 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.order.entity.Order;
-import com.team.project.domain.order.exception.OrderNotFoundException;
-import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.exception.PaymentAlreadyPaidException;
 import com.team.project.domain.payment.exception.PaymentNotFoundException;
 import com.team.project.domain.payment.infrastructure.PgProviderService;
-import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymentCommand;
-import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymentQuery;
-import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentCommand;
-import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentQuery;
 import com.team.project.domain.payment.infrastructure.exception.PgProviderBaseException;
 import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
 import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
@@ -49,7 +43,6 @@ public class PaymentServiceImpl implements PaymentService {
 	private final PaymentRepository paymentRepository;
 	private final PaymentLogService paymentLogService;
 	private final PgProviderService pgProviderService;
-	private final OrderRepository orderRepository;
 
 	/**
 	 * 결제 준비 메서드
@@ -57,13 +50,15 @@ public class PaymentServiceImpl implements PaymentService {
 	@Override
 	@Transactional
 	public CreatePaymentQuery createPayment(CreatePaymentCommand command) {
+
+		Order order = command.getOrder();
 		// 1. 가장 최신 결제 확인(삭제 포함)
-		Optional<Payment> latest = paymentRepository.getLatestPaymentByOrderContainsDeleted(command.getOrderId());
+		Optional<Payment> latest = paymentRepository.getLatestPaymentByOrderContainsDeleted(order.getId());
 		// 2. 이미 결제 시도한 경우
 		if (latest.isPresent()) {
 			Payment payment = latest.get();
 			if (payment.getStatus().isReady()) {
-				return CreatePaymentQuery.from(command.getOrderId(), payment);
+				return CreatePaymentQuery.from(order.getId(), payment);
 			} else {
 				throw new PaymentAlreadyPaidException();
 			}
@@ -71,19 +66,18 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 2. 결제 데이터 생성
 		// 2-1. 주문 찾아오기
-		Order foundOrder = orderRepository.findById(command.getOrderId()).orElseThrow(OrderNotFoundException::new);
 		// 2-2. 결제 생성
 		Payment payment = Payment.builder()
 			.status(PaymentStatus.READY)
 			.amount(command.getAmount())
-			.order(foundOrder)
+			.order(order)
 			.build();
 
 		// 3. 결제 데이터 저장
 		Payment savedPayment = paymentRepository.createPayment(payment);
 
 		// 4. 리턴
-		return CreatePaymentQuery.from(command.getOrderId(), savedPayment);
+		return CreatePaymentQuery.from(order.getId(), savedPayment);
 
 	}
 
@@ -99,9 +93,9 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 2. PG사 승인 호출
 		try {
-			ConfirmPgProviderPaymentQuery pgProviderQuery = pgProviderService.confirmPayment(
-				ConfirmPgProviderPaymentCommand.of(command.getPaymentKey(), command.getOrderId().toString(),
-					command.getAmount()));
+			// ConfirmPgProviderPaymentQuery pgProviderQuery = pgProviderService.confirmPayment(
+			// 	ConfirmPgProviderPaymentCommand.of(command.getPaymentKey(), command.getOrderId().toString(),
+			// 		command.getAmount()));
 
 			// 3. 결제 상태 변경
 			String paymentKey = command.getPaymentKey();
@@ -109,7 +103,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 			// 2-2. PG사 통신 성공 경우 로그 생성
 			paymentLogService.createPaymentLog(
-				CreatePaymentLogCommand.of(pgProviderQuery.getPaymentKey(), PaymentLogStatus.PAY_SUCCESS,
+				CreatePaymentLogCommand.of(paymentKey, PaymentLogStatus.PAY_SUCCESS,
 					null, payment.getId()));
 
 			return PayPaymentQuery.from(payment);
@@ -144,16 +138,17 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 2. PG사 결제 취소
 		try {
-			CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(
-				CancelPgProviderPaymentCommand.of(payment.getPaymentKey(),
-					command.getReason()));
+			// CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(
+			// 	CancelPgProviderPaymentCommand.of(payment.getPaymentKey(),
+			// 		command.getReason()));
 
 			// 3. 결제 상태 변경
 			payment.cancel();
 
 			// 2-2. PG 통신 성공 경우 로그 생성
+			String paymentKey = "test_paymentKey";
 			paymentLogService.createPaymentLog(
-				CreatePaymentLogCommand.of(pgProviderQuery.getPaymentKey(), PaymentLogStatus.valueOf(type + "_SUCCESS"),
+				CreatePaymentLogCommand.of(paymentKey, PaymentLogStatus.valueOf(type + "_SUCCESS"),
 					command.getReason(), payment.getId()));
 
 		} catch (PgProviderBaseException e) {
