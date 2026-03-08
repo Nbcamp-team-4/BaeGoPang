@@ -1,7 +1,8 @@
 package com.team.project.domain.auth.util;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,11 +15,11 @@ import com.team.project.domain.user.entity.UserRole;
 public class UserDetailsImpl implements UserDetails {
 
 	private final User user;
-	private final UserRole userRole;
+	private final List<UserRole> userRoles;
 
-	public UserDetailsImpl(User user, UserRole userRole) {
+	public UserDetailsImpl(User user, List<UserRole> userRoles) {
 		this.user = user;
-		this.userRole = userRole;
+		this.userRoles = userRoles;
 	}
 
 	@Override
@@ -33,14 +34,12 @@ public class UserDetailsImpl implements UserDetails {
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
-		RoleType role = userRole.getRole().getRole();
-		String authority = role.getAuthority();
-
-		SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(authority);
-		Collection<GrantedAuthority> authorities = new ArrayList<>();
-		authorities.add(simpleGrantedAuthority);
-
-		return authorities;
+		return userRoles.stream()
+			.map(userRole -> userRole.getRole().getRole())
+			.map(RoleType::getAuthority)
+			.distinct()
+			.map(SimpleGrantedAuthority::new)
+			.collect(Collectors.toList());
 	}
 
 	@Override

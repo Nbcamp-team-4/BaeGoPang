@@ -1,10 +1,13 @@
 package com.team.project.domain.auth.service;
 
+import java.util.List;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.team.project.domain.auth.exception.UserRoleNotFoundException;
 import com.team.project.domain.auth.util.UserDetailsImpl;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserRole;
@@ -26,9 +29,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
 		User user = userRepository.findByLoginId(loginId)
 			.orElseThrow(() -> new UsernameNotFoundException("Not Found " + loginId));
-		UserRole userRole = userRoleRepository.findByUser(user)
-			.orElseThrow(() -> new UsernameNotFoundException("Not Found " + loginId));
 
-		return new UserDetailsImpl(user);
+		List<UserRole> userRoles = userRoleRepository.findByUser(user);
+		if (userRoles.isEmpty()) {
+			throw new UserRoleNotFoundException();
+		}
+
+		return new UserDetailsImpl(user, userRoles);
 	}
 }
