@@ -5,16 +5,19 @@ import com.team.project.domain.auth.util.UserDetailsImpl;
 import com.team.project.domain.user.api.request.LoginUserRequest;
 import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.response.LoginUserResponse;
+import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
 import com.team.project.domain.user.entity.Role;
 import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserRole;
+import com.team.project.domain.user.exception.CustomException;
 import com.team.project.domain.user.repository.RoleRepository;
 import com.team.project.domain.user.repository.UserRepository;
 import com.team.project.domain.user.repository.UserRoleRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,37 +38,29 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
+
     @Override
-    public ResponseEntity<?> signUp(SignUpRequest request) {
+    public SignUpResponse signUp(SignUpRequest request) {
+        validateDuplicate(request);
+        Role role = roleRepository.findByRole(request.getRole())
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 권한이 존재하지 않습니다."));
 
-        if (userRepository.existsByLoginId(request.getLoginId())) {
-            throw new IllegalArgumentException("이미 존재하는 로그인 ID 입니다.");
-        }
+        User user = new User(
+                request.getLoginId(),
+                request.getEmail(),
+                passwordEncoder.encode(request.getPassword()),
+                request.getName(),
+                request.getPhone()
+        );
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("이미 존재하는 이메일 입니다.");
-        }
+        User savedUser = userRepository.save(user);
 
-        // 사용자 생성
-        User user = User.builder()
-                .loginId(request.getLoginId())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .name(request.getName())
-                .phone(request.getPhone())
-                .status(request.getStatus())
-                .build();
-
-        userRepository.save(user);
-
-        // 기본 권한 CUSTOMER 부여
-        Role role = roleRepository.findByRole(RoleType.CUSTOMER)
-                .orElseThrow(() -> new IllegalArgumentException("Role not found"));
-
-        UserRole userRole = UserRole.create(user, role);
+        UserRole userRole = new UserRole(savedUser, role, request.getLoginId());
         userRoleRepository.save(userRole);
 
-        return ResponseEntity.ok("회원가입 성공");
+        savedUser.addUserRole(userRole);
+
+        return SignUpResponse.from(savedUser, role.getRole());
     }
 
 
@@ -112,5 +107,18 @@ public class UserServiceImpl implements UserService {
 
         UserRole userRole = UserRole.create(user, role);
         userRoleRepository.save(userRole);
+    }
+    private void validateDuplicate(SignUpRequest request) {
+        if (userRepository.existsByLoginId(request.getLoginId())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 loginId 입니다.");
+        }
+
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 email 입니다.");
+        }
+
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 phone 입니다.");
+        }
     }
 }

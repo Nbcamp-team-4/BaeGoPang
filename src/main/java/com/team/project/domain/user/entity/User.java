@@ -6,14 +6,7 @@ import java.util.UUID;
 
 import com.team.project.global.common.entity.BaseEntity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -53,15 +46,21 @@ public class User extends BaseEntity {
 	@ColumnDefault("ACTIVE")
 	private UserStatus status;
 
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@Builder.Default
 	private List<UserRole> userRoles = new ArrayList<>();
 
-	public User(String loginId, String email, String password, String name, String phone) {
-		this.loginId = loginId;
-		this.email = email;
-		this.password = password;
-		this.name = name;
-		this.phone = phone;
+	public void changePassword(String encodedPassword) {
+		this.password = encodedPassword;
+	}
+
+	public void updateProfile(String name, String phone) {
+		if (name != null && !name.isBlank()) this.name = name;
+		if (phone != null && !phone.isBlank()) this.phone = phone;
+	}
+
+	public void changeStatus(UserStatus status) {
+		this.status = status;
 	}
 	public User(String loginId, String email, String password, String name, String phone, UserStatus status) {
 		this.loginId = loginId;
@@ -71,4 +70,6 @@ public class User extends BaseEntity {
 		this.phone = phone;
 		this.status = status;
 	}
+
+
 }

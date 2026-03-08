@@ -2,8 +2,11 @@ package com.team.project.domain.user.api;
 
 import com.team.project.domain.user.api.request.LoginUserRequest;
 import com.team.project.domain.user.api.request.SignUpRequest;
+import com.team.project.domain.user.api.response.ApiResponse;
+import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,9 +21,21 @@ public class UserController {
 
     private final UserService userService;
 
+    @PostMapping("/admin/signup")
+    public ResponseEntity<ApiResponse<AdminSignUpResponse>> adminSignUp(@Valid @RequestBody SignUpRequest request) {
+        AdminSignUpResponse response = userService.adminSignUp(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.ok("회원가입이 완료되었습니다.", response)
+        );
+    }
     @PostMapping("/signup")
-    public ResponseEntity<?> signUp(@RequestBody SignUpRequest request) {
-        return  userService.signUp(request);
+    public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
+        SignUpResponse response = userService.signUp(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.ok("회원가입이 완료되었습니다.", response)
+        );
     }
 
     @PostMapping("/login")
