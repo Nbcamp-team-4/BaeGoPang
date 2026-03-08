@@ -2,13 +2,17 @@ package com.team.project.domain.product.entity;
 
 import java.util.UUID;
 
+import com.team.project.domain.store.entity.Store;
 import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -25,8 +29,9 @@ public class Product extends BaseEntity {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "store_id", columnDefinition = "uuid", nullable = false)
-    private UUID storeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", nullable = false)
+    private Store store;
 
     @Column(nullable = false, length = 200)
     private String name;
@@ -50,14 +55,14 @@ public class Product extends BaseEntity {
 
     // ===== 생성 =====
     public Product(
-        UUID storeId,
+        Store store,
         String name,
         Integer price,
         String description,
         Boolean useAiDescription,
         String imageUrl
     ) {
-        this.storeId = storeId;
+        this.store = store;
         this.name = name;
         this.price = price;
         this.description = description;
@@ -101,7 +106,7 @@ public class Product extends BaseEntity {
     }
 
     // ===== 삭제 =====
-    public void delete(UUID userId) {
-        markDeleted(userId);
+    public void delete(UUID deleteby) {
+        markDeleted(deleteby);
     }
 }

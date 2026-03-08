@@ -18,10 +18,6 @@ import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.exception.PaymentAlreadyPaidException;
 import com.team.project.domain.payment.exception.PaymentNotFoundException;
 import com.team.project.domain.payment.infrastructure.PgProviderService;
-import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymentCommand;
-import com.team.project.domain.payment.infrastructure.dto.CancelPgProviderPaymentQuery;
-import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentCommand;
-import com.team.project.domain.payment.infrastructure.dto.ConfirmPgProviderPaymentQuery;
 import com.team.project.domain.payment.infrastructure.exception.PgProviderBaseException;
 import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
 import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
@@ -99,9 +95,9 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 2. PG사 승인 호출
 		try {
-			ConfirmPgProviderPaymentQuery pgProviderQuery = pgProviderService.confirmPayment(
-				ConfirmPgProviderPaymentCommand.of(command.getPaymentKey(), command.getOrderId().toString(),
-					command.getAmount()));
+			// ConfirmPgProviderPaymentQuery pgProviderQuery = pgProviderService.confirmPayment(
+			// 	ConfirmPgProviderPaymentCommand.of(command.getPaymentKey(), command.getOrderId().toString(),
+			// 		command.getAmount()));
 
 			// 3. 결제 상태 변경
 			String paymentKey = command.getPaymentKey();
@@ -109,7 +105,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 			// 2-2. PG사 통신 성공 경우 로그 생성
 			paymentLogService.createPaymentLog(
-				CreatePaymentLogCommand.of(pgProviderQuery.getPaymentKey(), PaymentLogStatus.PAY_SUCCESS,
+				CreatePaymentLogCommand.of(paymentKey, PaymentLogStatus.PAY_SUCCESS,
 					null, payment.getId()));
 
 			return PayPaymentQuery.from(payment);
@@ -144,16 +140,17 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 2. PG사 결제 취소
 		try {
-			CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(
-				CancelPgProviderPaymentCommand.of(payment.getPaymentKey(),
-					command.getReason()));
+			// CancelPgProviderPaymentQuery pgProviderQuery = pgProviderService.cancelPayment(
+			// 	CancelPgProviderPaymentCommand.of(payment.getPaymentKey(),
+			// 		command.getReason()));
 
 			// 3. 결제 상태 변경
 			payment.cancel();
 
 			// 2-2. PG 통신 성공 경우 로그 생성
+			String paymentKey = "test_paymentKey";
 			paymentLogService.createPaymentLog(
-				CreatePaymentLogCommand.of(pgProviderQuery.getPaymentKey(), PaymentLogStatus.valueOf(type + "_SUCCESS"),
+				CreatePaymentLogCommand.of(paymentKey, PaymentLogStatus.valueOf(type + "_SUCCESS"),
 					command.getReason(), payment.getId()));
 
 		} catch (PgProviderBaseException e) {

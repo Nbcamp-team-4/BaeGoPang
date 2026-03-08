@@ -16,6 +16,8 @@ public class CreateReviewRequest {
 	private UUID  userId;
 	private UUID storeId;
 	private List<String> imageUrls;
+	private Integer rating;
+	private String content;
 
 	public Review toEntity() {
 		return Review.builder()
@@ -24,7 +26,4 @@ public class CreateReviewRequest {
 			.orderId(this.orderId)
 			.build();
 	}
-
-	private Integer rating;
-	private String content;
 }
