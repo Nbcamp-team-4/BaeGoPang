@@ -6,17 +6,14 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.team.project.domain.product.api.request.CreateProductRequest;
-import com.team.project.domain.product.api.request.UpdateProductRequest;
-import com.team.project.domain.product.api.response.GetProductsResponse;
-import com.team.project.domain.product.api.response.ProductResponse;
 import com.team.project.domain.product.entity.Product;
-import com.team.project.domain.product.exception.ProductNotFoundException;
 import com.team.project.domain.product.repository.ProductRepository;
+import com.team.project.domain.product.service.command.CreateProductCommand;
+import com.team.project.domain.product.service.command.UpdateProductCommand;
+import com.team.project.domain.product.service.result.ProductResult;
 import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.repository.StoreRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,148 +24,179 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final StoreRepository storeRepository;
 
-    // ===== 생성 =====
+    /**
+     * 상품 생성
+     */
     @Override
-    public ProductResponse createProduct(CreateProductRequest request) {
+    public ProductResult createProduct(CreateProductCommand command) {
 
-        // 1. UUID를 이용해 DB에서 Store 엔티티를 조회한다.
-        Store store = storeRepository.findById(request.getStoreId())
-            .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
+        // TODO: Security 적용 후 로그인 사용자 정보에서 userId 추출
 
-        Product product = new Product(
+        Store store = storeRepository.findById(command.getStoreId())
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 가게입니다."));
+
+        // TODO: 가게 소유자(OWNER) 또는 관리자 권한 검증 필요
+
+        Product product = Product.create(
             store,
-            request.getName(),
-            request.getPrice(),
-            request.getDescription(),
-            request.getUseAiDescription(),
-            request.getImageUrl()
+            command.getName(),
+            command.getPrice(),
+            command.getDescription(),
+            command.getUseAiDescription(),
+            command.getImageUrl()
         );
 
-        productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
 
-        return toResponse(product);
+        // TODO: useAiDescription == true 인 경우 AI 설명 생성 로직 추가 예정
+
+        return ProductResult.from(savedProduct);
     }
 
-    // ===== 수정 =====
-    @Override
-    public ProductResponse updateProduct(UUID productId, UpdateProductRequest request) {
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+    /**
+     * 상품 수정
+     */
+    @Override
+    public ProductResult updateProduct(UpdateProductCommand command) {
+
+        // TODO: Security 적용 후 userId 추출
+
+        Product product = productRepository.findByIdAndDeletedAtIsNull(command.getProductId())
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+
+        // TODO: 상품 수정 권한 검증 (가게 OWNER / 관리자)
 
         product.update(
-            request.getName(),
-            request.getPrice(),
-            request.getDescription(),
-            request.getUseAiDescription(),
-            request.getImageUrl()
+            command.getName(),
+            command.getPrice(),
+            command.getDescription(),
+            command.getUseAiDescription(),
+            command.getImageUrl()
         );
 
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
-    // ===== 삭제 (Soft Delete) =====
+
+    /**
+     * 상품 삭제 (Soft Delete)
+     */
     @Override
     public void deleteProduct(UUID productId, UUID userId) {
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+        // TODO: Security 적용 후 userId 자동 주입
+
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
+
+        // TODO: 삭제 권한 검증 (가게 OWNER / 관리자)
 
         product.delete(userId);
     }
 
-    // ===== 목록 조회 =====
+
+    /**
+     * 상품 목록 조회
+     */
     @Override
     @Transactional(readOnly = true)
-    public GetProductsResponse getProducts(UUID storeId) {
+    public List<ProductResult> getProducts(UUID storeId) {
 
-        List<ProductResponse> products =
-            productRepository
-                .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalse(storeId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        // TODO: 관리자/점주 조회 시 hidden 포함 여부 분기 필요
 
-        return GetProductsResponse.builder()
-            .products(products)
-            .build();
+        return productRepository
+            .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalse(storeId)
+            .stream()
+            .map(ProductResult::from)
+            .toList();
     }
 
-    // ===== 단건 조회 =====
+
+    /**
+     * 상품 상세 조회
+     */
     @Override
     @Transactional(readOnly = true)
-    public ProductResponse getProduct(UUID productId) {
+    public ProductResult getProduct(UUID productId) {
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
-        if (product.getDeletedAt() != null) {
-            throw new ProductNotFoundException();
-        }
+        // TODO: 상품 상세 조회 시 옵션 그룹 + 옵션 아이템 조회 추가 예정
 
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
-    // ===== 품절 =====
-    @Override
-    public ProductResponse markSoldOut(UUID productId, UUID userId) {
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+    /**
+     * 상품 품절 처리
+     */
+    @Override
+    public ProductResult markSoldOut(UUID productId, UUID userId) {
+
+        // TODO: Security 적용 후 userId 자동 주입
+        // TODO: OWNER / 관리자 권한 검증 필요
+
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
         product.markSoldOut();
 
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
-    @Override
-    public ProductResponse markAvailable(UUID productId, UUID userId) {
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+    /**
+     * 상품 품절 해제
+     */
+    @Override
+    public ProductResult markAvailable(UUID productId, UUID userId) {
+
+        // TODO: Security 적용 후 userId 자동 주입
+        // TODO: OWNER / 관리자 권한 검증 필요
+
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
         product.markAvailable();
 
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
-    // ===== 숨김 =====
-    @Override
-    public ProductResponse hideProduct(UUID productId, UUID userId) {
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+    /**
+     * 상품 숨김 처리
+     */
+    @Override
+    public ProductResult hideProduct(UUID productId, UUID userId) {
+
+        // TODO: Security 적용 후 userId 자동 주입
+        // TODO: OWNER / 관리자 권한 검증 필요
+
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
         product.hide();
 
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
-    @Override
-    public ProductResponse unhideProduct(UUID productId, UUID userId) {
 
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
+    /**
+     * 상품 숨김 해제
+     */
+    @Override
+    public ProductResult unhideProduct(UUID productId, UUID userId) {
+
+        // TODO: Security 적용 후 userId 자동 주입
+        // TODO: OWNER / 관리자 권한 검증 필요
+
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
         product.unhide();
 
-        return toResponse(product);
-    }
-
-    // ===== Entity → Response =====
-    private ProductResponse toResponse(Product product) {
-        return new ProductResponse(
-            product.getId(),
-            product.getStore().getId(),
-            product.getName(),
-            product.getPrice(),
-            product.getDescription(),
-            product.getUseAiDescription(),
-            product.getImageUrl(),
-            product.getIsSoldOut(),
-            product.getIsHidden(),
-            product.getCreatedAt(),
-            product.getUpdatedAt()
-        );
+        return ProductResult.from(product);
     }
 }
