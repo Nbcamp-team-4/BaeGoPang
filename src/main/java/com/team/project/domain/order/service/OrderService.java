@@ -4,13 +4,10 @@ import java.util.List;
 import java.util.UUID;
 
 import com.team.project.domain.order.api.request.CancelOrderRequest;
+import com.team.project.domain.order.api.request.ConfirmOrderPaymentRequest;
 import com.team.project.domain.order.api.request.CreateOrderRequest;
 import com.team.project.domain.order.api.request.UpdateOrderStatusRequest;
-import com.team.project.domain.order.api.response.CancelOrderResponse;
-import com.team.project.domain.order.api.response.CreateOrderResponse;
-import com.team.project.domain.order.api.response.GetOrderDetailResponse;
-import com.team.project.domain.order.api.response.GetOrderSummaryResponse;
-import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
+import com.team.project.domain.order.api.response.*;
 
 public interface OrderService {
 
@@ -32,6 +29,9 @@ public interface OrderService {
 
     // 주문 삭제(소프트 삭제)
     void deleteOrder(UUID orderId, UUID userId);
+
+    // 결제 성공 처리
+    ConfirmOrderPaymentResponse confirmOrderPayment(UUID orderId, ConfirmOrderPaymentRequest request);
 
     // ======================
     // manager (store)

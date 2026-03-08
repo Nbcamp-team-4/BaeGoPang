@@ -3,17 +3,14 @@ package com.team.project.domain.order.api;
 import java.util.List;
 import java.util.UUID;
 
+import com.team.project.domain.order.api.request.ConfirmOrderPaymentRequest;
+import com.team.project.domain.order.api.response.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.team.project.domain.order.api.request.CancelOrderRequest;
 import com.team.project.domain.order.api.request.CreateOrderRequest;
 import com.team.project.domain.order.api.request.UpdateOrderStatusRequest;
-import com.team.project.domain.order.api.response.CancelOrderResponse;
-import com.team.project.domain.order.api.response.CreateOrderResponse;
-import com.team.project.domain.order.api.response.GetOrderDetailResponse;
-import com.team.project.domain.order.api.response.GetOrderSummaryResponse;
-import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
 import com.team.project.domain.order.service.OrderService;
 import com.team.project.global.common.dto.BaseResponse;
 
@@ -36,6 +33,18 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<?> createOrder(@RequestBody @Valid CreateOrderRequest request) {
         CreateOrderResponse response = orderService.createOrder(request);
+        return ResponseEntity.ok().body(BaseResponse.ofSuccess(response));
+    }
+
+    /**
+     * [고객] 결제 성공 처리
+     * POST /api/orders/{orderId}/payment/success
+     */
+    @PostMapping("/{orderId}/payment/success")
+    public ResponseEntity<?> confirmOrderPayment(@PathVariable("orderId") UUID orderId,
+                                                 @RequestBody @Valid ConfirmOrderPaymentRequest request) {
+
+        ConfirmOrderPaymentResponse response = orderService.confirmOrderPayment(orderId, request);
         return ResponseEntity.ok().body(BaseResponse.ofSuccess(response));
     }
 
