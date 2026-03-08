@@ -1,30 +1,27 @@
 package com.team.project.domain.user.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.annotations.UuidGenerator;
-
-import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Table(name = "p_role")
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Role extends BaseEntity {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Role {
 
 	@Id
 	@UuidGenerator
@@ -33,12 +30,8 @@ public class Role extends BaseEntity {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private RoleType role;
+	private RoleType type;
 
-	public static RoleType of(String role) {
-		/**
-		 * 해야 함
-		 */
-		return RoleType.valueOf(role);
-	}
+	@OneToMany(mappedBy = "role")
+	private List<UserRole> userRoles = new ArrayList<>();
 }

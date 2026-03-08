@@ -4,22 +4,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import com.team.project.global.common.entity.BaseEntity;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Table(name = "p_user")
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
 	@Id
@@ -43,11 +51,12 @@ public class User extends BaseEntity {
 	private String phone;
 
 	@Enumerated(EnumType.STRING)
-	@ColumnDefault("ACTIVE")
-	private UserStatus status;
+	private UserStatus status = UserStatus.ACTIVE;
 
-	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@Builder.Default
+	@Column(length = 500)
+	private String refreshToken;
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<UserRole> userRoles = new ArrayList<>();
 
 	public void changePassword(String encodedPassword) {
@@ -62,6 +71,7 @@ public class User extends BaseEntity {
 	public void changeStatus(UserStatus status) {
 		this.status = status;
 	}
+
 	public User(String loginId, String email, String password, String name, String phone, UserStatus status) {
 		this.loginId = loginId;
 		this.email = email;
@@ -71,5 +81,22 @@ public class User extends BaseEntity {
 		this.status = status;
 	}
 
+	public void updateRefreshToken(String refreshToken) {
+		this.refreshToken = refreshToken;
+	}
 
+	public void clearRefreshToken() {
+		this.refreshToken = null;
+	}
+
+	public List<String> getRoleNames() {
+		return userRoles.stream()
+			.map(userRole -> userRole.getRole().getType().name())
+			.distinct()
+			.toList();
+	}
+
+	public void addUserRole(UserRole userRole) {
+		userRoles.add(userRole);
+	}
 }
