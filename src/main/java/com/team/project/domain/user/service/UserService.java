@@ -1,13 +1,15 @@
 package com.team.project.domain.user.service;
 
-import org.springframework.stereotype.Service;
+import com.team.project.domain.user.api.request.SignUpRequest;
+import com.team.project.domain.user.api.response.UserResponse;
+import com.team.project.domain.user.entity.RoleType;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
 
-@Service
-@RequiredArgsConstructor
-@Slf4j(topic = "Security::UserService")
-public class UserService {
-	
+public interface UserService {
+    void signUp(SignUpRequest request);
+
+    UserResponse getUser(UUID userId);
+
+    void addRole(UUID userId, RoleType roleType);
 }

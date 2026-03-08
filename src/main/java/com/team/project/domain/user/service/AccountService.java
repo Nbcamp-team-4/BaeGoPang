@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.auth.util.JwtProvider;
-import com.team.project.domain.user.api.request.JoinRequest;
+import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.repository.UserRepository;
 
@@ -34,7 +34,7 @@ public class AccountService {
 	// 이메일이 중복되지 않으면 가입처리.
 
 	@Transactional
-	public void createAccount(JoinRequest dto, String role)
+	public void createAccount(SignUpRequest dto, String role)
 		throws DuplicateKeyException {
 		boolean duplicated = this.userRepository.findByEmail(dto.getEmail()).isPresent();
 		if (duplicated) {

@@ -14,17 +14,24 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Table(name = "p_user")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User extends BaseEntity {
 
 	@Id
+	@UuidGenerator
+	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
 
 	@Column(nullable = false, unique = true)
@@ -55,5 +62,13 @@ public class User extends BaseEntity {
 		this.password = password;
 		this.name = name;
 		this.phone = phone;
+	}
+	public User(String loginId, String email, String password, String name, String phone, UserStatus status) {
+		this.loginId = loginId;
+		this.email = email;
+		this.password = password;
+		this.name = name;
+		this.phone = phone;
+		this.status = status;
 	}
 }
