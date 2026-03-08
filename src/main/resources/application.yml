@@ -1,10 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/baegopang
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
-
   autoconfigure:
     exclude:
       - org.springframework.ai.model.google.genai.autoconfigure.chat.GoogleGenAiChatAutoConfiguration
@@ -18,9 +12,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
     properties:
       hibernate:
         format_sql: true
-        # ✅ deprecated 경고 피하려면 이걸로 교체 권장
         dialect: org.hibernate.dialect.PostgreSQLDialect
