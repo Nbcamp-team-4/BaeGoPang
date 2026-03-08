@@ -1,10 +1,14 @@
-package com.team.project.domain.user.repository;
+package com._team._project.domain.user.repository;
 
-import java.util.UUID;
-
+import com._team._project.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.team.project.domain.user.entity.User;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
+
+    Optional<User> findByLoginId(String loginId);
+
+    Optional<User> findByEmail(String email);
 }

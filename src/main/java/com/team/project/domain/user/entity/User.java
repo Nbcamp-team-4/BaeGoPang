@@ -1,24 +1,53 @@
-package com.team.project.domain.user.entity;
+package com._team._project.domain.user.entity;
 
-import java.util.UUID;
-
-import org.hibernate.annotations.UuidGenerator;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com._team._project.global.common.entity.BaseEntity;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "p_user")
 @Getter
 @NoArgsConstructor
-public class User {
+public class User extends BaseEntity {
 
     @Id
-    @UuidGenerator
-    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
+
+    @Column(nullable = false, unique = true)
+    private String loginId;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<UserRole> userRoles = new ArrayList<>();
+
+    public User (UUID id, String loginId, String email, String password, String name, String phone, UserStatus status) {
+        this.id = id;
+        this.loginId = loginId;
+        this.email = email;
+        this.password = password;
+        this.name = name;
+        this.phone = phone;
+        this.status = status;
+    }
+
 }
