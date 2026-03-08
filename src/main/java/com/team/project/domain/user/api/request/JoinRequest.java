@@ -2,6 +2,7 @@ package com.team.project.domain.user.api.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 
 @Getter
@@ -9,8 +10,10 @@ public class JoinRequest {
 
 	@NotBlank(message = "email은 빈 값이 허용되지 않습니다.")
 	@Email(message = "올바른 email 형식이 아닙니다.")
+	@Pattern(regexp = "^[a-z0-9]{4,10}$")
 	private final String loginId;
 
+	@Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).{8,15}$")
 	@NotBlank(message = "password는 빈 값이 허용되지 않습니다.")
 	private final String password;
 
