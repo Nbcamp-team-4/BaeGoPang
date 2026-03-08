@@ -9,9 +9,6 @@ import lombok.Data;
 public class LoginUserRequest {
 
 	@NotNull
-	private UUID userId;
-
-	@NotNull
 	private String loginId;
 
 	@NotNull
