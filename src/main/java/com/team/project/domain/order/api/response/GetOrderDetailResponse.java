@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.model.vo.OrderStatus;
+import com.team.project.domain.payment.entity.Payment;
+import com.team.project.domain.payment.model.vo.PaymentStatus;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +24,10 @@ public class GetOrderDetailResponse {
     private UUID userId;
     private UUID storeId;
     private UUID deliveryAddressId;
+
+    // 결제 요약 정보
+    private UUID paymentId;
+    private PaymentStatus paymentStatus;
 
     private Integer totalAmount;
     private String requestMemo;
@@ -58,7 +64,7 @@ public class GetOrderDetailResponse {
         private Integer extraPrice;
     }
 
-    public static GetOrderDetailResponse from(Order order) {
+    public static GetOrderDetailResponse from(Order order, Payment payment) {
         return GetOrderDetailResponse.builder()
                 .id(order.getId())
                 .orderNo(order.getOrderNo())
@@ -66,6 +72,8 @@ public class GetOrderDetailResponse {
                 .userId(order.getUser().getId())
                 .storeId(order.getStore().getId())
                 .deliveryAddressId(order.getDeliveryAddress() == null ? null : order.getDeliveryAddress().getId())
+                .paymentId(payment == null ? null : payment.getId())
+                .paymentStatus(payment == null ? null : payment.getStatus())
                 .totalAmount(order.getTotalAmount())
                 .requestMemo(order.getRequestMemo())
                 .canceledReason(order.getCanceledReason())
