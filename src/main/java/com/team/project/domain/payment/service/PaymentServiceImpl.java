@@ -11,8 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.order.entity.Order;
-import com.team.project.domain.order.exception.OrderNotFoundException;
-import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.exception.PaymentAlreadyPaidException;
@@ -45,7 +43,6 @@ public class PaymentServiceImpl implements PaymentService {
 	private final PaymentRepository paymentRepository;
 	private final PaymentLogService paymentLogService;
 	private final PgProviderService pgProviderService;
-	private final OrderRepository orderRepository;
 
 	/**
 	 * 결제 준비 메서드
@@ -53,13 +50,15 @@ public class PaymentServiceImpl implements PaymentService {
 	@Override
 	@Transactional
 	public CreatePaymentQuery createPayment(CreatePaymentCommand command) {
+
+		Order order = command.getOrder();
 		// 1. 가장 최신 결제 확인(삭제 포함)
-		Optional<Payment> latest = paymentRepository.getLatestPaymentByOrderContainsDeleted(command.getOrderId());
+		Optional<Payment> latest = paymentRepository.getLatestPaymentByOrderContainsDeleted(order.getId());
 		// 2. 이미 결제 시도한 경우
 		if (latest.isPresent()) {
 			Payment payment = latest.get();
 			if (payment.getStatus().isReady()) {
-				return CreatePaymentQuery.from(command.getOrderId(), payment);
+				return CreatePaymentQuery.from(order.getId(), payment);
 			} else {
 				throw new PaymentAlreadyPaidException();
 			}
@@ -67,19 +66,18 @@ public class PaymentServiceImpl implements PaymentService {
 
 		// 2. 결제 데이터 생성
 		// 2-1. 주문 찾아오기
-		Order foundOrder = orderRepository.findById(command.getOrderId()).orElseThrow(OrderNotFoundException::new);
 		// 2-2. 결제 생성
 		Payment payment = Payment.builder()
 			.status(PaymentStatus.READY)
 			.amount(command.getAmount())
-			.order(foundOrder)
+			.order(order)
 			.build();
 
 		// 3. 결제 데이터 저장
 		Payment savedPayment = paymentRepository.createPayment(payment);
 
 		// 4. 리턴
-		return CreatePaymentQuery.from(command.getOrderId(), savedPayment);
+		return CreatePaymentQuery.from(order.getId(), savedPayment);
 
 	}
 

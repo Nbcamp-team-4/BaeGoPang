@@ -4,6 +4,8 @@ import java.util.UUID;
 
 import javax.validation.constraints.NotNull;
 
+import com.team.project.domain.order.entity.Order;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -12,7 +14,7 @@ import lombok.Data;
 public class CreatePaymentCommand {
 
 	@NotNull
-	private UUID orderId;
+	private Order order;
 	@NotNull
 	private Integer amount;
 
