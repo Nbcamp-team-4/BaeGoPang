@@ -2,8 +2,19 @@ package com.team.project.domain.user.entity;
 
 public enum RoleType {
 
-	ROLE_CUSTOMER,
-	ROLE_OWNER,
-	ROLE_MANAGER,
-	ROLE_ADMIN
+	CUSTOMER("ROLE_CUSTOMER"),
+	OWNER("ROLE_OWNER"),
+	MANAGER("ROLE_MANAGER"),
+	ADMIN("ROLE_ADMIN");
+
+
+	private final String authority;
+
+	RoleType(String authority) {
+		this.authority = authority;
+	}
+
+	public String getAuthority() {
+		return authority;
+	}
 }

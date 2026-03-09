@@ -4,18 +4,18 @@ import java.util.List;
 import java.util.UUID;
 
 import com.team.project.domain.auth.dto.UserDto;
+import com.team.project.domain.user.api.request.AddUserRoleRequest;
 import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
 import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.model.dto.UserList;
+import jakarta.validation.Valid;
 
 public interface UserService {
 
 	SignUpResponse signUp(SignUpRequest request);
-
-	public void addRole(UUID userId, RoleType roleType);
 
 	UserResponse getUser(UUID userId);
 
@@ -30,4 +30,6 @@ public interface UserService {
 	void deleteMyInfo(UserDto userDto);
 
     List<UserList> getUsers();
+
+	void addUserRole(UUID userId, @Valid AddUserRoleRequest request, UUID currentUserId);
 }
