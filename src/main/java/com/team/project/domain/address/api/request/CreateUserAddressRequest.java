@@ -1,4 +1,4 @@
-package com.team.project.domain.user.api.request;
+package com.team.project.domain.address.api.request;
 
 import java.math.BigDecimal;
 

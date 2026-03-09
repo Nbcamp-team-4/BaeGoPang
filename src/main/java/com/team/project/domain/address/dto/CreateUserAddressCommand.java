@@ -1,4 +1,4 @@
-package com.team.project.domain.user.dto;
+package com.team.project.domain.address.dto;
 
 import java.math.BigDecimal;
 

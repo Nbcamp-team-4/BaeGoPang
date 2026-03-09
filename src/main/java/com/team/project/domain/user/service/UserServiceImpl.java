@@ -3,6 +3,14 @@ package com.team.project.domain.user.service;
 import java.util.List;
 import java.util.UUID;
 
+import com.team.project.domain.user.api.request.AddUserRoleRequest;
+import com.team.project.domain.user.api.request.UserListRequest;
+import com.team.project.domain.user.model.dto.UserList;
+import com.team.project.global.common.dto.BasePageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,7 +28,7 @@ import com.team.project.domain.user.entity.UserRole;
 import com.team.project.domain.user.entity.UserStatus;
 import com.team.project.domain.user.exception.CustomException;
 import com.team.project.domain.user.repository.RoleRepository;
-import com.team.project.domain.user.repository.UserAddressRepository;
+import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 import com.team.project.domain.user.repository.UserRoleRepository;
 
@@ -36,8 +44,6 @@ public class UserServiceImpl implements UserService {
 	private final RoleRepository roleRepository;
 	private final UserRoleRepository userRoleRepository;
 	private final PasswordEncoder passwordEncoder;
-	private final AuthenticationManager authenticationManager;
-	private final UserAddressRepository userAddressRepository;
 
 	@Override
 	@Transactional
@@ -171,22 +177,49 @@ public class UserServiceImpl implements UserService {
 		user.softDelete(userDto.getId());
 	}
 
-	private User findActiveUser(UUID userId) {
-		return userRepository.findById(userId)
-			.orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
+	@Override
+	public BasePageResponse<UserList> getUsers(UserListRequest request) {
+		Pageable pageable = PageRequest.of(
+				request.getPage(),
+				request.getSize(),
+				Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		Page<User> userPage = userRepository.findAllByDeletedAtIsNull(pageable);
+
+		List<UserList> content = userPage.getContent().stream()
+				.map(UserList::from)
+				.toList();
+
+		return new BasePageResponse<>(
+				content,
+				userPage.getNumber(),
+				userPage.getSize(),
+				userPage.getTotalElements(),
+				userPage.getTotalPages()
+		);
 	}
 
 	@Override
-	public void addRole(UUID userId, RoleType roleType) {
+	public void addUserRole(UUID targetUserId, AddUserRoleRequest request, UUID currentUserId) {
+		User targetUser = userRepository.findById(targetUserId)
+				.orElseThrow(() -> new IllegalArgumentException("대상 유저를 찾을 수 없습니다."));
 
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+		Role role = roleRepository.findByType(request.getRoleType())
+				.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 권한입니다."));
 
-		Role role = roleRepository.findByType(roleType)
-			.orElseThrow(() -> new IllegalArgumentException("권한이 존재하지 않습니다."));
+		boolean alreadyExists = userRoleRepository.existsByUserAndRole(targetUser, role);
+		if (alreadyExists) {
+			throw new IllegalArgumentException("이미 보유한 권한입니다.");
+		}
 
-		UserRole userRole = UserRole.create(user, role);
+		UserRole userRole = new UserRole(targetUser, role);
 		userRoleRepository.save(userRole);
+	}
+
+	private User findActiveUser(UUID userId) {
+		return userRepository.findById(userId)
+			.orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
 	}
 
 	private List<RoleType> extractRoles(User user) {
@@ -210,7 +243,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	private void validateSignUpRole(RoleType roleType) {
-		if (roleType == RoleType.ROLE_ADMIN) {
+		if (roleType == RoleType.ADMIN) {
 			throw new CustomException(HttpStatus.FORBIDDEN, "ADMIN 권한으로는 회원가입할 수 없습니다.");
 		}
 	}

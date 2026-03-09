@@ -1,7 +1,11 @@
 package com.team.project.domain.user.api;
 
+import java.util.List;
 import java.util.UUID;
 
+import com.team.project.domain.user.api.request.UserListRequest;
+import com.team.project.domain.user.model.dto.UserList;
+import com.team.project.global.common.dto.BasePageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,6 +58,11 @@ public class UserController {
 		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
 	}
 
+	// 유저 목록 조회
+	@GetMapping
+	public ResponseEntity<BasePageResponse<UserList>> getUsers(UserListRequest request) {
+		return ResponseEntity.ok(userService.getUsers(request));
+	}
 	// 유저 정보 수정
 	@PatchMapping("/{userId}")
 	public ResponseEntity<UserResponse> updateUser(@PathVariable UUID userId,
