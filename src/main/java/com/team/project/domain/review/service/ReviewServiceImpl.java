@@ -7,6 +7,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.order.entity.Order;
+import com.team.project.domain.order.model.vo.OrderStatus;
+import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.review.api.request.CreateReviewRequest;
 import com.team.project.domain.review.api.response.ReviewResponse;
 import com.team.project.domain.review.api.response.UpdateReviewRequest;
@@ -21,53 +24,77 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-
 public class ReviewServiceImpl implements ReviewService {
 
 	private final ReviewRepository reviewRepository;
 	private final ReviewImageRepository reviewImageRepository;
+	private final OrderRepository orderRepository;
 
-	// CREATE (하나로 합친 버전)
 	@Override
-	public ReviewResponse createReview(UUID orderId, CreateReviewRequest request) {
-		// 1. 리뷰 엔티티 생성 (Request DTO의 데이터를 사용)
+	public ReviewResponse createReview(UUID orderId, UUID userId, CreateReviewRequest request) {
+		// 1. 주문 조회
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+		// 2. 검증 로직 (권한, 상태, 중복)
+		if (!order.getUser().getId().equals(userId)) {
+			throw new IllegalStateException("본인의 주문에 대해서만 리뷰를 남길 수 있습니다.");
+		}
+
+		if (order.getStatus() != OrderStatus.COMPLETED) {
+			throw new IllegalStateException("배송이 완료된 주문만 리뷰 작성이 가능합니다.");
+		}
+
+		if (reviewRepository.existsByOrderId(orderId)) {
+			throw new IllegalStateException("이미 리뷰를 작성한 주문입니다.");
+		}
+		// 3. 리뷰 엔티티 생성 및 저장 (빌더 사용)
 		Review review = Review.builder()
 			.orderId(orderId)
-			.userId(request.getUserId())
-			.storeId(request.getStoreId())
+			.userId(userId)
+			.store(order.getStore()) // Store 객체 직접 주입
 			.rating(request.getRating())
 			.content(request.getContent())
 			.isHidden(false)
 			.build();
 
-		// 2. 리뷰 본체 먼저 저장
 		Review savedReview = reviewRepository.save(review);
 
-		// 3. 이미지 URL 리스트가 있다면 반복문으로 저장 (핵심 추가 로직)
-		if (request.getImageUrls() != null) {
+		// 4. 이미지 저장
+		if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
 			for (String url : request.getImageUrls()) {
 				ReviewImage image = ReviewImage.builder()
-					.review(savedReview) // 위에서 저장된 리뷰와 연결
+					.review(savedReview)
 					.imageUrl(url)
 					.build();
 				reviewImageRepository.save(image);
 			}
 		}
 
-		// 4. 응답으로 변환하여 반환
+		// 5. 가게 평점 업데이트 (Store 엔티티의 비즈니스 메서드 호출)
+		order.getStore().addReviewRating(request.getRating());
+
 		return ReviewResponse.from(savedReview);
 	}
 
-	// READ
+	@Override
+	@Transactional(readOnly = true)
+	public List<ReviewResponse> getReviewsByStore(UUID storeId) {
+		// Repository에 findAllByStoreIdAndDeletedAtIsNull 메서드가 있어야 합니다.
+		List<Review> reviews = reviewRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
+		return reviews.stream()
+			.map(ReviewResponse::from)
+			.collect(Collectors.toList());
+	}
+
 	@Override
 	@Transactional(readOnly = true)
 	public ReviewResponse getReview(UUID reviewId) {
 		Review review = reviewRepository.findByIdAndDeletedAtIsNull(reviewId)
-			.orElseThrow(() -> new IllegalArgumentException("해당 리뷰가 존재하지 않거나 삭제되었습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("리뷰를 찾을 수 없습니다."));
 		return ReviewResponse.from(review);
 	}
 
-	// UPDATE
 	@Override
 	public ReviewResponse updateReview(UUID reviewId, UpdateReviewRequest request) {
 		Review review = reviewRepository.findByIdAndDeletedAtIsNull(reviewId)
@@ -77,36 +104,15 @@ public class ReviewServiceImpl implements ReviewService {
 		return ReviewResponse.from(review);
 	}
 
-	// DELETE
 	@Override
-	@Transactional
 	public void deleteReview(UUID reviewId, UUID userId) {
-		// 1. 삭제할 리뷰 찾기 (이미 삭제된 건 제외하고 찾기)
 		Review review = reviewRepository.findByIdAndDeletedAtIsNull(reviewId)
 			.orElseThrow(() -> new EntityNotFoundException("리뷰를 찾을 수 없습니다."));
 
-		// 2. Soft Delete 수행 (deleted_at, deleted_by 업데이트)
+		// 1. 가게 평점 차감 (삭제 시 기존 평점만큼 빼줘야 함)
+		review.getStore().removeReviewRating(review.getRating());
+
+		// 2. 소프트 삭제 처리
 		review.delete(userId);
-
-		// 3. 연관된 이미지들도 Soft Delete 처리 (필요한 경우)
-		List<ReviewImage> images = reviewImageRepository.findAllByReviewId(reviewId);
-		for (ReviewImage image : images) {
-			image.delete(userId);
-		}
 	}
-
-	// 가게별 리뷰  조회로직
-	@Override
-	@Transactional(readOnly = true)
-	public List<ReviewResponse> getReviewsByStore(UUID storeId) {
-
-		List<Review> reviews = reviewRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
-
-		// Entity 리스트를 Response DTO 리스트로 변환해서 반환
-		return reviews.stream()
-			.map(ReviewResponse::from) // Response 변환 로직에 맞게 수정
-			.collect(Collectors.toList());
-	}
-
-
 }

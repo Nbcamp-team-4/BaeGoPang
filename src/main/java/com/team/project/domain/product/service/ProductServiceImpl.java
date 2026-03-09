@@ -6,6 +6,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.ai.api.request.ProcessAiRecommendRequest;
+import com.team.project.domain.ai.api.response.SearchAiRecommendResponse;
 import com.team.project.domain.ai.service.AiService;
 import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.product.entity.ProductAiLog;
@@ -24,7 +26,6 @@ import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.repository.StoreRepository;
 
 import lombok.RequiredArgsConstructor;
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -58,7 +59,22 @@ public class ProductServiceImpl implements ProductService {
             - 설명만 출력
             """.formatted(command.getName());
 
-            aiResponse = aiService.recommendMenu(prompt);
+            // 1. UUID 타입을 String으로 변환해서 3개의 인수를 채워줍니다.
+            // 순서: (String query, String storeId, String category) 로 추정됩니다.
+            ProcessAiRecommendRequest aiRequest = new ProcessAiRecommendRequest(
+                prompt,
+                store.getId().toString(), // UUID를 String으로 변환! 👈 핵심 수정 사항
+                null                      // 세 번째 인수는 일단 null로 처리
+            );
+
+            // 2. 서비스 호출 (List 응답)
+            List<SearchAiRecommendResponse> aiResponses = aiService.recommendMenu(aiRequest);
+
+            // 3. record 타입에서 데이터 추출 (.description() 호출)
+            if (aiResponses != null && !aiResponses.isEmpty()) {
+                aiResponse = aiResponses.get(0).description();
+            }
+
             description = normalizeDescription(aiResponse);
         }
 
@@ -107,7 +123,21 @@ public class ProductServiceImpl implements ProductService {
             - 설명만 출력
             """.formatted(command.getName());
 
-            aiResponse = aiService.recommendMenu(prompt);
+            // 1. updateProduct에서는 store 대신 product.getStore()를 사용합니다.
+            ProcessAiRecommendRequest aiRequest = new ProcessAiRecommendRequest(
+                prompt,
+                product.getStore().getId().toString(), // product에서 store를 꺼내서 ID를 String으로 변환!
+                null
+            );
+
+            // 2. 서비스 호출
+            List<SearchAiRecommendResponse> aiResponses = aiService.recommendMenu(aiRequest);
+
+            // 3. record 타입 호출 (.description())
+            if (aiResponses != null && !aiResponses.isEmpty()) {
+                aiResponse = aiResponses.get(0).description();
+            }
+
             description = normalizeDescription(aiResponse);
         }
 
