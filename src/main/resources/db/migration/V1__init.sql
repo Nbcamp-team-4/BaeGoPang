@@ -15,8 +15,13 @@ BEGIN
 CREATE TYPE user_status AS ENUM ('ACTIVE', 'BLOCKED', 'WITHDRAWN', 'DELETED');
 END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_type') THEN
-CREATE TYPE role_type AS ENUM ('CUSTOMER', 'OWNER', 'MANAGER', 'ADMIN');
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_type') THEN
+CREATE TYPE role_type AS ENUM (
+        'ROLE_CUSTOMER',
+        'ROLE_OWNER',
+        'ROLE_MANAGER',
+        'ROLE_ADMIN'
+    );
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'store_status') THEN
@@ -92,8 +97,8 @@ ALTER TABLE p_user
 -- p_role
 -- =======================
 CREATE TABLE IF NOT EXISTS p_role (
-                                      id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    role        role_type NOT NULL UNIQUE,
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    type        role_type NOT NULL UNIQUE,
 
     created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by  uuid NULL,
