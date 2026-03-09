@@ -39,7 +39,7 @@ public class UserServiceImpl implements UserService {
         validateDuplicate(request);
         validateSignUpRole(request.getRole());
 
-        Role role = roleRepository.findByRoleType(request.getRole())
+        Role role = roleRepository.findByType(request.getRole())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 권한이 존재하지 않습니다."));
 
         User user = new User(
@@ -173,7 +173,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        Role role = roleRepository.findByRoleType(roleType)
+        Role role = roleRepository.findByType(roleType)
                 .orElseThrow(() -> new IllegalArgumentException("권한이 존재하지 않습니다."));
 
         UserRole userRole = UserRole.create(user, role);
