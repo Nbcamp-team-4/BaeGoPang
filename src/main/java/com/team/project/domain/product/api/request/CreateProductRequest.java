@@ -2,6 +2,8 @@ package com.team.project.domain.product.api.request;
 
 import java.util.UUID;
 
+import com.team.project.domain.product.service.command.CreateProductCommand;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -26,6 +28,15 @@ public class CreateProductRequest {
 
     private String imageUrl;
 
-    @NotNull
-    private UUID userId;
+
+    public CreateProductCommand toCommand() {
+        return new CreateProductCommand(
+            storeId,
+            name,
+            price,
+            description,
+            useAiDescription,
+            imageUrl
+        );
+    }
 }

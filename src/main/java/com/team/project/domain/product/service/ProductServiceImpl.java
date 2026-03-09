@@ -6,17 +6,23 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.team.project.domain.product.api.request.CreateProductRequest;
-import com.team.project.domain.product.api.request.UpdateProductRequest;
-import com.team.project.domain.product.api.response.GetProductsResponse;
-import com.team.project.domain.product.api.response.ProductResponse;
+import com.team.project.domain.ai.service.AiService;
 import com.team.project.domain.product.entity.Product;
+import com.team.project.domain.product.entity.ProductAiLog;
+import com.team.project.domain.product.entity.ProductOption;
+import com.team.project.domain.product.entity.ProductOptionItem;
 import com.team.project.domain.product.exception.ProductNotFoundException;
+import com.team.project.domain.product.repository.ProductAiLogRepository;
+import com.team.project.domain.product.repository.ProductOptionItemRepository;
+import com.team.project.domain.product.repository.ProductOptionRepository;
 import com.team.project.domain.product.repository.ProductRepository;
+import com.team.project.domain.product.service.command.CreateProductCommand;
+import com.team.project.domain.product.service.command.UpdateProductCommand;
+import com.team.project.domain.product.service.result.GetProductResult;
+import com.team.project.domain.product.service.result.ProductResult;
 import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.repository.StoreRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -25,150 +31,249 @@ import lombok.RequiredArgsConstructor;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductOptionRepository productOptionRepository;
+    private final ProductOptionItemRepository productOptionItemRepository;
     private final StoreRepository storeRepository;
+    private final ProductOptionManager productOptionManager;
+    private final ProductAiLogRepository productAiLogRepository;
+    private final AiService aiService;
 
-    // ===== 생성 =====
     @Override
-    public ProductResponse createProduct(CreateProductRequest request) {
+    public ProductResult createProduct(CreateProductCommand command) {
+        Store store = storeRepository.findById(command.getStoreId())
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 가게입니다."));
 
-        // 1. UUID를 이용해 DB에서 Store 엔티티를 조회한다.
-        Store store = storeRepository.findById(request.getStoreId())
-            .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
+        String description = command.getDescription();
+        String prompt = null;
+        String aiResponse = null;
 
-        Product product = new Product(
+        if (Boolean.TRUE.equals(command.getUseAiDescription())) {
+            prompt = """
+            다음 메뉴의 상품 설명을 작성해줘.
+            메뉴명: %s
+            조건:
+            - 배달앱 메뉴 설명
+            - 한글
+            - 50자 이하
+            - 설명만 출력
+            """.formatted(command.getName());
+
+            aiResponse = aiService.recommendMenu(prompt);
+            description = normalizeDescription(aiResponse);
+        }
+
+        Product product = Product.create(
             store,
-            request.getName(),
-            request.getPrice(),
-            request.getDescription(),
-            request.getUseAiDescription(),
-            request.getImageUrl()
+            command.getName(),
+            command.getPrice(),
+            description,
+            command.getUseAiDescription(),
+            command.getImageUrl()
         );
 
-        productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
 
-        return toResponse(product);
+        if (Boolean.TRUE.equals(command.getUseAiDescription()) && aiResponse != null) {
+            productAiLogRepository.save(
+                ProductAiLog.create(
+                    savedProduct.getId(),
+                    prompt,
+                    aiResponse,
+                    "spring-ai-chatclient",
+                    null
+                )
+            );
+        }
+
+        return ProductResult.from(savedProduct);
     }
-
-    // ===== 수정 =====
     @Override
-    public ProductResponse updateProduct(UUID productId, UpdateProductRequest request) {
-
-        Product product = productRepository.findById(productId)
+    public ProductResult updateProduct(UpdateProductCommand command) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(command.getProductId())
             .orElseThrow(ProductNotFoundException::new);
+
+        String description = command.getDescription();
+        String prompt = null;
+        String aiResponse = null;
+
+        if (Boolean.TRUE.equals(command.getUseAiDescription())) {
+            prompt = """
+            다음 메뉴의 상품 설명을 작성해줘.
+            메뉴명: %s
+            조건:
+            - 배달앱 메뉴 설명
+            - 한글
+            - 50자 이하
+            - 설명만 출력
+            """.formatted(command.getName());
+
+            aiResponse = aiService.recommendMenu(prompt);
+            description = normalizeDescription(aiResponse);
+        }
 
         product.update(
-            request.getName(),
-            request.getPrice(),
-            request.getDescription(),
-            request.getUseAiDescription(),
-            request.getImageUrl()
+            command.getName(),
+            command.getPrice(),
+            description,
+            command.getUseAiDescription(),
+            command.getImageUrl()
         );
 
-        return toResponse(product);
-    }
+        productOptionManager.syncOptionGroups(product, command.getOptions());
 
-    // ===== 삭제 (Soft Delete) =====
+        if (Boolean.TRUE.equals(command.getUseAiDescription()) && aiResponse != null) {
+            productAiLogRepository.save(
+                ProductAiLog.create(
+                    product.getId(),
+                    prompt,
+                    aiResponse,
+                    "spring-ai-chatclient",
+                    null
+                )
+            );
+        }
+
+        return ProductResult.from(product);
+    }
     @Override
     public void deleteProduct(UUID productId, UUID userId) {
-
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
+
+        List<ProductOption> optionGroups =
+            productOptionRepository.findAllByProductIdAndDeletedAtIsNull(productId);
+
+        for (ProductOption optionGroup : optionGroups) {
+            productOptionManager.deleteOptionGroup(optionGroup, userId);
+        }
 
         product.delete(userId);
     }
 
-    // ===== 목록 조회 =====
     @Override
     @Transactional(readOnly = true)
-    public GetProductsResponse getProducts(UUID storeId) {
-
-        List<ProductResponse> products =
-            productRepository
-                .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalse(storeId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
-
-        return GetProductsResponse.builder()
-            .products(products)
-            .build();
+    public List<ProductResult> getProducts(UUID storeId) {
+        return productRepository
+            .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalseAndIsSoldOutFalse(storeId)
+            .stream()
+            .map(ProductResult::from)
+            .toList();
     }
 
-    // ===== 단건 조회 =====
     @Override
     @Transactional(readOnly = true)
-    public ProductResponse getProduct(UUID productId) {
-
-        Product product = productRepository.findById(productId)
-            .orElseThrow(ProductNotFoundException::new);
-
-        if (product.getDeletedAt() != null) {
-            throw new ProductNotFoundException();
-        }
-
-        return toResponse(product);
+    public GetProductResult getProduct(UUID productId) {
+        Product product = getActiveProduct(productId);
+        return toGetProductResult(product);
     }
 
-    // ===== 품절 =====
     @Override
-    public ProductResponse markSoldOut(UUID productId, UUID userId) {
+    @Transactional(readOnly = true)
+    public GetProductResult getProductForAdmin(UUID productId) {
+        Product product = getProductIncludingHiddenAndSoldOut(productId);
+        return toGetProductResult(product);
+    }
 
-        Product product = productRepository.findById(productId)
+    @Override
+    public ProductResult markSoldOut(UUID productId, UUID userId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
 
         product.markSoldOut();
-
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
     @Override
-    public ProductResponse markAvailable(UUID productId, UUID userId) {
-
-        Product product = productRepository.findById(productId)
+    public ProductResult markAvailable(UUID productId, UUID userId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
 
         product.markAvailable();
-
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
-    // ===== 숨김 =====
     @Override
-    public ProductResponse hideProduct(UUID productId, UUID userId) {
-
-        Product product = productRepository.findById(productId)
+    public ProductResult hideProduct(UUID productId, UUID userId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
 
         product.hide();
-
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
     @Override
-    public ProductResponse unhideProduct(UUID productId, UUID userId) {
-
-        Product product = productRepository.findById(productId)
+    public ProductResult unhideProduct(UUID productId, UUID userId) {
+        Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
 
         product.unhide();
-
-        return toResponse(product);
+        return ProductResult.from(product);
     }
 
-    // ===== Entity → Response =====
-    private ProductResponse toResponse(Product product) {
-        return new ProductResponse(
-            product.getId(),
-            product.getStore().getId(),
-            product.getName(),
-            product.getPrice(),
-            product.getDescription(),
-            product.getUseAiDescription(),
-            product.getImageUrl(),
-            product.getIsSoldOut(),
-            product.getIsHidden(),
-            product.getCreatedAt(),
-            product.getUpdatedAt()
-        );
+    private Product getActiveProduct(UUID productId) {
+        return productRepository
+            .findByIdAndDeletedAtIsNullAndIsHiddenFalseAndIsSoldOutFalse(productId)
+            .orElseThrow(ProductNotFoundException::new);
+    }
+
+    private Product getProductIncludingHiddenAndSoldOut(UUID productId) {
+        return productRepository
+            .findByIdAndDeletedAtIsNull(productId)
+            .orElseThrow(ProductNotFoundException::new);
+    }
+
+    private GetProductResult toGetProductResult(Product product) {
+        List<ProductOption> optionGroups =
+            productOptionRepository.findAllByProductIdAndDeletedAtIsNull(product.getId());
+
+        List<GetProductResult.OptionGroup> options = optionGroups.stream()
+            .map(option -> {
+                List<ProductOptionItem> optionItems =
+                    productOptionItemRepository.findAllByProductOptionIdAndDeletedAtIsNull(option.getId());
+
+                List<GetProductResult.OptionItem> items = optionItems.stream()
+                    .map(item -> GetProductResult.OptionItem.builder()
+                        .itemId(item.getId())
+                        .name(item.getName())
+                        .additionalPrice(item.getAdditionalPrice())
+                        .build())
+                    .toList();
+
+                return GetProductResult.OptionGroup.builder()
+                    .optionId(option.getId())
+                    .name(option.getName())
+                    .isRequired(option.isRequired())
+                    .items(items)
+                    .build();
+            })
+            .toList();
+
+        return GetProductResult.builder()
+            .id(product.getId())
+            .storeId(product.getStore().getId())
+            .name(product.getName())
+            .price(product.getPrice())
+            .description(product.getDescription())
+            .useAiDescription(product.isUseAiDescription())
+            .imageUrl(product.getImageUrl())
+            .isSoldOut(product.isSoldOut())
+            .isHidden(product.isHidden())
+            .options(options)
+            .build();
+    }
+
+    private String normalizeDescription(String text) {
+
+        if (text == null || text.isBlank()) {
+            return "상품 설명이 준비 중입니다.";
+        }
+
+        String normalized = text.replace("\n", " ").trim();
+
+        if (normalized.length() > 50) {
+            normalized = normalized.substring(0, 50);
+        }
+
+        return normalized;
     }
 }
