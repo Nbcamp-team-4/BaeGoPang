@@ -4,7 +4,13 @@ import java.util.List;
 import java.util.UUID;
 
 import com.team.project.domain.user.api.request.AddUserRoleRequest;
+import com.team.project.domain.user.api.request.UserListRequest;
 import com.team.project.domain.user.model.dto.UserList;
+import com.team.project.global.common.dto.BasePageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -172,12 +178,26 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public List<UserList> getUsers() {
-		List<User> users = userRepository.findAll();
+	public BasePageResponse<UserList> getUsers(UserListRequest request) {
+		Pageable pageable = PageRequest.of(
+				request.getPage(),
+				request.getSize(),
+				Sort.by(Sort.Direction.DESC, "createdAt")
+		);
 
-		return users.stream()
+		Page<User> userPage = userRepository.findAllByDeletedAtIsNull(pageable);
+
+		List<UserList> content = userPage.getContent().stream()
 				.map(UserList::from)
 				.toList();
+
+		return new BasePageResponse<>(
+				content,
+				userPage.getNumber(),
+				userPage.getSize(),
+				userPage.getTotalElements(),
+				userPage.getTotalPages()
+		);
 	}
 
 	@Override

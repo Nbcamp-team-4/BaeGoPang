@@ -1,5 +1,8 @@
 package com.team.project.domain.user.entity;
 
+import lombok.Getter;
+
+@Getter
 public enum RoleType {
 
 	CUSTOMER("ROLE_CUSTOMER"),
@@ -14,7 +17,4 @@ public enum RoleType {
 		this.authority = authority;
 	}
 
-	public String getAuthority() {
-		return authority;
-	}
 }

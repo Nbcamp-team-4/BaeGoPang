@@ -7,10 +7,12 @@ import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.user.api.request.AddUserRoleRequest;
 import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
+import com.team.project.domain.user.api.request.UserListRequest;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
 import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.model.dto.UserList;
+import com.team.project.global.common.dto.BasePageResponse;
 import jakarta.validation.Valid;
 
 public interface UserService {
@@ -29,7 +31,7 @@ public interface UserService {
 
 	void deleteMyInfo(UserDto userDto);
 
-    List<UserList> getUsers();
+	BasePageResponse<UserList> getUsers(UserListRequest request);
 
 	void addUserRole(UUID userId, @Valid AddUserRoleRequest request, UUID currentUserId);
 }
