@@ -32,11 +32,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String uri = request.getRequestURI();
 
 		return uri.equals("/")
-				|| uri.equals("/error")
-				|| uri.equals("/favicon.ico")
-				|| uri.startsWith("/api/auth/")
-				|| uri.startsWith("/swagger-ui/")
-				|| uri.startsWith("/v3/api-docs/");
+			|| uri.equals("/error")
+			|| uri.equals("/favicon.ico")
+			|| uri.startsWith("/api/auth/")
+			|| uri.startsWith("/swagger-ui/")
+			|| uri.startsWith("/v3/api-docs/");
 	}
 
 	@Override

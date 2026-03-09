@@ -42,19 +42,19 @@ INSERT INTO p_user (
 INSERT INTO p_user_roles (id, user_id, role_id, created_at)
 SELECT gen_random_uuid(), '11111111-1111-1111-1111-111111111111', r.id, CURRENT_TIMESTAMP
 FROM p_role r
-WHERE r.role = 'CUSTOMER'
+WHERE r.type = 'ROLE_CUSTOMER'
     ON CONFLICT (user_id, role_id) DO NOTHING;
 
 INSERT INTO p_user_roles (id, user_id, role_id, created_at)
 SELECT gen_random_uuid(), '22222222-2222-2222-2222-222222222222', r.id, CURRENT_TIMESTAMP
 FROM p_role r
-WHERE r.role = 'OWNER'
+WHERE r.type = 'ROLE_OWNER'
     ON CONFLICT (user_id, role_id) DO NOTHING;
 
 INSERT INTO p_user_roles (id, user_id, role_id, created_at)
 SELECT gen_random_uuid(), '33333333-3333-3333-3333-333333333333', r.id, CURRENT_TIMESTAMP
 FROM p_role r
-WHERE r.role = 'ADMIN'
+WHERE r.type = 'ROLE_ADMIN'
     ON CONFLICT (user_id, role_id) DO NOTHING;
 
 -- 3. 지역
@@ -294,14 +294,14 @@ INSERT INTO p_payment (
 -- INSERT INTO p_payment_log (
 --     id, payment_id, payment_key, status, reason, created_at
 -- ) VALUES (
---              gen_random_uuid(),
---              'ffffffff-ffff-ffff-ffff-ffffffffffff',
---              NULL,
---              'SUCCESS',
---              '초기 결제 생성 로그',
---              CURRENT_TIMESTAMP
---          )
---     ON CONFLICT DO NOTHING;
+--     gen_random_uuid(),
+--     'ffffffff-ffff-ffff-ffff-ffffffffffff',
+--     NULL,
+--     'PAY_SUCCESS',
+--     '초기 결제 생성 로그',
+--     CURRENT_TIMESTAMP
+-- )
+-- ON CONFLICT DO NOTHING;
 
 -- 19. PG 제공자
 INSERT INTO p_pg_provider (
