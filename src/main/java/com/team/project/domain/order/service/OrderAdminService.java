@@ -9,11 +9,13 @@ import com.team.project.domain.order.api.response.CancelOrderResponse;
 import com.team.project.domain.order.api.response.GetOrderDetailResponse;
 import com.team.project.domain.order.api.response.GetOrderSummaryResponse;
 import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
+import com.team.project.domain.order.model.dto.GetOrdersCommand;
+import com.team.project.domain.order.model.dto.GetOrdersQuery;
 
 public interface OrderAdminService {
 
     // 관리자: 주문 전체 조회
-    List<GetOrderSummaryResponse> getAllOrders();
+    GetOrdersQuery getAllOrders(GetOrdersCommand command);
 
     // 관리자: 주문 상세 조회
     GetOrderDetailResponse getOrderDetail(UUID orderId);

@@ -10,9 +10,7 @@ import lombok.Data;
 @Data
 public class AddCartItemRequest {
 
-    @NotNull
-    private UUID userId;
-
+    // 로그인 사용자는 토큰에서 가져오므로 userId 제거
     @NotNull
     private UUID storeId;
 
@@ -23,7 +21,7 @@ public class AddCartItemRequest {
     @Min(1)
     private Integer quantity;
 
-    // 옵션이 없다면 빈 리스트 또는 null 가능
+    // 옵션이 없다면 null 또는 빈 리스트 허용
     private List<CartItemOptionRequest> options;
 
     @Data

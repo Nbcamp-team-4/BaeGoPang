@@ -22,9 +22,9 @@ public class SwaggerConfig {
 	@Bean
 	public GroupedOpenApi cartApi() {
 		return GroupedOpenApi.builder()
-			.group("cart")
-			.pathsToMatch("/api/**/carts/**")
-			.build();
+				.group("cart")
+				.pathsToMatch("/api/carts/**")
+				.build();
 	}
 
 	@Bean
@@ -38,9 +38,13 @@ public class SwaggerConfig {
 	@Bean
 	public GroupedOpenApi orderApi() {
 		return GroupedOpenApi.builder()
-			.group("order")
-			.pathsToMatch("/api/**/orders/**")
-			.build();
+				.group("order")
+				.pathsToMatch(
+						"/api/orders/**",
+						"/api/owner/orders/**",
+						"/api/admin/orders/**"
+				)
+				.build();
 	}
 
 	@Bean

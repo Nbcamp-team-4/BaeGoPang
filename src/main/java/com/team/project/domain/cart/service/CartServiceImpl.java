@@ -57,15 +57,15 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public AddCartItemResponse addCartItem(AddCartItemRequest request) {
+    public AddCartItemResponse addCartItem(UUID userId, AddCartItemRequest request) {
 
-        // 1) 기본 검증(수량)
+        // 수량 검증
         if (request.getQuantity() == null || request.getQuantity() < 1) {
             throw new InvalidCartQuantityException();
         }
 
-        // 2) 유저/가게/상품 존재 확인 (실무에서는 전용 NotFoundException 권장)
-        User user = userRepository.findById(request.getUserId())
+        // 로그인 사용자 기준으로 유저 조회
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
 
         Store store = storeRepository.findById(request.getStoreId())
@@ -74,29 +74,23 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
 
-        // 3) 유저의 ACTIVE 장바구니 조회(없으면 생성)
         Cart cart = cartRepository.findActiveCartByUserId(user.getId())
                 .orElseGet(() -> cartRepository.save(new Cart(user, store)));
 
-        // 4) 장바구니 상태 체크 (ORDERED/ABANDONED면 수정 불가)
         if (cart.getStatus() != CartStatus.ACTIVE) {
             throw new InvalidCartStatusException();
         }
 
-        // 5) 다른 가게 상품이면 정책 적용: 기존 장바구니 비우고 store 교체
         boolean cartReset = false;
         if (!cart.getStore().getId().equals(store.getId())) {
             cart.changeStoreAndClear(store);
             cartReset = true;
         }
 
-        // 6) CartItem 생성 후 추가
         CartItem item = new CartItem(product, request.getQuantity());
 
-        // 7) 옵션이 있으면 옵션 엔티티 매핑(간단히 검증만)
         if (request.getOptions() != null) {
             for (AddCartItemRequest.CartItemOptionRequest optReq : request.getOptions()) {
-
                 ProductOption option = productOptionRepository.findById(optReq.getProductOptionId())
                         .orElseThrow(() -> new IllegalArgumentException("PRODUCT_OPTION_NOT_FOUND"));
 
@@ -109,8 +103,6 @@ public class CartServiceImpl implements CartService {
         }
 
         cart.addItem(item);
-
-        // 8) 저장 (cascade로 item/option까지 저장됨)
         Cart saved = cartRepository.save(cart);
 
         return AddCartItemResponse.of(
@@ -124,42 +116,36 @@ public class CartServiceImpl implements CartService {
 
     @Override
     @Transactional
-    public UpdateCartItemResponse updateCartItem(UUID cartId, UUID itemId, UpdateCartItemRequest request) {
+    public UpdateCartItemResponse updateCartItem(UUID userId, UUID cartId, UUID itemId, UpdateCartItemRequest request) {
 
-        // 1) 수량 검증
+        // 수량 검증
         if (request.getQuantity() == null || request.getQuantity() < 1) {
             throw new InvalidCartQuantityException();
         }
 
-        // 2) cart 상세 조회 (권한 체크 위해 user까지 가져오는 쿼리 사용 권장)
         Cart cart = cartRepository.findCartDetailById(cartId)
                 .orElseThrow(CartNotFoundException::new);
 
-        // 3) 본인 장바구니인지 확인
-        if (!cart.getUser().getId().equals(request.getUserId())) {
+        // 로그인 사용자와 장바구니 소유자 일치 여부 확인
+        if (!cart.getUser().getId().equals(userId)) {
             throw new CartForbiddenException();
         }
 
-        // 4) 상태 체크
         if (cart.getStatus() != CartStatus.ACTIVE) {
             throw new InvalidCartStatusException();
         }
 
-        // 5) 수정할 item 찾기
         CartItem target = cart.getItems().stream()
                 .filter(i -> i.getId().equals(itemId))
                 .findFirst()
                 .orElseThrow(CartItemNotFoundException::new);
 
-        // 6) 수량 변경
         target.changeQuantity(request.getQuantity());
 
-        // 7) 옵션 변경(단순하게: 기존 옵션 삭제 후 새로 세팅)
         if (request.getOptions() != null) {
             target.getOptions().clear();
 
             for (UpdateCartItemRequest.CartItemOptionRequest optReq : request.getOptions()) {
-
                 ProductOption option = productOptionRepository.findById(optReq.getProductOptionId())
                         .orElseThrow(() -> new IllegalArgumentException("PRODUCT_OPTION_NOT_FOUND"));
 
