@@ -82,10 +82,18 @@ public class PaymentController {
 	 */
 	@Operation(summary = "결제 목록 조회", description = "조건에 따라 결제 데이터를 페이지 단위로 조회합니다.")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "결제 목록 조회 성공")
+		@ApiResponse(
+			responseCode = "200",
+			description = "결제 목록 조회 성공",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = GetPaymentsResponse.class)
+			)
+		)
 	})
 	@GetMapping
-	public ResponseEntity<?> getPayments(@ParameterObject @ModelAttribute GetPaymentsRequest request) {
+	public ResponseEntity<BaseResponse<GetPaymentsResponse>> getPayments(
+		@ParameterObject @ModelAttribute GetPaymentsRequest request) {
 
 		// 1. service dto 변환
 		GetPaymentsCommand command = GetPaymentsCommand.of(request.getPage(), request.getSize(),

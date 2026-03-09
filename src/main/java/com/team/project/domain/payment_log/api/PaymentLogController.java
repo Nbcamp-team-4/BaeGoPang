@@ -2,6 +2,7 @@ package com.team.project.domain.payment_log.api;
 
 import java.util.UUID;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -75,8 +76,20 @@ public class PaymentLogController {
 	/**
 	 * 결제 로그 데이터 전체 조회 api
 	 */
+	@Operation(summary = "결제 로그 목록 조회", description = "조건에 따라 결제 로그 데이터를 페이지 단위로 조회합니다.")
+	@ApiResponses(value = {
+		@ApiResponse(
+			responseCode = "200",
+			description = "결제 로그 목록 조회 성공",
+			content = @Content(
+				mediaType = "application/json",
+				schema = @Schema(implementation = GetPaymentLogsResponse.class)
+			)
+		)
+	})
 	@GetMapping
-	public ResponseEntity<?> getPaymentLogs(@ModelAttribute GetPaymentLogsRequest request) {
+	public ResponseEntity<BaseResponse<GetPaymentLogsResponse>> getPaymentLogs(
+		@ParameterObject @ModelAttribute GetPaymentLogsRequest request) {
 
 		// 1. service dto 변환
 		GetPaymentLogsCommand command = GetPaymentLogsCommand.of(request.getPage(), request.getSize(),
