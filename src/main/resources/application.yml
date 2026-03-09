@@ -30,3 +30,12 @@ jwt:
     1800000 # 30분
   refresh-token-expiration-seconds:
     604800000 # 7일
+  #swagger
+  springdoc:
+    swagger-ui:
+      path: /swagger-ui.html
+      operations-sorter: method
+      tags-sorter: alpha
+      display-request-duration: true
+    api-docs:
+      path: /v3/api-docs
