@@ -2,6 +2,7 @@ package com.team.project.domain.user.entity;
 
 import java.util.UUID;
 
+import com.team.project.global.common.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -24,7 +25,7 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserRole {
+public class UserRole extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
