@@ -27,31 +27,18 @@ public class User extends BaseEntity {
 	@Column(name = "id", updatable = false, nullable = false)
 	private UUID id;
 
-	@NotBlank
-	@Pattern(
-			regexp = "^[a-z0-9]{4,10}$",
-			message = "username은 4~10자의 소문자와 숫자만 사용할 수 있습니다."
-	)
 	@Column(nullable = false, unique = true)
 	private String loginId;
 
-	@NotBlank
 	@Column(nullable = false, unique = true)
 	private String email;
 
-	@NotBlank(message = "password는 필수입니다.")
-	@Pattern(
-			regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[\\W_]).{8,15}$",
-			message = "password는 8~15자이며, 대문자/소문자/숫자/특수문자를 각각 1개 이상 포함해야 합니다."
-	)
 	@Column(nullable = false)
 	private String password;
 
-	@NotBlank
 	@Column(nullable = false)
 	private String name;
 
-	@NotBlank
 	@Column(nullable = false, unique = true)
 	private String phone;
 
