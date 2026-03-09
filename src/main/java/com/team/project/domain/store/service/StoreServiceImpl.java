@@ -10,12 +10,17 @@ import org.springframework.transaction.annotation.Transactional;
 import com.team.project.domain.category.entity.Category;
 import com.team.project.domain.category.repository.CategoryRepository;
 import com.team.project.domain.product.entity.Product;
+import com.team.project.domain.product.entity.ProductOption;
+import com.team.project.domain.product.repository.ProductOptionRepository;
 import com.team.project.domain.product.repository.ProductRepository;
+import com.team.project.domain.product.service.ProductOptionManager;
 import com.team.project.domain.region.entity.Region;
 import com.team.project.domain.region.repository.RegionRepository;
 import com.team.project.domain.store.entity.Store;
+import com.team.project.domain.store.entity.StoreCategory;
 import com.team.project.domain.store.exception.StoreNotFoundException;
 import com.team.project.domain.store.model.vo.StoreStatus;
+import com.team.project.domain.store.repository.StoreCategoryRepository;
 import com.team.project.domain.store.repository.StoreRepository;
 import com.team.project.domain.store.service.command.CreateStoreCommand;
 import com.team.project.domain.store.service.command.SearchStoreCommand;
@@ -39,7 +44,10 @@ public class StoreServiceImpl implements StoreService {
 	private final UserRepository userRepository;
 	private final RegionRepository regionRepository;
 	private final ProductRepository productRepository;
+	private final ProductOptionRepository productOptionRepository;
+	private final ProductOptionManager productOptionManager;
 	private final CategoryRepository categoryRepository;
+	private final StoreCategoryRepository storeCategoryRepository;
 	private final UserAddressRepository userAddressRepository;
 
 	// === [점주] 가게 입점 신청 ===
@@ -258,23 +266,33 @@ public class StoreServiceImpl implements StoreService {
 	@Override
 	@Transactional
 	public void deleteStore(UUID storeId, UUID userId) {
-		// 1. 가게 조회 및 권한 체크
 		Store store = findStoreById(storeId);
+
 		if (!store.getUser().getId().equals(userId)) {
 			throw new IllegalArgumentException("ACCESS_DENIED");
 		}
 
-		// 2. 가게 Soft Delete
+		List<Product> products = productRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
+
+		for (Product product : products) {
+			List<ProductOption> optionGroups =
+				productOptionRepository.findAllByProductIdAndDeletedAtIsNull(product.getId());
+
+			for (ProductOption optionGroup : optionGroups) {
+				productOptionManager.deleteOptionGroup(optionGroup, userId);
+			}
+
+			product.delete(userId);
+		}
+
+		List<StoreCategory> storeCategories =
+			storeCategoryRepository.findAllByStore_IdAndDeletedAtIsNull(storeId);
+
+		for (StoreCategory storeCategory : storeCategories) {
+			storeCategory.delete(userId);
+		}
+
 		store.markDeleted(userId);
-
-		// 3. [핵심] 카테고리 매핑 정보 Soft Delete
-		// 가게와 연결된 "한식", "치킨" 등의 매핑 데이터를 다 지웁니다.
-		//storeCategoryRepository.softDeleteByStoreId(storeId, userId);
-
-		// 4. 연관 데이터(상품, 그룹, 옵션) Soft Delete
-		productRepository.softDeleteByStoreId(storeId, userId);
-		//productGroupRepository.softDeleteByStoreId(storeId, userId);
-		//productOptionRepository.softDeleteByStoreId(storeId, userId);
 	}
 
 	// 내부 헬퍼: 삭제되지 않은 가게만 조회

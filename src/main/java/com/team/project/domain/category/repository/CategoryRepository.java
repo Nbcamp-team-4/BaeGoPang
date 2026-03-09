@@ -23,7 +23,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     //사용자
     Page<Category> findAllByDeletedAtIsNull(Pageable pageable);
 
-    //추후 가게-카테고리 매핑 시 필요
-    //List<StoreCategory> findAllByCategoryIdAndDeletedAtIsNull(UUID categoryId);
+
 
 }
