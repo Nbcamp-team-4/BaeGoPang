@@ -19,12 +19,12 @@ public class GetStoresRequest extends BasePageRequest {
 
 	public GetStoresRequest(Integer page, Integer size, String name,
 		StoreStatus status, UUID regionId, UUID categoryId) {
-		super(page, size);
 		this.name = name;
 		this.status = status;
 		this.regionId = regionId;
 		this.categoryId = categoryId;
 	}
+
 	// 서비스로 넘길 쿼리 객체로 변환
 	public SearchStoreCommand toCommand(UUID userId) { // 인증된 유저 ID를 받아서 처리
 		return SearchStoreCommand.builder()
