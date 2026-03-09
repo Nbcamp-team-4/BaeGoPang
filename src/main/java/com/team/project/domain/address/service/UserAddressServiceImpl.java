@@ -1,7 +1,16 @@
 package com.team.project.domain.address.service;
 
+import java.util.List;
 import java.util.UUID;
 
+import com.team.project.domain.address.api.request.GetUserAllAddressRequest;
+import com.team.project.domain.address.api.request.UpdateUserAddressRequest;
+import com.team.project.domain.address.api.response.UserAddressResponse;
+import com.team.project.global.common.dto.BasePageResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.team.project.domain.auth.dto.UserDto;
@@ -59,6 +68,59 @@ public class UserAddressServiceImpl implements UserAddressService {
 		return GetUserAddressQuery.from(found, userDto);
 	}
 
+	@Override
+	public BasePageResponse<UserAddressResponse> getMyAddresses(UserDto userDto, GetUserAllAddressRequest request) {
+		Pageable pageable = PageRequest.of(
+				request.getPage(),
+				request.getSize(),
+				Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		Page<UserAddress> result = userAddressRepository.findAllByUserId(userDto.getId(), pageable);
+
+		List<UserAddressResponse> content = result.getContent().stream()
+				.map(UserAddressResponse::from)
+				.toList();
+
+		return new BasePageResponse<>(
+				content,
+				result.getNumber(),
+				result.getSize(),
+				result.getTotalElements(),
+				result.getTotalPages()
+		);
+	}
+
+	@Override
+	@Transactional
+	public UserAddressResponse updateAddress(UserDto userDto, UUID addressId, UpdateUserAddressRequest request) {
+		UserAddress userAddress = getMyAddress(userDto.getId(), addressId);
+
+		boolean requestDefault = Boolean.TRUE.equals(request.getIsDefault());
+		if (requestDefault) {
+			clearDefaultAddress(userDto.getId());
+		}
+
+		userAddress.update(
+				request.getAddressName(),
+				request.getPhone(),
+				request.getAddress(),
+				request.getDetailAddress(),
+				request.getLatitude(),
+				request.getLongitude(),
+				request.getIsDefault()
+		);
+
+		return UserAddressResponse.from(userAddress);
+	}
+
+	@Override
+	@Transactional
+	public void deleteAddress(UserDto userDto, UUID addressId) {
+		UserAddress userAddress = getMyAddress(userDto.getId(), addressId);
+		userAddress.markDeleted(userDto.getId());
+	}
+
 	/**
 	 * 내부 함수들
 	 */
@@ -66,5 +128,14 @@ public class UserAddressServiceImpl implements UserAddressService {
 		UserAddress address = userAddressRepository.findById(userAddressId)
 			.orElseThrow(UserAddressNotFoundException::new);
 		return address;
+	}
+	private UserAddress getMyAddress(UUID userId, UUID addressId) {
+		return userAddressRepository.findByIdAndUserId(addressId, userId)
+				.orElseThrow(() -> new IllegalArgumentException("해당 주소를 찾을 수 없습니다."));
+	}
+
+	private void clearDefaultAddress(UUID userId) {
+		userAddressRepository.findByUserId(userId)
+				.ifPresent(address -> address.updateIsDefault(false));
 	}
 }

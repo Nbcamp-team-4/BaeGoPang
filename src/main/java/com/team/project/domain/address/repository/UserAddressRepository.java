@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +20,10 @@ public interface UserAddressRepository extends JpaRepository<UserAddress, UUID> 
 
 	@Query("select ua from UserAddress ua where ua.isDefault = false and ua.user = :user")
 	List<UserAddress> findDefaultAddressByUser(@Param("user") User user);
+
+	Page<UserAddress> findAllByUserId(UUID userId, Pageable pageable);
+
+	Optional<UserAddress> findByUserId(UUID userId);
+
+	boolean existsByIdAndUserIdAndDeletedAtIsNull(UUID id, UUID userId);
 }

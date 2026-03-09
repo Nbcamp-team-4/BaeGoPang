@@ -63,15 +63,13 @@ public class UserAddress extends BaseEntity {
 		super();
 
 		this.user = user;
-		// this.user.addUserAddress(this);
-
 		this.addressName = addressName;
 		this.phone = phone;
 		this.address = address;
 		this.detailAddress = detailAddress;
 		this.latitude = latitude;
 		this.longitude = longitude;
-		this.isDefault = isDefault;
+		this.isDefault = isDefault != null ? isDefault : false;
 	}
 
 	public static UserAddress of(User user, String addressName, String phone, String address, String detailAddress,
@@ -79,11 +77,34 @@ public class UserAddress extends BaseEntity {
 		return new UserAddress(user, addressName, phone, address, detailAddress, latitude, longitude, isDefault);
 	}
 
-	public void markDeleted(UUID deletedBy) {
-		super.markDeleted(deletedBy);
+	public void update(String addressName, String phone, String address, String detailAddress,
+					   BigDecimal latitude, BigDecimal longitude, Boolean isDefault) {
+		if (addressName != null && !addressName.isBlank()) {
+			this.addressName = addressName;
+		}
+		if (phone != null && !phone.isBlank()) {
+			this.phone = phone;
+		}
+		if (address != null && !address.isBlank()) {
+			this.address = address;
+		}
+		this.detailAddress = detailAddress;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		if (isDefault != null) {
+			this.isDefault = isDefault;
+		}
 	}
 
 	public void updateIsDefault(boolean isDefault) {
 		this.isDefault = isDefault;
+	}
+
+	public void markDeleted(UUID deletedBy) {
+		super.markDeleted(deletedBy);
+	}
+
+	public boolean isDeleted() {
+		return getDeletedAt() != null;
 	}
 }
