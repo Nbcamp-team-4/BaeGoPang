@@ -71,22 +71,26 @@ END $$;
 -- =======================
 -- p_user
 -- =======================
+-- =======================
+-- p_user
+-- =======================
 CREATE TABLE IF NOT EXISTS p_user (
-                                      id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    login_id     varchar(50)  NOT NULL UNIQUE,
-    email        varchar(255) NOT NULL UNIQUE,
-    password     varchar(255) NOT NULL,
-    name         varchar(100) NOT NULL,
-    phone        varchar(20)  NOT NULL UNIQUE,
-    status       user_status  NOT NULL DEFAULT 'ACTIVE',
+                                      id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    login_id      varchar(50)  NOT NULL UNIQUE,
+    email         varchar(255) NOT NULL UNIQUE,
+    password      varchar(255) NOT NULL,
+    name          varchar(100) NOT NULL,
+    phone         varchar(20)  NOT NULL UNIQUE,
+    status        user_status  NOT NULL DEFAULT 'ACTIVE',
+    refresh_token varchar(500) NULL,
 
-    created_at   timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by   uuid         NULL,
-    updated_at   timestamp    NULL,
-    updated_by   uuid         NULL,
-    deleted_at   timestamp    NULL,
-    deleted_by   uuid         NULL
-    );
+    created_at    timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by    uuid         NULL,
+    updated_at    timestamp    NULL,
+    updated_by    uuid         NULL,
+    deleted_at    timestamp    NULL,
+    deleted_by    uuid         NULL
+);
 
 ALTER TABLE p_user
     ADD CONSTRAINT fk_user_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
@@ -106,7 +110,7 @@ CREATE TABLE IF NOT EXISTS p_role (
     updated_by  uuid NULL,
     deleted_at  timestamp NULL,
     deleted_by  uuid NULL
-    );
+);
 
 ALTER TABLE p_role
     ADD CONSTRAINT fk_role_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
