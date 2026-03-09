@@ -10,7 +10,7 @@ import com.team.project.domain.review.api.response.UpdateReviewRequest;
 public interface ReviewService {
 
 	//  매개변수 이름을 reviewId로 통일
-	ReviewResponse createReview(UUID orderId, CreateReviewRequest request);
+	ReviewResponse createReview(UUID orderId, UUID userId,CreateReviewRequest request);
 
 	ReviewResponse getReview(UUID reviewId);
 

@@ -98,7 +98,42 @@ public class Store extends BaseEntity {
 	@OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<StoreCategory> storeCategories = new ArrayList<>();
 
+	// 평점 과 리뷰
+	// Store.java 내부 수정
+	@Column(
+		name = "average_rating",
+		nullable = false,
+		columnDefinition = "double precision default 0.0" // 'double' 대신 'double precision' 사용
+	)
+	private Double averageRating = 0.0;
 
+	// 아래 두 필드는 표준이라 에러가 나지 않을 겁니다.
+	@Column(name = "review_count", nullable = false)
+	private Integer reviewCount = 0;
+
+	@Column(name = "total_rating_sum", nullable = false)
+	private Integer totalRatingSum = 0;
+
+	/**
+	 * 리뷰 등록 시 평점 갱신 (N+1 문제 해결)
+	 */
+	public void addReviewRating(int newRating) {
+		this.totalRatingSum += newRating;
+		this.reviewCount += 1;
+		this.averageRating = (double) this.totalRatingSum / this.reviewCount;
+	}
+	/**
+	 * 리뷰 삭제 시 평점 차감
+	 */
+	public void removeReviewRating(int oldRating) {
+		if (this.reviewCount > 0) {
+			this.totalRatingSum -= oldRating;
+			this.reviewCount -= 1;
+			this.averageRating = this.reviewCount > 0
+				? (double) this.totalRatingSum / this.reviewCount
+				: 0.0;
+		}
+	}
 	/* ============================================================================
 	 * 2. 생성자 및 정적 팩토리 메서드 영역 (1번 방식 핵심)
 	 * ============================================================================ */

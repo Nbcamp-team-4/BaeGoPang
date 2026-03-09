@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team.project.domain.review.api.request.CreateReviewRequest;
@@ -35,13 +36,15 @@ public class ReviewController {
 	 * p_order 와 연결
 	 */
 	@PostMapping("/orders/{orderId}")
-	public ResponseEntity<ReviewResponse> createReview
-	(@PathVariable UUID orderId,
+	public ResponseEntity<ReviewResponse> createReview(
+		@PathVariable UUID orderId,
+		@RequestHeader(name = "X-User-Id") UUID userId, // 인증된 유저 ID 헤더
 		@RequestBody CreateReviewRequest request) {
-		ReviewResponse response = reviewService.createReview(orderId, request);
+
+		// 서비스에서 주문 완료 상태 및 중복 여부를 체크하도록 설계
+		ReviewResponse response = reviewService.createReview(orderId, userId, request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
-
 	/**
 	 * 리뷰 상세 조회
 	 * 특정 가게의 리뷰  조회 기능
@@ -51,6 +54,20 @@ public class ReviewController {
 		// 가게별 리뷰 조회 기능 추가 시
 		return ResponseEntity.ok(reviewService.getReviewsByStore(storeId));
 	}
+
+
+	/**
+	 * 2번 기능: 리뷰 리스트 조회 (Query String 방식)
+	 * 요구사항: 가게 PK값을 쿼리스트링에 담아 호출 (예: /api/reviews?storeId=...)
+	 */
+	@GetMapping
+	public ResponseEntity<List<ReviewResponse>> getReviewsByStore(
+		@RequestParam(name = "storeId") UUID storeId) {
+
+		List<ReviewResponse> responses = reviewService.getReviewsByStore(storeId);
+		return ResponseEntity.ok(responses);
+	}
+
 
 	/**
 	 * 리뷰 수정
