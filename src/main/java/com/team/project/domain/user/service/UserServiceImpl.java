@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUser(UUID userId) {
-        User user = userRepository.findByUserId(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
         List<UserRole> userRoles = userRoleRepository.findByUser(user);
         List<RoleType> roles = userRoles.stream()
@@ -111,7 +111,7 @@ public class UserServiceImpl implements UserService {
         user.softDelete(userId);
     }
     private User findActiveUser(UUID userId) {
-        return userRepository.findByUserId(userId)
+        return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
     }
 
