@@ -103,7 +103,7 @@ public class AuthService {
 		User user = new User(request.getLoginId(), request.getEmail(), passwordEncoder.encode(request.getPassword()),
 			request.getName(), request.getPhone());
 
-		UserRole userRoleMapping = UserRole.of(user, userRole);
+		UserRole userRoleMapping = UserRole.create(user, userRole);
 		user.addUserRole(userRoleMapping);
 
 		userRepository.save(user);

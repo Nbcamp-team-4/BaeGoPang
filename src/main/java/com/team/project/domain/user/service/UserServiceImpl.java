@@ -1,16 +1,11 @@
 package com.team.project.domain.user.service;
 
 import com.team.project.domain.auth.util.JwtProvider;
-import com.team.project.domain.auth.util.UserDetailsImpl;
 import com.team.project.domain.user.api.request.LoginUserRequest;
 import com.team.project.domain.user.api.request.SignUpRequest;
-import com.team.project.domain.user.api.response.LoginUserResponse;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
-import com.team.project.domain.user.entity.Role;
-import com.team.project.domain.user.entity.RoleType;
-import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.entity.UserRole;
+import com.team.project.domain.user.entity.*;
 import com.team.project.domain.user.exception.CustomException;
 import com.team.project.domain.user.repository.RoleRepository;
 import com.team.project.domain.user.repository.UserRepository;
@@ -18,10 +13,7 @@ import com.team.project.domain.user.repository.UserRoleRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -72,7 +64,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        return new UserResponse(user);
+        return new UserResponse.from(user,extractRole(user));
     }
 
     @Override
@@ -84,7 +76,7 @@ public class UserServiceImpl implements UserService {
         Role role = roleRepository.findByRole(roleType)
                 .orElseThrow(() -> new IllegalArgumentException("권한이 존재하지 않습니다."));
 
-        UserRole userRole = UserRole.of(user, role);
+        UserRole userRole = UserRole.create(user, role);
         userRoleRepository.save(userRole);
     }
     private void validateDuplicate(SignUpRequest request) {

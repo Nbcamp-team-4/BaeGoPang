@@ -43,7 +43,7 @@ public class UserRole {
 		this.role = role;
 	}
 
-	public static UserRole of(User user, Role role) {
+	public static UserRole create(User user, Role role) {
 		UserRole userRole = new UserRole();
 		userRole.user = user;
 		userRole.role = role;

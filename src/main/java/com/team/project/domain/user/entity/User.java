@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.team.project.global.common.entity.BaseEntity;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Builder
 public class User extends BaseEntity {
 
 	@Id
@@ -48,19 +50,6 @@ public class User extends BaseEntity {
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	private List<UserRole> userRoles = new ArrayList<>();
 
-	public void changePassword(String encodedPassword) {
-		this.password = encodedPassword;
-	}
-
-	public void updateProfile(String name, String phone) {
-		if (name != null && !name.isBlank()) this.name = name;
-		if (phone != null && !phone.isBlank()) this.phone = phone;
-	}
-
-	public void changeStatus(UserStatus status) {
-		this.status = status;
-	}
-
 	public User(String loginId, String email, String password, String name, String phone) {
 		this.loginId = loginId;
 		this.email = email;
@@ -79,12 +68,68 @@ public class User extends BaseEntity {
 
 	public List<String> getRoleNames() {
 		return userRoles.stream()
-			.map(userRole -> userRole.getRole().getType().name())
+			.map(userRole -> userRole.getRole().getRole().name())
 			.distinct()
 			.toList();
 	}
 
+	@Builder
+	private User(
+			UUID id,
+			String loginId,
+			String email,
+			String password,
+			String name,
+			String phone,
+			UserStatus status
+	) {
+		this.id = id;
+		this.loginId = loginId;
+		this.email = email;
+		this.password = password;
+		this.name = name;
+		this.phone = phone;
+		this.status = status;
+	}
+
+	public static User create(
+			String loginId,
+			String email,
+			String password,
+			String name,
+			String phone,
+			UUID actorId
+	) {
+		User user = User.builder()
+				.id(UUID.randomUUID())
+				.loginId(loginId)
+				.email(email)
+				.password(password)
+				.name(name)
+				.phone(phone)
+				.status(UserStatus.ACTIVE)
+				.build();
+		return user;
+	}
+
 	public void addUserRole(UserRole userRole) {
-		userRoles.add(userRole);
+		this.userRoles.add(userRole);
+	}
+
+	public void updateUser(String name, String phone, UUID userId) {
+		this.name = name;
+		this.phone = phone;
+	}
+
+	public void changePassword(String password, UUID userId) {
+		this.password = password;
+	}
+
+	public void changeStatus(UserStatus status, UUID userId) {
+		this.status = status;
+	}
+
+	public void softDelete(UUID userId) {
+		this.status = UserStatus.DELETED;
 	}
 }
