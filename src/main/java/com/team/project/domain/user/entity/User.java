@@ -107,7 +107,7 @@ public class User extends BaseEntity {
 		}
 	}
 
-	public void softDelete(UUID userId) {
+	public void softDelete(UUID id) {
 		this.status = UserStatus.DELETED;
 	}
 	public boolean isDeleted() {

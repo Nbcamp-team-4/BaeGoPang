@@ -1,7 +1,7 @@
 package com.team.project.domain.user.service;
 
-import com.team.project.domain.review.api.response.ReviewResponse;
-import com.team.project.domain.review.entity.Review;
+import com.team.project.domain.auth.dto.UserDto;
+
 import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
 import com.team.project.domain.user.api.response.SignUpResponse;
@@ -33,6 +33,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
 
     @Override
+    @Transactional
     public SignUpResponse signUp(SignUpRequest request) {
 
         validateDuplicate(request);
@@ -60,6 +61,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserResponse getUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
@@ -68,7 +70,19 @@ public class UserServiceImpl implements UserService {
                 .map(userRole -> userRole.getRole().getType())
                 .toList();
         return UserResponse.from(user, roles);
+    }
+    // 본인 정보 조회
+    @Override
+    @Transactional
+    public UserResponse getMyInfo(UserDto userDto) {
+        User user = userRepository.findById(userDto.getId())
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        List<UserRole> userRoles = userRoleRepository.findByUser(user);
+        List<RoleType> roles = userRoles.stream()
+                .map(userRole -> userRole.getRole().getType())
+                .toList();
 
+        return UserResponse.from(user, roles);
     }
 
     @Override
@@ -98,6 +112,30 @@ public class UserServiceImpl implements UserService {
 
         return UserResponse.from(user, extractRoles(user));
     }
+    // 본인 정보 수정
+    @Override
+    @Transactional
+    public UserResponse updateMyInfo(UserDto userDto, UpdateUserRequest request) {
+        User user = userRepository.findById(userDto.getId())
+            .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+        validateUpdatableUser(user);
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            }
+        }
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            if (userRepository.existsByPhone(request.getPhone())) {
+                throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+            }
+        }
+        user.updateInfo(
+                request.getEmail(),
+                request.getName(),
+                request.getPhone()
+        );
+        return UserResponse.from(user, extractRoles(user));
+    }
 
     @Override
     @Transactional
@@ -110,6 +148,20 @@ public class UserServiceImpl implements UserService {
 
         user.softDelete(userId);
     }
+
+    // 본인 탈퇴
+    @Override
+    public void deleteMyInfo(UserDto userDto) {
+        User user = userRepository.findById(userDto.getId())
+                .orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
+
+        if (user.getStatus() == UserStatus.DELETED || user.isDeleted()) {
+            throw new IllegalArgumentException("이미 삭제된 유저입니다.");
+        }
+
+        user.softDelete(userDto.getId());
+    }
+
     private User findActiveUser(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));

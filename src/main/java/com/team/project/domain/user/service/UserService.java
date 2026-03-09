@@ -1,5 +1,6 @@
 package com.team.project.domain.user.service;
 
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.user.api.request.*;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
@@ -19,4 +20,10 @@ public interface UserService {
     UserResponse updateUser(UUID userId, UpdateUserRequest request);
 
     void deleteUser(UUID userId);
+
+    UserResponse getMyInfo(UserDto userDto);
+
+    UserResponse updateMyInfo(UserDto userDto, UpdateUserRequest request);
+
+    void deleteMyInfo(UserDto userDto);
 }
