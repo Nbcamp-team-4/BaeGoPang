@@ -1,10 +1,8 @@
 package com.team.project.domain.user.api.request;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 
-public class AdminSignUpReqeust {
+public class AdminSignUpRequest {
 
     @NotBlank(message = "loginId는 빈 값이 허용되지 않습니다.")
     private final String loginId;

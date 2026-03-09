@@ -2,6 +2,7 @@ package com.team.project.domain.user.api;
 
 import com.team.project.domain.user.api.request.LoginUserRequest;
 import com.team.project.domain.user.api.request.SignUpRequest;
+import com.team.project.domain.user.api.response.AdminSignUpResponse;
 import com.team.project.domain.user.api.response.ApiResponse;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.service.UserService;

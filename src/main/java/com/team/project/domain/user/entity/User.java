@@ -4,19 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.team.project.global.common.entity.BaseEntity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,13 +61,12 @@ public class User extends BaseEntity {
 		this.status = status;
 	}
 
-	public User(String loginId, String email, String password, String name, String phone,UserStatus status) {
+	public User(String loginId, String email, String password, String name, String phone) {
 		this.loginId = loginId;
 		this.email = email;
 		this.password = password;
 		this.name = name;
 		this.phone = phone;
-		this.status = status;
 	}
 
 	public void updateRefreshToken(String refreshToken) {

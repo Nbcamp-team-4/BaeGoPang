@@ -4,15 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,8 +24,9 @@ public class Role {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private RoleType type;
+	private RoleType role;
 
-	@OneToMany(mappedBy = "role")
-	private List<UserRole> userRoles = new ArrayList<>();
+	public Role(RoleType role) {
+		this.role = role;
+	}
 }

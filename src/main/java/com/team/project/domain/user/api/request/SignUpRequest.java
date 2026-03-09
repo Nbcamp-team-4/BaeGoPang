@@ -1,5 +1,6 @@
 package com.team.project.domain.user.api.request;
 
+import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.UserStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -31,12 +32,16 @@ public class SignUpRequest {
 	@NotBlank(message = "phone은 빈 값이 허용되지 않습니다.")
 	private final String phone;
 
-	public SignUpRequest(String loginId, String password, String email, String name, String phone) {
+	@NotBlank(message = "role 빈 값이 허용되지 않습니다.")
+	private final RoleType role;
+
+	public SignUpRequest(String loginId, String password, String email, String name, String phone, RoleType role) {
 		this.loginId = loginId;
 		this.password = password;
 		this.email = email;
 		this.name = name;
 		this.phone = phone;
-	}
+        this.role = role;
+    }
 
 }

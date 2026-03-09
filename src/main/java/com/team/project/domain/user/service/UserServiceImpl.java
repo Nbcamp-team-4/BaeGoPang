@@ -37,11 +37,13 @@ public class UserServiceImpl implements UserService {
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
-    private final JwtProvider jwtProvider;
 
     @Override
     public SignUpResponse signUp(SignUpRequest request) {
+
         validateDuplicate(request);
+        validateSignUpRole(request.getRole());
+
         Role role = roleRepository.findByRole(request.getRole())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 권한이 존재하지 않습니다."));
 
@@ -55,35 +57,12 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
 
-        UserRole userRole = new UserRole(savedUser, role, request.getLoginId());
+        UserRole userRole = new UserRole(savedUser, role);
         userRoleRepository.save(userRole);
 
         savedUser.addUserRole(userRole);
 
         return SignUpResponse.from(savedUser, role.getRole());
-    }
-
-
-    @Override
-    public ResponseEntity<?> login(LoginUserRequest request) {
-
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getLoginId(),
-                        request.getPassword()
-                )
-        );
-
-        UserDetailsImpl userDetails =
-                (UserDetailsImpl) authentication.getPrincipal();
-
-        String token = jwtProvider.createToken(
-                userDetails.getUsername()
-        );
-
-        return ResponseEntity.ok(
-                new LoginUserResponse(token)
-        );
     }
 
     @Override
@@ -105,7 +84,7 @@ public class UserServiceImpl implements UserService {
         Role role = roleRepository.findByRole(roleType)
                 .orElseThrow(() -> new IllegalArgumentException("권한이 존재하지 않습니다."));
 
-        UserRole userRole = UserRole.create(user, role);
+        UserRole userRole = UserRole.of(user, role);
         userRoleRepository.save(userRole);
     }
     private void validateDuplicate(SignUpRequest request) {
@@ -119,6 +98,11 @@ public class UserServiceImpl implements UserService {
 
         if (userRepository.existsByPhone(request.getPhone())) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 phone 입니다.");
+        }
+    }
+    private void validateSignUpRole(RoleType roleType) {
+        if (roleType == RoleType.ADMIN) {
+            throw new CustomException(HttpStatus.FORBIDDEN, "ADMIN 권한으로는 회원가입할 수 없습니다.");
         }
     }
 }
