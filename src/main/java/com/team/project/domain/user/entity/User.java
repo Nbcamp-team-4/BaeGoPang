@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.team.project.global.common.entity.BaseEntity;
@@ -20,6 +21,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "p_user")
@@ -48,6 +50,8 @@ public class User extends BaseEntity {
 	private String phone;
 
 	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
+	@Column(name = "status", nullable = false, columnDefinition = "user_status")
 	private UserStatus status = UserStatus.ACTIVE;
 
 	@Column(length = 500)

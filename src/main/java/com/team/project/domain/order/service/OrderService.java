@@ -13,6 +13,8 @@ import com.team.project.domain.order.api.response.CreateOrderResponse;
 import com.team.project.domain.order.api.response.GetOrderDetailResponse;
 import com.team.project.domain.order.api.response.GetOrderSummaryResponse;
 import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
+import com.team.project.domain.order.model.dto.GetOrdersCommand;
+import com.team.project.domain.order.model.dto.GetOrdersQuery;
 
 public interface OrderService {
 
@@ -22,7 +24,7 @@ public interface OrderService {
 
     CreateOrderResponse createOrder(UUID userId, CreateOrderRequest request);
 
-    List<GetOrderSummaryResponse> getMyOrders(UUID userId);
+    GetOrdersQuery getMyOrders(UUID userId, GetOrdersCommand command);
 
     GetOrderDetailResponse getOrderDetail(UUID orderId, UUID userId);
 
@@ -36,7 +38,7 @@ public interface OrderService {
     // owner (store)
     // ======================
 
-    List<GetOrderSummaryResponse> getStoreOrders(UUID ownerUserId, UUID storeId);
+    GetOrdersQuery getStoreOrders(UUID ownerUserId, UUID storeId, GetOrdersCommand command);
 
     GetOrderDetailResponse getStoreOrderDetail(UUID ownerUserId, UUID orderId, UUID storeId);
 

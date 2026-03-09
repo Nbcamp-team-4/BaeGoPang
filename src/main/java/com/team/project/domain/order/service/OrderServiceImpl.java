@@ -4,6 +4,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.team.project.domain.order.model.dto.GetOrdersCommand;
+import com.team.project.domain.order.model.dto.GetOrdersQuery;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -191,16 +196,39 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public List<GetOrderSummaryResponse> getMyOrders(UUID userId) {
+	public GetOrdersQuery getMyOrders(UUID userId, GetOrdersCommand command) {
 
-		List<Order> orders = orderRepository.findAllByUserIdOrderByOrderDateDesc(userId);
+		Pageable pageable = PageRequest.of(command.getPage(), command.getSize());
 
-		return orders.stream()
-				.map(order -> {
-					Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
-					return GetOrderSummaryResponse.from(order, payment);
-				})
-				.collect(Collectors.toList());
+		Page<Order> orderPage = orderRepository.searchMyOrders(
+				userId,
+				command.getStatus(),
+				command.getRangeCreatedAt(),
+				pageable
+		);
+
+		List<GetOrdersQuery.Item> items = orderPage.getContent()
+				.stream()
+				.map(order -> GetOrdersQuery.Item.builder()
+						.id(order.getId())
+						.orderNo(order.getOrderNo())
+						.status(order.getStatus())
+						.totalAmount(order.getTotalAmount())
+						.createdAt(order.getCreatedAt())
+						.storeId(order.getStore().getId())
+						.storeName(order.getStore().getName())
+						.userId(order.getUser().getId())
+						.userName(order.getUser().getName())
+						.build())
+				.toList();
+
+		return GetOrdersQuery.builder()
+				.content(items)
+				.page(orderPage.getNumber())
+				.size(orderPage.getSize())
+				.totalElements(orderPage.getTotalElements())
+				.totalPages(orderPage.getTotalPages())
+				.build();
 	}
 
 	@Override
@@ -264,19 +292,42 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	@Override
-	public List<GetOrderSummaryResponse> getStoreOrders(UUID ownerUserId, UUID storeId) {
+	public GetOrdersQuery getStoreOrders(UUID ownerUserId, UUID storeId, GetOrdersCommand command) {
 
 		// 로그인한 OWNER의 가게인지 확인
 		getOwnedStore(ownerUserId, storeId);
 
-		List<Order> orders = orderRepository.findAllByStoreIdOrderByOrderDateDesc(storeId);
+		Pageable pageable = PageRequest.of(command.getPage(), command.getSize());
 
-		return orders.stream()
-				.map(order -> {
-					Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
-					return GetOrderSummaryResponse.from(order, payment);
-				})
-				.collect(Collectors.toList());
+		Page<Order> orderPage = orderRepository.searchStoreOrders(
+				storeId,
+				command.getStatus(),
+				command.getRangeCreatedAt(),
+				pageable
+		);
+
+		List<GetOrdersQuery.Item> items = orderPage.getContent()
+				.stream()
+				.map(order -> GetOrdersQuery.Item.builder()
+						.id(order.getId())
+						.orderNo(order.getOrderNo())
+						.status(order.getStatus())
+						.totalAmount(order.getTotalAmount())
+						.createdAt(order.getCreatedAt())
+						.storeId(order.getStore().getId())
+						.storeName(order.getStore().getName())
+						.userId(order.getUser().getId())
+						.userName(order.getUser().getName())
+						.build())
+				.toList();
+
+		return GetOrdersQuery.builder()
+				.content(items)
+				.page(orderPage.getNumber())
+				.size(orderPage.getSize())
+				.totalElements(orderPage.getTotalElements())
+				.totalPages(orderPage.getTotalPages())
+				.build();
 	}
 
 	@Override

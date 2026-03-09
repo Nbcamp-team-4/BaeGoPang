@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Column;
@@ -16,6 +17,7 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "p_role")
@@ -29,7 +31,8 @@ public class Role {
 	private UUID id;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
+	@Column(nullable = false, unique = true, columnDefinition = "role_type")
 	private RoleType type;
 
 	@OneToMany(mappedBy = "role")
