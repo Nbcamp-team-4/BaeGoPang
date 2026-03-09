@@ -29,9 +29,12 @@ import com.team.project.domain.store.service.StoreService;
 import com.team.project.domain.store.service.command.SearchStoreCommand;
 import com.team.project.domain.store.service.result.StoreResult;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+@Tag(name = "Store", description = "가게 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/stores")
@@ -39,7 +42,7 @@ public class StoreController {
 
 	private final StoreService storeService;
 
-	// === [OWNER] 가게 입점 신청 ===
+	@Operation(summary = "가게 등록", description = "가게를 등록합니다.")
 	@PostMapping
 	@PreAuthorize("hasRole('OWNER')")
 	public ResponseEntity<StoreResponse> createStore(@RequestBody @Valid CreateStoreRequest request) {
@@ -49,6 +52,7 @@ public class StoreController {
 	}
 
 	// === [공통] 가게 단건 상세 조회 ===
+	@Operation(summary = "가게 상세 조회", description = "가게 상세 정보를 조회합니다.")
 	@GetMapping("/{storeId}")
 	public ResponseEntity<StoreResponse> getStoreDetail(@PathVariable UUID storeId) {
 
@@ -62,6 +66,7 @@ public class StoreController {
 	}
 
 	// === [MANAGER/MASTER] 가게 전체 조회 ===
+	@Operation(summary = "가게 전체 조회", description = "가게 목록을 조회합니다. 이름, 상태, 지역, 카테고리 조건으로 필터링할 수 있으며 페이징이 적용됩니다.")
 	@GetMapping
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 관리자 권한 유지!
 	public ResponseEntity<GetStoresResponse> getStores(
@@ -74,6 +79,7 @@ public class StoreController {
 	}
 
 	// === [OWNER] 내 가게 목록 조회 ===
+	@Operation(summary = "내 가게 조회", description = "점주(OWNER)가 자신의 가게 목록을 조회합니다.")
 	@GetMapping("/my")
 	@PreAuthorize("hasRole('OWNER')")
 	public ResponseEntity<GetStoresResponse> getMyStores(
@@ -84,9 +90,9 @@ public class StoreController {
 	}
 
 	// === [OWNER] 가게 정보 수정 ===
-	// URL: PATCH /api/stores/{storeId}?userId=...
+	@Operation(summary = "가게 정보 수정(점주)", description = "점주(OWNER)가 자신의 가게 정보를 수정합니다.")
 	@PatchMapping("/{storeId}")
-	@PreAuthorize("hasRole('OWNER')") // 점주 권한 유지!
+	@PreAuthorize("hasRole('OWNER')")
 	public ResponseEntity<StoreResponse> updateStoreByOwner(
 		@PathVariable UUID storeId,
 		@RequestParam UUID userId, // TODO: @AuthenticationPrincipal 적용 예정
@@ -97,7 +103,7 @@ public class StoreController {
 	}
 
 	// === [MANAGER/MASTER] 가게 전체 정보 수정 ===
-	// URL: PATCH /api/stores/{storeId}?userId=...
+	@Operation(summary = "가게 전체 정보 수정", description = "관리자(MANAGER, MASTER)가 가게 전체 정보를 수정합니다.")
 	@PatchMapping("/{storeId}/admin")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 관리자 권한 유지!
 	public ResponseEntity<StoreResponse> updateStoreByAdmin(
@@ -110,7 +116,7 @@ public class StoreController {
 	}
 
 	// === [공통/관리자] 가게 상태 변경 ===
-	// URL: PATCH /api/stores/{storeId}/status?status=OPEN&userId=...&role=...
+	@Operation(summary = "가게 상태 변경", description = "가게 상태를 변경합니다.")
 	@PatchMapping("/{storeId}/status")
 	@PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')") // 점주(OPEN/CLOSED) 및 관리자 권한 유지!
 	public ResponseEntity<StoreResponse> updateStoreStatus(
@@ -124,6 +130,7 @@ public class StoreController {
 	}
 
 	// === [사용자] 내 주소 기준 주변 가게 조회 ===
+	@Operation(summary = "주변 가게 조회", description = "사용자의 주소 기준 주변 가게를 조회합니다.")
 	@GetMapping("/nearby")
 	public ResponseEntity<GetStoresResponse> searchByMyAddress(
 		@RequestParam UUID addressId,
@@ -136,6 +143,7 @@ public class StoreController {
 	}
 
 	// === [MANAGER/MASTER] 가게 삭제 ===
+	@Operation(summary = "가게 삭제", description = "관리자가 가게를 삭제합니다.")
 	@DeleteMapping("/{storeId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 권한 유지!
 	public ResponseEntity<Void> deleteStore(

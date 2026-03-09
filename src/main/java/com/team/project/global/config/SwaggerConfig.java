@@ -98,4 +98,13 @@ public class SwaggerConfig {
 			.pathsToMatch("/api/users/**")
 			.build();
 	}
+
+	@Bean
+	public  GroupedOpenApi AiApi(){
+		return  GroupedOpenApi.builder()
+			.group("ai")
+			.pathsToMatch("/api/ai/**")
+			.build();
+	}
+
 }
