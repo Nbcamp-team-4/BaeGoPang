@@ -1,5 +1,7 @@
 package com.team.project.domain.auth.api.request;
 
+import com.team.project.domain.user.entity.RoleType;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,4 +15,5 @@ public class SignUpRequest {
 	private String name;
 	private String email;
 	private String phone;
+	private RoleType type;
 }

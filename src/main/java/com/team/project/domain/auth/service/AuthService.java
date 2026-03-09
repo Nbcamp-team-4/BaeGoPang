@@ -15,7 +15,6 @@ import com.team.project.domain.auth.api.request.SignUpRequest;
 import com.team.project.domain.auth.api.response.LoginResponse;
 import com.team.project.domain.auth.dto.CustomUserPrincipal;
 import com.team.project.domain.user.entity.Role;
-import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserRole;
 import com.team.project.domain.user.exception.UserNotFoundException;
@@ -97,7 +96,7 @@ public class AuthService {
 			throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
 		}
 
-		Role userRole = roleRepository.findByType(RoleType.ROLE_CUSTOMER)
+		Role userRole = roleRepository.findByType(request.getType())
 			.orElseThrow(() -> new IllegalArgumentException("기본 권한이 존재하지 않습니다."));
 
 		User user = new User(request.getLoginId(), request.getEmail(), passwordEncoder.encode(request.getPassword()),
