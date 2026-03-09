@@ -111,4 +111,12 @@ public class SwaggerConfig {
 			.build();
 	}
 
+	@Bean
+	public GroupedOpenApi imageApi() {
+		return GroupedOpenApi.builder()
+				.group("image")
+				.pathsToMatch("/api/images/**")
+				.build();
+	}
+
 }
