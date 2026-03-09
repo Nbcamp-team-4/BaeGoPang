@@ -1,5 +1,6 @@
 package com.team.project.domain.category.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.category.api.request.CreateCategoryRequest;
 import com.team.project.domain.category.api.request.UpdateCategoryRequest;
 import com.team.project.domain.category.api.response.CategoryResponse;
@@ -16,6 +18,8 @@ import com.team.project.domain.category.entity.Category;
 import com.team.project.domain.category.exception.CategoryDuplicateException;
 import com.team.project.domain.category.exception.CategoryNotFoundException;
 import com.team.project.domain.category.repository.CategoryRepository;
+import com.team.project.domain.store.entity.StoreCategory;
+import com.team.project.domain.store.repository.StoreCategoryRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,17 +29,17 @@ import lombok.RequiredArgsConstructor;
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final StoreCategoryRepository storeCategoryRepository;
 
     @Override
-    public CategoryResponse createCategory(UUID userId, CreateCategoryRequest request) {
-        // 삭제 안 된 카테고리 기준으로 중복 체크가 더 안전함
-        if (categoryRepository.existsByName(request.getName())) {
+    public CategoryResponse createCategory(UserDto userDto, CreateCategoryRequest request) {
+        if (categoryRepository.existsByNameAndDeletedAtIsNull(request.getName())) {
             throw new CategoryDuplicateException();
         }
 
         Category category = Category.builder()
             .name(request.getName())
-            .createdBy(userId)
+            .createdBy(userDto.getId())
             .build();
 
         Category saved = categoryRepository.save(category);
@@ -45,7 +49,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional(readOnly = true)
     public GetCategoryResponse getCategory(UUID categoryId) {
-        Category category = categoryRepository.findById(categoryId)
+        Category category = categoryRepository.findByIdAndDeletedAtIsNull(categoryId)
             .orElseThrow(CategoryNotFoundException::new);
 
         return GetCategoryResponse.of(CategoryResponse.from(category));
@@ -86,34 +90,31 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponse updateCategory(UUID userId, UUID categoryId, UpdateCategoryRequest request) {
-        Category category = categoryRepository.findById(categoryId)
+    public CategoryResponse updateCategory(UserDto userDto, UUID categoryId, UpdateCategoryRequest request) {
+        Category category = categoryRepository.findByIdAndDeletedAtIsNull(categoryId)
             .orElseThrow(CategoryNotFoundException::new);
 
         boolean nameChanged = !category.getName().equals(request.getName());
-        if (nameChanged && categoryRepository.existsByName(request.getName())) {
+        if (nameChanged && categoryRepository.existsByNameAndDeletedAtIsNull(request.getName())) {
             throw new CategoryDuplicateException();
         }
 
-        category.update(request.getName(), userId);
+        category.update(request.getName(), userDto.getId());
         return CategoryResponse.from(category);
     }
 
     @Override
-    public void deleteCategory(UUID userId, UUID categoryId) {
-        Category category = categoryRepository.findById(categoryId)
+    public void deleteCategory(UserDto userDto, UUID categoryId) {
+        Category category = categoryRepository.findByIdAndDeletedAtIsNull(categoryId)
             .orElseThrow(CategoryNotFoundException::new);
 
-        //추후 매핑 연결 시 가게-카테고리 매핑 삭제
-        /*List<StoreCategory> mappings =
-            storeCategoryRepository.findAllByCategoryIdAndDeletedAtIsNull(categoryId);
+        List<StoreCategory> mappings =
+            storeCategoryRepository.findAllByCategory_IdAndDeletedAtIsNull(categoryId);
 
         for (StoreCategory mapping : mappings) {
-            mapping.softDelete(userId);
+            mapping.markDeleted(userDto.getId());
         }
-        */
-        // 2카테고리 soft delete
-        category.softDelete(userId);
-    }
 
+        category.markDeleted(userDto.getId());
+    }
 }

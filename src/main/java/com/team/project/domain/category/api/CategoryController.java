@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.project.domain.auth.dto.CurrentUser;
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.category.api.request.CreateCategoryRequest;
 import com.team.project.domain.category.api.request.UpdateCategoryRequest;
 import com.team.project.domain.category.api.response.CategoryResponse;
@@ -45,11 +47,11 @@ public class CategoryController {
     @PostMapping
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryResponse create(@Valid @RequestBody CreateCategoryRequest request) {
-
-        UUID userId = null; // TODO: Security 적용 후 JWT에서 추출
-
-        return categoryService.createCategory(userId, request);
+    public CategoryResponse create(
+        @CurrentUser UserDto userDto,
+        @Valid @RequestBody CreateCategoryRequest request
+    ) {
+        return categoryService.createCategory(userDto, request);
     }
 
     /**
@@ -93,13 +95,11 @@ public class CategoryController {
     @PutMapping("/{categoryId}")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     public CategoryResponse update(
+        @CurrentUser UserDto userDto,
         @PathVariable UUID categoryId,
         @Valid @RequestBody UpdateCategoryRequest request
     ) {
-
-        UUID userId = null; // TODO: Security 적용 후 JWT에서 추출
-
-        return categoryService.updateCategory(userId, categoryId, request);
+        return categoryService.updateCategory(userDto, categoryId, request);
     }
 
     /**
@@ -110,11 +110,9 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(
+        @CurrentUser UserDto userDto,
         @PathVariable UUID categoryId
     ) {
-
-        UUID userId = null; // TODO: Security 적용 후 JWT에서 추출
-
-        categoryService.deleteCategory(userId, categoryId);
+        categoryService.deleteCategory(userDto, categoryId);
     }
 }

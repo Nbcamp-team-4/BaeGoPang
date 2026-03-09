@@ -3,6 +3,8 @@ package com.team.project.domain.category.entity;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.team.project.global.common.entity.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Entity
 @Table(name = "p_category")
-public class Category {
+public class Category extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -67,8 +69,7 @@ public class Category {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public void softDelete(UUID userId) {
-        this.deletedAt = LocalDateTime.now();
-        this.deletedBy = userId;
+    public void markDeleted(UUID deletedBy) {
+        super.markDeleted(deletedBy);
     }
 }
