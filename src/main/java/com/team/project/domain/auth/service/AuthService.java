@@ -1,5 +1,6 @@
 package com.team.project.domain.auth.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,7 @@ import com.team.project.domain.auth.api.request.SignUpRequest;
 import com.team.project.domain.auth.api.response.LoginResponse;
 import com.team.project.domain.auth.dto.CustomUserPrincipal;
 import com.team.project.domain.user.entity.Role;
+import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserRole;
 import com.team.project.domain.user.exception.UserNotFoundException;
@@ -53,7 +55,9 @@ public class AuthService {
 			.orElseThrow(() -> new UserNotFoundException());
 		user.updateRefreshToken(refreshToken);
 
-		return new LoginResponse(accessToken, refreshToken);
+		List<RoleType> types = user.getUserRoles().stream().map(r -> r.getRole().getType()).toList();
+
+		return new LoginResponse(accessToken, refreshToken, user.getLoginId(), user.getName(), types);
 	}
 
 	public LoginResponse reissue(String refreshToken) {
@@ -78,7 +82,9 @@ public class AuthService {
 
 		user.updateRefreshToken(newRefreshToken);
 
-		return new LoginResponse(newAccessToken, newRefreshToken);
+		List<RoleType> roleTypes = user.getUserRoles().stream().map(r -> r.getRole().getType()).toList();
+
+		return new LoginResponse(newAccessToken, newRefreshToken, user.getLoginId(), user.getName(), roleTypes);
 	}
 
 	public void logout(UUID userId) {

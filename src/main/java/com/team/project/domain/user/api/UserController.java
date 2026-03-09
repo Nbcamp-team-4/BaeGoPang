@@ -152,7 +152,7 @@ public class UserController {
 			))
 	})
 	// 유저 목록 조회
-	@GetMapping("/list")
+	@GetMapping
 	public ResponseEntity<BasePageResponse<UserList>> getUsers(UserListRequest request) {
 		return ResponseEntity.ok(userService.getUsers(request));
 	}
