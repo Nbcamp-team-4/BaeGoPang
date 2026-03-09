@@ -12,15 +12,15 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
-CREATE TYPE user_status AS ENUM ('ACTIVE','BLOCKED','WITHDRAWN','DELETED');
+CREATE TYPE user_status AS ENUM ('ACTIVE', 'BLOCKED', 'WITHDRAWN', 'DELETED');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_type') THEN
-CREATE TYPE role_type AS ENUM ('CUSTOMER','OWNER','MANAGER','ADMIN');
+CREATE TYPE role_type AS ENUM ('CUSTOMER', 'OWNER', 'MANAGER', 'ADMIN');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'store_status') THEN
-CREATE TYPE store_status AS ENUM ('OPEN','CLOSED','INACTIVE');
+CREATE TYPE store_status AS ENUM ('OPEN', 'CLOSED', 'INACTIVE');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
@@ -37,26 +37,26 @@ CREATE TYPE order_status AS ENUM (
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'cart_status') THEN
-CREATE TYPE cart_status AS ENUM ('ACTIVE','ORDERED','ABANDONED');
+CREATE TYPE cart_status AS ENUM ('ACTIVE', 'ORDERED', 'ABANDONED');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
-CREATE TYPE payment_status AS ENUM ('READY','PAID','CANCELED','CANCEL_FAILED');
+CREATE TYPE payment_status AS ENUM ('READY', 'PAID', 'CANCELED', 'CANCEL_FAILED');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_log_status') THEN
 CREATE TYPE payment_log_status AS ENUM (
-  'PAY_SUCCESS',
-  'PAY_FAILURE',
-  'CANCEL_SUCCESS',
-  'CANCEL_FAILURE',
-  'REFUND_SUCCESS',
-  'REFUND_FAILURE'
-);
+      'PAY_SUCCESS',
+      'PAY_FAILURE',
+      'CANCEL_SUCCESS',
+      'CANCEL_FAILURE',
+      'REFUND_SUCCESS',
+      'REFUND_FAILURE'
+    );
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pg_provider_status') THEN
-CREATE TYPE pg_provider_status AS ENUM ('ACTIVE','DEACTIVE');
+CREATE TYPE pg_provider_status AS ENUM ('ACTIVE', 'DEACTIVE');
 END IF;
 END $$;
 
@@ -193,8 +193,7 @@ CREATE TABLE IF NOT EXISTS p_store (
     delivery_fee          int NOT NULL DEFAULT 0,
     minimum_order_amount  int NOT NULL DEFAULT 0,
 
-
--- [추가] 평점 및 리뷰 관련 컬럼
+    -- [추가] 평점 및 리뷰 관련 컬럼
     average_rating        double precision NOT NULL DEFAULT 0.0,
     review_count          int NOT NULL DEFAULT 0,
     total_rating_sum      int NOT NULL DEFAULT 0,
@@ -337,18 +336,18 @@ CREATE INDEX IF NOT EXISTS ix_option_item_option_id ON p_product_option_item(pro
 -- =======================
 CREATE TABLE IF NOT EXISTS p_ai_log (
                                         id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    product_id     uuid NOT NULL,
+    product_id    uuid NOT NULL,
+    task_type     varchar(255) NULL,
+    request_text  text NOT NULL,
+    response_text text NOT NULL,
+    ai_model      varchar(100) NOT NULL,
 
-    request_text   text NOT NULL,
-    response_text  text NOT NULL,
-    ai_model       varchar(100) NOT NULL,
-
-    created_at     timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by     uuid NULL,
-    updated_at     timestamp NULL,
-    updated_by     uuid NULL,
-    deleted_at     timestamp NULL,
-    deleted_by     uuid NULL
+    created_at    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by    uuid NULL,
+    updated_at    timestamp NULL,
+    updated_by    uuid NULL,
+    deleted_at    timestamp NULL,
+    deleted_by    uuid NULL
     );
 
 ALTER TABLE p_ai_log
@@ -639,17 +638,17 @@ CREATE INDEX IF NOT EXISTS ix_cart_item_cart_id ON p_cart_item(cart_id);
 -- p_cart_item_option
 -- =======================
 CREATE TABLE IF NOT EXISTS p_cart_item_option (
-                                                  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    cart_item_id          uuid NOT NULL,
-    product_option_id     uuid NOT NULL,
+                                                  id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    cart_item_id           uuid NOT NULL,
+    product_option_id      uuid NOT NULL,
     product_option_item_id uuid NOT NULL,
 
-    created_at            timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by            uuid NULL,
-    updated_at            timestamp NULL,
-    updated_by            uuid NULL,
-    deleted_at            timestamp NULL,
-    deleted_by            uuid NULL
+    created_at             timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by             uuid NULL,
+    updated_at             timestamp NULL,
+    updated_by             uuid NULL,
+    deleted_at             timestamp NULL,
+    deleted_by             uuid NULL
     );
 
 ALTER TABLE p_cart_item_option
