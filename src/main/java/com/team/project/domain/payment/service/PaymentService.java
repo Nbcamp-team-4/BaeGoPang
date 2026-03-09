@@ -2,6 +2,7 @@ package com.team.project.domain.payment.service;
 
 import java.util.UUID;
 
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
 import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
 import com.team.project.domain.payment.model.dto.CreatePaymentCommand;
@@ -19,7 +20,7 @@ public interface PaymentService {
 
 	CancelPaymentQuery cancelPayment(CancelPaymentCommand command);
 
-	void deletePayment(UUID paymentId);
+	void deletePayment(UUID paymentId, UserDto userDto);
 
 	GetPaymentQuery getPayment(UUID paymentId);
 
