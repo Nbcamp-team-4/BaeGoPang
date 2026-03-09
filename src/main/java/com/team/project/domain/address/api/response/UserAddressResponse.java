@@ -1,6 +1,7 @@
 package com.team.project.domain.address.api.response;
 
 import com.team.project.domain.address.entity.UserAddress;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 @Getter
 @Builder
+@Schema(description = "배송지 응답")
 public class UserAddressResponse {
 
     private UUID id;
