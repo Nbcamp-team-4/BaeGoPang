@@ -108,10 +108,22 @@ public class PaymentController {
 	@Operation(summary = "결제 삭제", description = "paymentId에 해당하는 결제 데이터를 삭제합니다.")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "결제 삭제 성공"),
-		@ApiResponse(responseCode = "404", description = "결제를 찾을 수 없음", content = @Content)
+		@ApiResponse(responseCode = "404", description = "결제를 찾을 수 없음", content = @Content(
+			mediaType = "application/json",
+			schema = @Schema(implementation = BaseResponse.class),
+			examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+				value = """
+					{
+					  "success": false,
+					  "data": null,
+					  "errorCode": "PAYMENT_NOT_FOUND"
+					}
+					"""
+			)
+		))
 	})
 	@DeleteMapping("/{paymentId}")
-	public ResponseEntity<?> deletePayment(
+	public ResponseEntity<BaseResponse<Void>> deletePayment(
 		@Parameter(description = "결제 ID", required = true) @PathVariable("paymentId") UUID paymentId) {
 
 		// 1. service 호출

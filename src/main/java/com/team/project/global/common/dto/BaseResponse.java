@@ -10,7 +10,7 @@ public class BaseResponse<T> {
 	private final boolean success;
 	@Schema(description = "응답 데이터 (성공 시 반환)")
 	private final T data;
-	@Schema(description = "에러 코드 (실패 시 반환)", example = "ERROR_CODE")
+	@Schema(description = "에러 코드 (실패 시 반환)", nullable = true, example = "ERROR_CODE")
 	private final String errorCode;
 
 	private BaseResponse(boolean success, T data, String errorCode) {
