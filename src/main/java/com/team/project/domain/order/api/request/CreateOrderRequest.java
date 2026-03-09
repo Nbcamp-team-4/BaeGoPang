@@ -12,9 +12,7 @@ import lombok.Data;
 @Data
 public class CreateOrderRequest {
 
-    @NotNull
-    private UUID userId; // 인증 붙으면 SecurityContext로 대체 가능
-
+    // 로그인 사용자는 토큰에서 가져오므로 userId 제거
     @NotNull
     private UUID storeId;
 
@@ -31,8 +29,8 @@ public class CreateOrderRequest {
         @NotNull
         private UUID productId;
 
-        @jakarta.validation.constraints.NotBlank
-        private String productName; // 주문 시점 스냅샷(변경 대비)
+        @NotBlank
+        private String productName; // 주문 시점 스냅샷
 
         @NotNull
         @Positive

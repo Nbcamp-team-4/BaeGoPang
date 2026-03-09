@@ -10,14 +10,12 @@ import lombok.Data;
 @Data
 public class UpdateCartItemRequest {
 
-    @NotNull
-    private UUID userId;
-
+    // 로그인 사용자는 토큰에서 가져오므로 userId 제거
     @NotNull
     @Min(1)
     private Integer quantity;
 
-    // 옵션 변경이 필요하면 통째로 갈아끼우는 방식(가장 단순)
+    // 옵션 변경 시 통째로 교체
     private List<CartItemOptionRequest> options;
 
     @Data
