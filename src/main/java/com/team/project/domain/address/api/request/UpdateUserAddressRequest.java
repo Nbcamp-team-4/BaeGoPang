@@ -16,7 +16,7 @@ public class UpdateUserAddressRequest {
 
     @NotBlank
     @Schema(description = "배송지 이름", example = "회사")
-    private String name;
+    private String addressName;
     @NotBlank
     @Schema(description = "배송지 번호", example = "010-1334-1234")
     private String phone;
