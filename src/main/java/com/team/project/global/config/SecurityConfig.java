@@ -34,21 +34,30 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-
 				.requestMatchers(
 					"/",
+					"/error",
 					"/favicon.ico",
 					"/api/auth/**",
 					"/swagger-ui/**",
-					"/v3/api-docs/**",
-					"/api/**"
+					"/v3/api-docs/**"
 				).permitAll()
+
 				.requestMatchers("/api/admin/**").hasRole("ADMIN")
 				.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-				.anyRequest().authenticated()
+
+				.requestMatchers("/api/carts/**").hasRole("CUSTOMER")
+				.requestMatchers("/api/orders/**").authenticated()
+
+				.requestMatchers("/api/test/customer").hasRole("CUSTOMER")
+				.requestMatchers("/api/test/owner").hasRole("OWNER")
+				.requestMatchers("/api/test").authenticated()
+
+				.anyRequest().permitAll()
 			)
 			.userDetailsService(customUserDetailsService)
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
 		return http.build();
 	}
 

@@ -1,11 +1,14 @@
 package com.team.project.domain.product.api.response;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.team.project.domain.product.service.result.ProductResult;
+
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@Builder
 public class ProductResponse {
 
     private UUID id;
@@ -17,29 +20,18 @@ public class ProductResponse {
     private String imageUrl;
     private Boolean isSoldOut;
     private Boolean isHidden;
-    private LocalDateTime createdAt;
 
-    public ProductResponse(
-        UUID id,
-        UUID storeId,
-        String name,
-        Integer price,
-        String description,
-        Boolean useAiDescription,
-        String imageUrl,
-        Boolean isSoldOut,
-        Boolean isHidden,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
-        this.id = id;
-        this.storeId = storeId;
-        this.name = name;
-        this.price = price;
-        this.description = description;
-        this.useAiDescription = useAiDescription;
-        this.imageUrl = imageUrl;
-        this.isSoldOut = isSoldOut;
-        this.isHidden = isHidden;
-        this.createdAt = createdAt;
+    public static ProductResponse from(ProductResult result) {
+        return ProductResponse.builder()
+            .id(result.getId())
+            .storeId(result.getStoreId())
+            .name(result.getName())
+            .price(result.getPrice())
+            .description(result.getDescription())
+            .useAiDescription(result.getUseAiDescription())
+            .imageUrl(result.getImageUrl())
+            .isSoldOut(result.getIsSoldOut())
+            .isHidden(result.getIsHidden())
+            .build();
     }
 }
