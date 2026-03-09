@@ -1,12 +1,16 @@
 package com.team.project.domain.user.service;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.user.dto.CreateUserAddressCommand;
 import com.team.project.domain.user.dto.CreateUserAddressQuery;
+import com.team.project.domain.user.dto.GetUserAddressQuery;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserAddress;
+import com.team.project.domain.user.exception.UserAddressNotFoundException;
 import com.team.project.domain.user.exception.UserNotFoundException;
 import com.team.project.domain.user.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
@@ -44,5 +48,23 @@ public class UserAddressServiceImpl implements UserAddressService {
 		UserAddress saved = userAddressRepository.save(address);
 
 		return CreateUserAddressQuery.from(saved, userDto);
+	}
+
+	@Override
+	public GetUserAddressQuery getUserAddress(UUID userAddressId, UserDto userDto) {
+
+		// 1. 주소 ID로 찾아온다.
+		UserAddress found = getUserAddressInnerWithException(userAddressId);
+
+		return GetUserAddressQuery.from(found, userDto);
+	}
+
+	/**
+	 * 내부 함수들
+	 */
+	public UserAddress getUserAddressInnerWithException(UUID userAddressId) {
+		UserAddress address = userAddressRepository.findById(userAddressId)
+			.orElseThrow(UserAddressNotFoundException::new);
+		return address;
 	}
 }
