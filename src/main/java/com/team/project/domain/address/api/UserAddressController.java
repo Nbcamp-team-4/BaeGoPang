@@ -1,4 +1,4 @@
-package com.team.project.domain.user.api;
+package com.team.project.domain.address.api;
 
 import java.util.UUID;
 
@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.team.project.domain.auth.dto.CurrentUser;
 import com.team.project.domain.auth.dto.UserDto;
-import com.team.project.domain.user.api.request.CreateUserAddressRequest;
-import com.team.project.domain.user.api.response.CreateUserAddressResponse;
-import com.team.project.domain.user.api.response.GetUserAddressResponse;
-import com.team.project.domain.user.dto.CreateUserAddressCommand;
-import com.team.project.domain.user.dto.CreateUserAddressQuery;
-import com.team.project.domain.user.dto.GetUserAddressQuery;
-import com.team.project.domain.user.service.UserAddressService;
+import com.team.project.domain.address.api.request.CreateUserAddressRequest;
+import com.team.project.domain.address.api.response.CreateUserAddressResponse;
+import com.team.project.domain.address.api.response.GetUserAddressResponse;
+import com.team.project.domain.address.dto.CreateUserAddressCommand;
+import com.team.project.domain.address.dto.CreateUserAddressQuery;
+import com.team.project.domain.address.dto.GetUserAddressQuery;
+import com.team.project.domain.address.service.UserAddressService;
 import com.team.project.global.common.dto.BaseResponse;
 
 import jakarta.validation.Valid;

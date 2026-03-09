@@ -20,7 +20,7 @@ import com.team.project.domain.user.entity.UserRole;
 import com.team.project.domain.user.entity.UserStatus;
 import com.team.project.domain.user.exception.CustomException;
 import com.team.project.domain.user.repository.RoleRepository;
-import com.team.project.domain.user.repository.UserAddressRepository;
+import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 import com.team.project.domain.user.repository.UserRoleRepository;
 

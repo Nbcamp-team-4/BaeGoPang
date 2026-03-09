@@ -1,11 +1,11 @@
-package com.team.project.domain.user.service;
+package com.team.project.domain.address.service;
 
 import java.util.UUID;
 
 import com.team.project.domain.auth.dto.UserDto;
-import com.team.project.domain.user.dto.CreateUserAddressCommand;
-import com.team.project.domain.user.dto.CreateUserAddressQuery;
-import com.team.project.domain.user.dto.GetUserAddressQuery;
+import com.team.project.domain.address.dto.CreateUserAddressCommand;
+import com.team.project.domain.address.dto.CreateUserAddressQuery;
+import com.team.project.domain.address.dto.GetUserAddressQuery;
 
 public interface UserAddressService {
 

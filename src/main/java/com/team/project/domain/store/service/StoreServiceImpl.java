@@ -29,8 +29,8 @@ import com.team.project.domain.store.service.command.UpdateStoreByAdminCommand;
 import com.team.project.domain.store.service.result.StoreResult;
 import com.team.project.domain.store.util.GeometryUtil;
 import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.entity.UserAddress;
-import com.team.project.domain.user.repository.UserAddressRepository;
+import com.team.project.domain.address.entity.UserAddress;
+import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;

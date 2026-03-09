@@ -1,18 +1,18 @@
-package com.team.project.domain.user.service;
+package com.team.project.domain.address.service;
 
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
 import com.team.project.domain.auth.dto.UserDto;
-import com.team.project.domain.user.dto.CreateUserAddressCommand;
-import com.team.project.domain.user.dto.CreateUserAddressQuery;
-import com.team.project.domain.user.dto.GetUserAddressQuery;
+import com.team.project.domain.address.dto.CreateUserAddressCommand;
+import com.team.project.domain.address.dto.CreateUserAddressQuery;
+import com.team.project.domain.address.dto.GetUserAddressQuery;
 import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.entity.UserAddress;
+import com.team.project.domain.address.entity.UserAddress;
 import com.team.project.domain.user.exception.UserAddressNotFoundException;
 import com.team.project.domain.user.exception.UserNotFoundException;
-import com.team.project.domain.user.repository.UserAddressRepository;
+import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
