@@ -48,7 +48,6 @@ public class ReviewServiceImpl implements ReviewService {
 		if (reviewRepository.existsByOrderId(orderId)) {
 			throw new IllegalStateException("이미 리뷰를 작성한 주문입니다.");
 		}
-
 		// 3. 리뷰 엔티티 생성 및 저장 (빌더 사용)
 		Review review = Review.builder()
 			.orderId(orderId)

@@ -97,10 +97,9 @@ public class Store extends BaseEntity {
 
 	@OneToMany(mappedBy = "store", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<StoreCategory> storeCategories = new ArrayList<>();
- 	// 평점 과 리뷰
-	// Store.java 내부 수정
-	// Store.java 내부 수정
 
+	// 평점 과 리뷰
+	// Store.java 내부 수정
 	@Column(
 		name = "average_rating",
 		nullable = false,

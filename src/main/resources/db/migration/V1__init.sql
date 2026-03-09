@@ -193,6 +193,12 @@ CREATE TABLE IF NOT EXISTS p_store (
     delivery_fee          int NOT NULL DEFAULT 0,
     minimum_order_amount  int NOT NULL DEFAULT 0,
 
+
+-- [추가] 평점 및 리뷰 관련 컬럼
+    average_rating        double precision NOT NULL DEFAULT 0.0,
+    review_count          int NOT NULL DEFAULT 0,
+    total_rating_sum      int NOT NULL DEFAULT 0,
+
     created_at            timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by            uuid NULL,
     updated_at            timestamp NULL,

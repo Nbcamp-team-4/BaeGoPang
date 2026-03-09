@@ -15,7 +15,6 @@ import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.exception.PaymentAlreadyPaidException;
 import com.team.project.domain.payment.exception.PaymentNotFoundException;
-import com.team.project.domain.payment.infrastructure.PgProviderService;
 import com.team.project.domain.payment.infrastructure.exception.PgProviderBaseException;
 import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
 import com.team.project.domain.payment.model.dto.CancelPaymentQuery;
@@ -42,7 +41,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 	private final PaymentRepository paymentRepository;
 	private final PaymentLogService paymentLogService;
-	private final PgProviderService pgProviderService;
+	//private final PgProviderService pgProviderService;
 
 	/**
 	 * 결제 준비 메서드
