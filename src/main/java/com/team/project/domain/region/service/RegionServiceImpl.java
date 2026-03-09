@@ -6,11 +6,15 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.io.WKTReader;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.region.api.request.CreateRegionRequest;
+import com.team.project.domain.region.api.request.RegionSearchRequest;
 import com.team.project.domain.region.api.request.UpdateRegionRequest;
 import com.team.project.domain.region.api.response.PagedRegionsResponse;
 import com.team.project.domain.region.api.response.RegionResponse;
@@ -29,7 +33,7 @@ public class RegionServiceImpl implements RegionService {
     private final RegionRepository regionRepository;
 
     @Override
-    public RegionResponse createRegion(CreateRegionRequest request) {
+    public RegionResponse createRegion(UserDto userDto, CreateRegionRequest request) {
         MultiPolygon geom = toMultiPolygon(request.getGeomWkt());
 
         Region region = new Region(request.getName(), geom);
@@ -49,11 +53,26 @@ public class RegionServiceImpl implements RegionService {
         return RegionResponse.from(region);
     }
 
-    // 사용자: 활성만
     @Override
     @Transactional(readOnly = true)
-    public PagedRegionsResponse getRegionsForUser(Pageable pageable) {
-        Page<Region> page = regionRepository.findAllByActiveTrueOrderByCreatedAtDesc(pageable);
+    public PagedRegionsResponse getRegionsForUser(RegionSearchRequest request) {
+        Pageable pageable = PageRequest.of(
+            request.getPage(),
+            request.getSize(),
+            Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        String keyword = normalizeKeyword(request.getKeyword());
+        Page<Region> page;
+
+        if (keyword == null) {
+            page = regionRepository.findAllByActiveTrueOrderByCreatedAtDesc(pageable);
+        } else {
+            page = regionRepository.findAllByIsActiveTrueAndNameContainingIgnoreCaseOrderByCreatedAtDesc(
+                keyword,
+                pageable
+            );
+        }
 
         return new PagedRegionsResponse(
             page.getContent().stream().map(RegionResponse::from).toList(),
@@ -64,11 +83,26 @@ public class RegionServiceImpl implements RegionService {
         );
     }
 
-    // 관리자: 전체
     @Override
     @Transactional(readOnly = true)
-    public PagedRegionsResponse getRegionsForAdmin(Pageable pageable) {
-        Page<Region> page = regionRepository.findAllByOrderByCreatedAtDesc(pageable);
+    public PagedRegionsResponse getRegionsForAdmin(RegionSearchRequest request) {
+        Pageable pageable = PageRequest.of(
+            request.getPage(),
+            request.getSize(),
+            Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        String keyword = normalizeKeyword(request.getKeyword());
+        Page<Region> page;
+
+        if (keyword == null) {
+            page = regionRepository.findAllByOrderByCreatedAtDesc(pageable);
+        } else {
+            page = regionRepository.findAllByNameContainingIgnoreCaseOrderByCreatedAtDesc(
+                keyword,
+                pageable
+            );
+        }
 
         return new PagedRegionsResponse(
             page.getContent().stream().map(RegionResponse::from).toList(),
@@ -80,7 +114,7 @@ public class RegionServiceImpl implements RegionService {
     }
 
     @Override
-    public RegionResponse updateRegion(UUID regionId, UpdateRegionRequest request) {
+    public RegionResponse updateRegion(UserDto userDto, UUID regionId, UpdateRegionRequest request) {
         Region region = regionRepository.findById(regionId)
             .orElseThrow(RegionNotFoundException::new);
 
@@ -99,17 +133,24 @@ public class RegionServiceImpl implements RegionService {
     }
 
     @Override
-    public void deactivateRegion(UUID regionId) {
+    public void deactivateRegion(UserDto userDto, UUID regionId) {
         Region region = regionRepository.findById(regionId)
             .orElseThrow(RegionNotFoundException::new);
         region.deactivate();
     }
 
     @Override
-    public void activateRegion(UUID regionId) {
+    public void activateRegion(UserDto userDto, UUID regionId) {
         Region region = regionRepository.findById(regionId)
             .orElseThrow(RegionNotFoundException::new);
         region.activate();
+    }
+
+    private String normalizeKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+        return keyword.trim();
     }
 
     private MultiPolygon toMultiPolygon(String wkt) {

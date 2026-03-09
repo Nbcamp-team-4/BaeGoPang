@@ -2,11 +2,10 @@ package com.team.project.domain.region.api;
 
 import java.util.UUID;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.region.api.request.CreateRegionRequest;
+import com.team.project.domain.region.api.request.RegionSearchRequest;
 import com.team.project.domain.region.api.request.UpdateRegionRequest;
 import com.team.project.domain.region.api.response.PagedRegionsResponse;
 import com.team.project.domain.region.api.response.RegionResponse;
@@ -38,7 +39,8 @@ public class RegionController {
     @PostMapping
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     public RegionResponse createRegion(@Valid @RequestBody CreateRegionRequest request) {
-        return regionService.createRegion(request);
+        UserDto userDto = null; // TODO: Security 적용 후 주입
+        return regionService.createRegion(userDto, request);
     }
 
     @Operation(summary = "지역 조회", description = "특정 지역 정보를 조회합니다.")
@@ -48,44 +50,43 @@ public class RegionController {
         return regionService.getRegion(regionId);
     }
 
-    // 사용자: 활성만
     @Operation(summary = "지역 목록 조회 (사용자)", description = "사용자가 활성화된 지역 목록을 조회합니다.")
     @GetMapping
-    public PagedRegionsResponse getRegionsForUser(
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        return regionService.getRegionsForUser(pageable);
+    public PagedRegionsResponse getRegionsForUser(@ModelAttribute RegionSearchRequest request) {
+        return regionService.getRegionsForUser(request);
     }
 
-    // 관리자: 전체
     @Operation(summary = "지역 목록 조회 (관리자)", description = "관리자가 전체 지역 목록을 조회합니다.")
     @GetMapping("/admin")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
-    public PagedRegionsResponse getRegionsForAdmin(
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        return regionService.getRegionsForAdmin(pageable);
+    public PagedRegionsResponse getRegionsForAdmin(@ModelAttribute RegionSearchRequest request) {
+        return regionService.getRegionsForAdmin(request);
     }
 
     @Operation(summary = "지역 수정", description = "관리자가 지역 정보를 수정합니다.")
     @PatchMapping("/{regionId}")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
-    public RegionResponse updateRegion(@PathVariable UUID regionId,
-                                       @Valid @RequestBody UpdateRegionRequest request) {
-        return regionService.updateRegion(regionId, request);
+    public RegionResponse updateRegion(
+        @PathVariable UUID regionId,
+        @Valid @RequestBody UpdateRegionRequest request
+    ) {
+        UserDto userDto = null; // TODO: Security 적용 후 주입
+        return regionService.updateRegion(userDto, regionId, request);
     }
 
     @Operation(summary = "지역 비활성화", description = "관리자가 지역을 비활성화합니다.")
     @PatchMapping("/{regionId}/deactivate")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     public void deactivateRegion(@PathVariable UUID regionId) {
-        regionService.deactivateRegion(regionId);
+        UserDto userDto = null; // TODO: Security 적용 후 주입
+        regionService.deactivateRegion(userDto, regionId);
     }
 
     @Operation(summary = "지역 활성화", description = "관리자가 지역을 활성화합니다.")
     @PatchMapping("/{regionId}/activate")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     public void activateRegion(@PathVariable UUID regionId) {
-        regionService.activateRegion(regionId);
+        UserDto userDto = null; // TODO: Security 적용 후 주입
+        regionService.activateRegion(userDto, regionId);
     }
 }
