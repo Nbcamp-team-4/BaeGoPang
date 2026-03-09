@@ -2,6 +2,7 @@ package com.team.project.domain.payment.api;
 
 import java.util.UUID;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +19,16 @@ import com.team.project.domain.payment.model.dto.GetPaymentsQuery;
 import com.team.project.domain.payment.service.PaymentService;
 import com.team.project.global.common.dto.BaseResponse;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Tag(name = "Payment", description = "결제 API")
 @RestController
 @RequestMapping("/api/payments")
 @Slf4j
@@ -32,8 +40,14 @@ public class PaymentController {
 	/**
 	 * 결제 데이터를 단건조회하는 api
 	 */
+	@Operation(summary = "결제 단건 조회", description = "paymentId로 결제 데이터를 조회합니다.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "결제 조회 성공"),
+		@ApiResponse(responseCode = "404", description = "결제를 찾을 수 없음", content = @Content)
+	})
 	@GetMapping("/{paymentId}")
-	public ResponseEntity<?> getPayment(@PathVariable("paymentId") UUID paymentId) {
+	public ResponseEntity<?> getPayment(
+		@Parameter(description = "결제 ID", required = true) @PathVariable("paymentId") UUID paymentId) {
 
 		// 1. service 호출
 		GetPaymentQuery query = paymentService.getPayment(paymentId);
@@ -51,8 +65,12 @@ public class PaymentController {
 	/**
 	 * 결제 데이터를 전체 조회하는 api
 	 */
+	@Operation(summary = "결제 목록 조회", description = "조건에 따라 결제 데이터를 페이지 단위로 조회합니다.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "결제 목록 조회 성공")
+	})
 	@GetMapping
-	public ResponseEntity<?> getPayments(GetPaymentsRequest request) {
+	public ResponseEntity<?> getPayments(@ParameterObject GetPaymentsRequest request) {
 
 		// 1. service dto 변환
 		GetPaymentsCommand command = GetPaymentsCommand.of(request.getPage(), request.getSize(),
@@ -72,8 +90,14 @@ public class PaymentController {
 	/**
 	 * 결제 데이터를 삭제하는 api
 	 */
+	@Operation(summary = "결제 삭제", description = "paymentId에 해당하는 결제 데이터를 삭제합니다.")
+	@ApiResponses(value = {
+		@ApiResponse(responseCode = "200", description = "결제 삭제 성공"),
+		@ApiResponse(responseCode = "404", description = "결제를 찾을 수 없음", content = @Content)
+	})
 	@DeleteMapping("/{paymentId}")
-	public ResponseEntity<?> deletePayment(@PathVariable("paymentId") UUID paymentId) {
+	public ResponseEntity<?> deletePayment(
+		@Parameter(description = "결제 ID", required = true) @PathVariable("paymentId") UUID paymentId) {
 
 		// 1. service 호출
 		paymentService.deletePayment(paymentId);
