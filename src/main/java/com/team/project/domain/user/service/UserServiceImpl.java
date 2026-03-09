@@ -3,6 +3,7 @@ package com.team.project.domain.user.service;
 import java.util.List;
 import java.util.UUID;
 
+import com.team.project.domain.user.model.dto.UserList;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -169,6 +170,15 @@ public class UserServiceImpl implements UserService {
 		}
 
 		user.softDelete(userDto.getId());
+	}
+
+	@Override
+	public List<UserList> getUsers() {
+		List<User> users = userRepository.findAll();
+
+		return users.stream()
+				.map(UserList::from)
+				.toList();
 	}
 
 	private User findActiveUser(UUID userId) {

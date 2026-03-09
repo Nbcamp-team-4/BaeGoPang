@@ -21,6 +21,10 @@ public class UserResponse {
     private UserStatus status;
     private List<RoleType> roles;
 
+    public static UserResponse from(StoreResult result) {
+        return from(result, List.of());
+    }
+
     public static UserResponse from(User user, List<RoleType> roles) {
         return UserResponse.builder()
                 .id(user.getId())
