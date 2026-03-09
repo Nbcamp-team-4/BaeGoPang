@@ -3,6 +3,7 @@ package com.team.project.domain.user.api.response;
 import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserStatus;
+import com.team.project.domain.user.model.dto.UserList;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -21,7 +22,7 @@ public class UserResponse {
     private UserStatus status;
     private List<RoleType> roles;
 
-    public static UserResponse from(StoreResult result) {
+    public static UserResponse from(User result) {
         return from(result, List.of());
     }
 
