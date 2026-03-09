@@ -201,7 +201,7 @@ public class StoreServiceImpl implements StoreService {
 		}
 		// 2. 점주(OWNER)인 경우: 본인 가게여야 하고, OPEN <-> CLOSED 사이만 가능
 		else if ("OWNER".equals(role)) {
-			if (!store.getUser().equals(userId)) {
+			if (!store.getUser().getId().equals(userId)) {
 				throw new IllegalStateException("본인 가게의 상태만 변경할 수 있습니다.");
 			}
 
