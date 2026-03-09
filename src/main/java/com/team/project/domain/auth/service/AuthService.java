@@ -97,7 +97,7 @@ public class AuthService {
 			throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
 		}
 
-		Role userRole = roleRepository.findByRole(RoleType.CUSTOMER)
+		Role userRole = roleRepository.findByRole(RoleType.ROLE_CUSTOMER)
 			.orElseThrow(() -> new IllegalArgumentException("기본 권한이 존재하지 않습니다."));
 
 		User user = new User(request.getLoginId(), request.getEmail(), passwordEncoder.encode(request.getPassword()),

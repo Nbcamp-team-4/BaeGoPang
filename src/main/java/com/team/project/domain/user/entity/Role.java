@@ -24,9 +24,9 @@ public class Role {
 
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false)
-	private RoleType role;
+	private RoleType type;
 
-	public Role(RoleType role) {
-		this.role = role;
+	public Role(RoleType type) {
+		this.type = type;
 	}
 }

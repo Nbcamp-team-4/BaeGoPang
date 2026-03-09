@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
 
         savedUser.addUserRole(userRole);
 
-        return SignUpResponse.from(savedUser, role.getRole());
+        return SignUpResponse.from(savedUser, role.getType());
     }
 
     @Override
@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
         List<UserRole> userRoles = userRoleRepository.findByUser(user);
         List<RoleType> roles = userRoles.stream()
-                .map(userRole -> userRole.getRole().getRole())
+                .map(userRole -> userRole.getRole().getType())
                 .toList();
         return UserResponse.from(user, roles);
 
@@ -130,7 +130,7 @@ public class UserServiceImpl implements UserService {
 
     private List<RoleType> extractRoles(User user) {
         return userRoleRepository.findByUser(user).stream()
-                .map(userRole -> userRole.getRole().getRole())
+                .map(userRole -> userRole.getRole().getType())
                 .toList();
     }
 
@@ -148,7 +148,7 @@ public class UserServiceImpl implements UserService {
         }
     }
     private void validateSignUpRole(RoleType roleType) {
-        if (roleType == RoleType.ADMIN) {
+        if (roleType == RoleType.ROLE_ADMIN) {
             throw new CustomException(HttpStatus.FORBIDDEN, "ADMIN 권한으로는 회원가입할 수 없습니다.");
         }
     }
