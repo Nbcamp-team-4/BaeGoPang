@@ -20,4 +20,5 @@ public class CreateUserAddressRequest {
 	private BigDecimal latitude;
 	@NotNull
 	private BigDecimal longitude;
+	private Boolean isDefault = false;
 }

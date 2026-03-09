@@ -81,4 +81,8 @@ public class UserAddress extends BaseEntity {
 	public void markDeleted(UUID deletedBy) {
 		super.markDeleted(deletedBy);
 	}
+
+	public void updateIsDefault(boolean isDefault) {
+		this.isDefault = isDefault;
+	}
 }
