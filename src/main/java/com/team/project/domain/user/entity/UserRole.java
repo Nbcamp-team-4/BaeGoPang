@@ -2,6 +2,7 @@ package com.team.project.domain.user.entity;
 
 import java.util.UUID;
 
+import com.team.project.global.common.entity.BaseEntity;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -24,21 +25,26 @@ import lombok.NoArgsConstructor;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserRole {
+public class UserRole extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "user_id")
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "role_id")
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "role_id", nullable = false)
 	private Role role;
 
-	public static UserRole of(User user, Role role) {
+	public UserRole(User user, Role role) {
+		this.user = user;
+		this.role = role;
+	}
+
+	public static UserRole create(User user, Role role) {
 		UserRole userRole = new UserRole();
 		userRole.user = user;
 		userRole.role = role;
