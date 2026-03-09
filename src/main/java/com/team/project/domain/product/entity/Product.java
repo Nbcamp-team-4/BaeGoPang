@@ -1,5 +1,7 @@
 package com.team.project.domain.product.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import com.team.project.domain.store.entity.Store;
@@ -13,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,6 +36,9 @@ public class Product extends BaseEntity {
     @JoinColumn(name = "store_id", nullable = false)
     private Store store;
 
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private List<ProductOption> options = new ArrayList<>();
+
     @Column(nullable = false, length = 200)
     private String name;
 
@@ -43,35 +49,37 @@ public class Product extends BaseEntity {
     private String description;
 
     @Column(nullable = false)
-    private Boolean useAiDescription;
+    private boolean useAiDescription;
 
+    @Column(length = 500)
     private String imageUrl;
 
     @Column(nullable = false)
-    private Boolean isSoldOut;
+    private boolean isSoldOut;
 
     @Column(nullable = false)
-    private Boolean isHidden;
+    private boolean isHidden;
 
     // ===== 생성 =====
-    public Product(
+    public static Product create(
         Store store,
         String name,
         Integer price,
         String description,
-        Boolean useAiDescription,
+        boolean useAiDescription,
         String imageUrl
     ) {
-        this.store = store;
-        this.name = name;
-        this.price = price;
-        this.description = description;
-        this.useAiDescription = useAiDescription;
-        this.imageUrl = imageUrl;
-        this.isSoldOut = false;
-        this.isHidden = false;
+        Product product = new Product();
+        product.store = store;
+        product.name = name;
+        product.price = price;
+        product.description = description;
+        product.useAiDescription = useAiDescription;
+        product.imageUrl = imageUrl;
+        product.isSoldOut = false;
+        product.isHidden = false;
+        return product;
     }
-
     // ===== 수정 =====
     public void update(
         String name,
@@ -106,7 +114,7 @@ public class Product extends BaseEntity {
     }
 
     // ===== 삭제 =====
-    public void delete(UUID deleteby) {
-        markDeleted(deleteby);
+    public void delete(UUID deletedBy) {
+        markDeleted(deletedBy);
     }
 }

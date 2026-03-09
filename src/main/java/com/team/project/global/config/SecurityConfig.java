@@ -34,6 +34,7 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
+
 				.requestMatchers(
 					"/",
 					"/favicon.ico",
@@ -47,7 +48,6 @@ public class SecurityConfig {
 			)
 			.userDetailsService(customUserDetailsService)
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
 		return http.build();
 	}
 
