@@ -4,19 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import lombok.Builder;
 import org.hibernate.annotations.UuidGenerator;
 
 import com.team.project.global.common.entity.BaseEntity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -35,11 +30,11 @@ public class User extends BaseEntity {
 	@Column(nullable = false, unique = true)
 	private String loginId;
 
-	@Column(nullable = false)
-	private String password;
-
 	@Column(nullable = false, unique = true)
 	private String email;
+
+	@Column(nullable = false)
+	private String password;
 
 	@Column(nullable = false)
 	private String name;
@@ -64,15 +59,6 @@ public class User extends BaseEntity {
 		this.phone = phone;
 	}
 
-	public User(String loginId, String email, String password, String name, String phone, UserStatus status) {
-		this.loginId = loginId;
-		this.email = email;
-		this.password = password;
-		this.name = name;
-		this.phone = phone;
-		this.status = status;
-	}
-
 	public void updateRefreshToken(String refreshToken) {
 		this.refreshToken = refreshToken;
 	}
@@ -88,7 +74,45 @@ public class User extends BaseEntity {
 			.toList();
 	}
 
+	@Builder
+	private User(
+			UUID id,
+			String loginId,
+			String email,
+			String password,
+			String name,
+			String phone,
+			UserStatus status
+	) {
+		this.id = id;
+		this.loginId = loginId;
+		this.email = email;
+		this.password = password;
+		this.name = name;
+		this.phone = phone;
+		this.status = status;
+	}
+
 	public void addUserRole(UserRole userRole) {
-		userRoles.add(userRole);
+		this.userRoles.add(userRole);
+	}
+
+	public void updateInfo(String email, String name, String phone) {
+		if (email != null && !email.isBlank()) {
+			this.email = email;
+		}
+		if (name != null && !name.isBlank()) {
+			this.name = name;
+		}
+		if (phone != null && !phone.isBlank()) {
+			this.phone = phone;
+		}
+	}
+
+	public void softDelete(UUID id) {
+		this.status = UserStatus.DELETED;
+	}
+	public boolean isDeleted() {
+		return getDeletedAt() != null || this.status == UserStatus.DELETED;
 	}
 }
