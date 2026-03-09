@@ -3,7 +3,8 @@ package com.team.project.global.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,36 +30,32 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.csrf(AbstractHttpConfigurer::disable)
-			.formLogin(AbstractHttpConfigurer::disable)
-			.httpBasic(AbstractHttpConfigurer::disable)
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.authorizeHttpRequests(auth -> auth
-				.requestMatchers(
-					"/",
-					"/error",
-					"/favicon.ico",
-					"/api/auth/**",
-					"/swagger-ui/**",
-					"/v3/api-docs/**",
-					"/api/stores/**",
-					"/api/images/**"
-				).permitAll()
-
-				.requestMatchers("/api/admin/**").hasRole("ADMIN")
-				.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
-
-				.requestMatchers("/api/carts/**").hasRole("CUSTOMER")
-				.requestMatchers("/api/orders/**").authenticated()
-
-				.requestMatchers("/api/test/customer").hasRole("CUSTOMER")
-				.requestMatchers("/api/test/owner").hasRole("OWNER")
-				.requestMatchers("/api/test").authenticated()
-
-				.anyRequest().permitAll()
-			)
-			.userDetailsService(customUserDetailsService)
-			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+				.csrf(AbstractHttpConfigurer::disable)
+				.formLogin(AbstractHttpConfigurer::disable)
+				.httpBasic(AbstractHttpConfigurer::disable)
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers(
+								"/",
+								"/error",
+								"/favicon.ico",
+								"/api/auth/**",
+								"/swagger-ui/**",
+								"/v3/api-docs/**",
+								"/api/stores/**",
+								"/api/images/**"
+						).permitAll()
+						.requestMatchers("/api/admin/**").hasRole("ADMIN")
+						.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
+						.requestMatchers("/api/carts/**").hasRole("CUSTOMER")
+						.requestMatchers("/api/orders/**").authenticated()
+						.requestMatchers("/api/test/customer").hasRole("CUSTOMER")
+						.requestMatchers("/api/test/owner").hasRole("OWNER")
+						.requestMatchers("/api/test").authenticated()
+						.anyRequest().permitAll()
+				)
+				.userDetailsService(customUserDetailsService)
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
@@ -70,8 +67,11 @@ public class SecurityConfig {
 
 	@Bean
 	public AuthenticationManager authenticationManager(
-		AuthenticationConfiguration authenticationConfiguration
-	) throws Exception {
-		return authenticationConfiguration.getAuthenticationManager();
+			PasswordEncoder passwordEncoder
+	) {
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+		provider.setUserDetailsService(customUserDetailsService);
+		provider.setPasswordEncoder(passwordEncoder);
+		return new ProviderManager(provider);
 	}
 }
