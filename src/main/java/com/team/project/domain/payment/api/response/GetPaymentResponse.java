@@ -22,14 +22,6 @@ public class GetPaymentResponse {
 	private PaymentStatus status;
 	@Schema(description = "결제 금액", example = "15000")
 	private Integer amount;
-	@Schema(description = "주문 번호", example = "ORD-20250309-001")
-	private String orderNo;
-	@Schema(description = "주문 상태", example = "ORDERED")
-	private String orderStatus;
-	@Schema(description = "PG 코드", example = "KAKAOPAY")
-	private String pgCode;
-	@Schema(description = "PG 이름", example = "카카오페이")
-	private String pgName;
 	@Schema(description = "생성 시각")
 	private LocalDateTime createdAt;
 	@Schema(description = "생성자 ID", format = "uuid")
