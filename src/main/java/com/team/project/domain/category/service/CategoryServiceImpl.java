@@ -4,11 +4,14 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.auth.dto.UserDto;
+import com.team.project.domain.category.api.request.CategoryPageRequest;
 import com.team.project.domain.category.api.request.CreateCategoryRequest;
 import com.team.project.domain.category.api.request.UpdateCategoryRequest;
 import com.team.project.domain.category.api.response.CategoryResponse;
@@ -60,7 +63,14 @@ public class CategoryServiceImpl implements CategoryService {
      */
     @Override
     @Transactional(readOnly = true)
-    public GetCategoriesResponse getCategoriesForUser(Pageable pageable) {
+    public GetCategoriesResponse getCategoriesForUser(CategoryPageRequest request) {
+
+        Pageable pageable = PageRequest.of(
+            request.getPage(),
+            request.getSize(),
+            Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
         Page<Category> page = categoryRepository.findAllByDeletedAtIsNull(pageable);
 
         return new GetCategoriesResponse(
@@ -71,13 +81,18 @@ public class CategoryServiceImpl implements CategoryService {
             page.getTotalPages()
         );
     }
-
     /**
      * 관리자용(전체) 페이징 조회
      */
     @Override
     @Transactional(readOnly = true)
-    public GetCategoriesResponse getCategoriesForAdmin(Pageable pageable) {
+    public GetCategoriesResponse getCategoriesForAdmin(CategoryPageRequest request) {
+        Pageable pageable = PageRequest.of(
+            request.getPage(),
+            request.getSize(),
+            Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
         Page<Category> page = categoryRepository.findAll(pageable);
 
         return new GetCategoriesResponse(

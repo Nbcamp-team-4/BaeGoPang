@@ -2,12 +2,11 @@ package com.team.project.domain.category.api;
 
 import java.util.UUID;
 
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.team.project.domain.auth.dto.CurrentUser;
 import com.team.project.domain.auth.dto.UserDto;
+import com.team.project.domain.category.api.request.CategoryPageRequest;
 import com.team.project.domain.category.api.request.CreateCategoryRequest;
 import com.team.project.domain.category.api.request.UpdateCategoryRequest;
 import com.team.project.domain.category.api.response.CategoryResponse;
@@ -57,24 +57,22 @@ public class CategoryController {
     /**
      * 사용자용 카테고리 목록 조회
      */
-    @Operation(summary = "카테고리 목록 조회 (사용자)", description = "삭제되지 않은 카테고리 목록을 조회합니다.")
-    @GetMapping
+    @Operation(summary = "카테고리 목록 조회 (사용자)", description = "삭제되지 않은 카테고리 목록을 조회합니다.")@GetMapping
     public GetCategoriesResponse getCategoriesForUser(
-        @PageableDefault(size = 20) Pageable pageable
+        @ModelAttribute CategoryPageRequest request
     ) {
-        return categoryService.getCategoriesForUser(pageable);
+        return categoryService.getCategoriesForUser(request);
     }
 
     /**
      * 관리자용 카테고리 목록 조회
      */
-    @Operation(summary = "카테고리 목록 조회 (관리자)", description = "관리자가 전체 카테고리 목록을 조회합니다.")
     @GetMapping("/admin")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     public GetCategoriesResponse getCategoriesForAdmin(
-        @PageableDefault(size = 20) Pageable pageable
+        @ModelAttribute CategoryPageRequest request
     ) {
-        return categoryService.getCategoriesForAdmin(pageable);
+        return categoryService.getCategoriesForAdmin(request);
     }
 
     /**
