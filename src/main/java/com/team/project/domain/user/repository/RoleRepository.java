@@ -9,5 +9,5 @@ import com.team.project.domain.user.entity.Role;
 import com.team.project.domain.user.entity.RoleType;
 
 public interface RoleRepository extends JpaRepository<Role, UUID> {
-	Optional<Role> findByRole(RoleType role);
+	Optional<Role> findByRoleType(RoleType roleType);
 }
