@@ -25,4 +25,6 @@ public interface UserAddressService {
 	UserAddressResponse updateAddress(UserDto userDto, UUID addressId, UpdateUserAddressRequest request);
 
 	void deleteAddress(UserDto userDto, UUID addressId);
+
+	UserAddressResponse changeDefaultAddress(UserDto userDto, UUID addressId);
 }

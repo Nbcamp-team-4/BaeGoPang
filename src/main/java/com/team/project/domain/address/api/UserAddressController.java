@@ -84,7 +84,14 @@ public class UserAddressController {
 	) {
 		return ResponseEntity.ok(userAddressService.updateAddress(userDto, addressId, request));
 	}
-
+	// 기본 배송지 변경
+	@PatchMapping("/{addressId}/default")
+	public ResponseEntity<UserAddressResponse> changeDefaultAddress(
+			@CurrentUser UserDto userDto,
+			@PathVariable UUID addressId
+	) {
+		return ResponseEntity.ok(userAddressService.changeDefaultAddress(userDto, addressId));
+	}
 	// 본인 주소 삭제
 	@DeleteMapping("/{addressId}")
 	public ResponseEntity<Void> deleteAddress(

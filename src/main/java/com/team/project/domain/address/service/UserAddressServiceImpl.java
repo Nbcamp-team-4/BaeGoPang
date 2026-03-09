@@ -121,6 +121,23 @@ public class UserAddressServiceImpl implements UserAddressService {
 		userAddress.markDeleted(userDto.getId());
 	}
 
+	@Override
+	@Transactional
+	public UserAddressResponse changeDefaultAddress(UserDto userDto, UUID addressId) {
+		UserAddress targetAddress = getMyAddress(userDto.getId(), addressId);
+
+		if (Boolean.TRUE.equals(targetAddress.getIsDefault())) {
+			return UserAddressResponse.from(targetAddress);
+		}
+
+		userAddressRepository.findByUserId(userDto.getId())
+				.ifPresent(defaultAddress -> defaultAddress.updateIsDefault(false));
+
+		targetAddress.updateIsDefault(true);
+
+		return UserAddressResponse.from(targetAddress);
+	}
+
 	/**
 	 * 내부 함수들
 	 */
