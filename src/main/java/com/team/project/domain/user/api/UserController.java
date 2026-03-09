@@ -1,11 +1,7 @@
 package com.team.project.domain.user.api;
 
-import java.util.List;
 import java.util.UUID;
 
-import com.team.project.domain.user.api.request.UserListRequest;
-import com.team.project.domain.user.model.dto.UserList;
-import com.team.project.global.common.dto.BasePageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,10 +16,13 @@ import com.team.project.domain.auth.dto.CurrentUser;
 import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
+import com.team.project.domain.user.api.request.UserListRequest;
 import com.team.project.domain.user.api.response.ApiResponse;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
+import com.team.project.domain.user.model.dto.UserList;
 import com.team.project.domain.user.service.UserService;
+import com.team.project.global.common.dto.BasePageResponse;
 import com.team.project.global.common.dto.BaseResponse;
 
 import jakarta.validation.Valid;
@@ -52,7 +51,7 @@ public class UserController {
 	}
 
 	// 본인 정보 조회
-	@GetMapping
+	@GetMapping("/my")
 	public ResponseEntity<BaseResponse<UserResponse>> getMyInfo(@CurrentUser UserDto userDto) {
 		UserResponse response = userService.getMyInfo(userDto);
 		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
@@ -63,6 +62,7 @@ public class UserController {
 	public ResponseEntity<BasePageResponse<UserList>> getUsers(UserListRequest request) {
 		return ResponseEntity.ok(userService.getUsers(request));
 	}
+
 	// 유저 정보 수정
 	@PatchMapping("/{userId}")
 	public ResponseEntity<UserResponse> updateUser(@PathVariable UUID userId,
