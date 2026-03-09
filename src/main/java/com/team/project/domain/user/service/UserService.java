@@ -7,8 +7,6 @@ import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
-import com.team.project.domain.user.dto.CreateUserAddressCommand;
-import com.team.project.domain.user.dto.CreateUserAddressQuery;
 import com.team.project.domain.user.entity.RoleType;
 
 public interface UserService {
@@ -28,7 +26,5 @@ public interface UserService {
 	UserResponse updateMyInfo(UserDto userDto, UpdateUserRequest request);
 
 	void deleteMyInfo(UserDto userDto);
-
-	CreateUserAddressQuery createUserAdress(CreateUserAddressCommand command, UserDto userDto);
 
 }
