@@ -40,8 +40,7 @@ public class PaymentLog extends BaseEntity {
 	@JdbcTypeCode(SqlTypes.NAMED_ENUM)
 	private PaymentLogStatus status;
 
-	@Column(name = "reason")
-	@Lob
+	@Column(name = "reason", columnDefinition = "text")
 	private String reason;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)

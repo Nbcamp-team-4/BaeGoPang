@@ -3,6 +3,7 @@ package com.team.project.domain.cart.api;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -10,9 +11,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.project.domain.auth.dto.CurrentUser;
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.cart.api.request.AddCartItemRequest;
 import com.team.project.domain.cart.api.request.UpdateCartItemRequest;
 import com.team.project.domain.cart.api.response.AddCartItemResponse;
@@ -35,13 +37,13 @@ public class CartController {
 
     /**
      * [고객] 장바구니 조회
-     * GET /api/carts?userId={userId}
-     * - 인증 적용 전 임시로 userId를 query param으로 받음
+     * - 로그인한 사용자 기준으로 장바구니 조회
      */
     @GetMapping
-    public ResponseEntity<?> getCart(@RequestParam("userId") UUID userId) {
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> getCart(@CurrentUser UserDto userDto) {
 
-        GetCartResponse response = cartService.getCart(userId);
+        GetCartResponse response = cartService.getCart(userDto.getId());
 
         return ResponseEntity.ok().body(
                 BaseResponse.ofSuccess(response)
@@ -50,13 +52,16 @@ public class CartController {
 
     /**
      * [고객] 장바구니 상품 담기
-     * POST /api/carts
-     * - 다른 가게 상품일 경우 기존 장바구니 초기화 후 담기(정책은 서비스에서 처리)
+     * - 로그인한 사용자 기준으로 상품 추가
      */
     @PostMapping
-    public ResponseEntity<?> addCartItem(@RequestBody @Valid AddCartItemRequest request) {
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> addCartItem(
+            @CurrentUser UserDto userDto,
+            @RequestBody @Valid AddCartItemRequest request
+    ) {
 
-        AddCartItemResponse response = cartService.addCartItem(request);
+        AddCartItemResponse response = cartService.addCartItem(userDto.getId(), request);
 
         return ResponseEntity.ok().body(
                 BaseResponse.ofSuccess(response)
@@ -65,15 +70,18 @@ public class CartController {
 
     /**
      * [고객] 장바구니 상품 수량/옵션 수정
-     * PUT /api/carts/{cartId}/items/{itemId}
-     * - 인증 적용 전 임시로 userId를 body로 받음
+     * - 로그인한 사용자 본인 장바구니만 수정 가능
      */
     @PutMapping("/{cartId}/items/{itemId}")
-    public ResponseEntity<?> updateCartItem(@PathVariable("cartId") UUID cartId,
-                                            @PathVariable("itemId") UUID itemId,
-                                            @RequestBody @Valid UpdateCartItemRequest request) {
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> updateCartItem(
+            @CurrentUser UserDto userDto,
+            @PathVariable("cartId") UUID cartId,
+            @PathVariable("itemId") UUID itemId,
+            @RequestBody @Valid UpdateCartItemRequest request
+    ) {
 
-        UpdateCartItemResponse response = cartService.updateCartItem(cartId, itemId, request);
+        UpdateCartItemResponse response = cartService.updateCartItem(userDto.getId(), cartId, itemId, request);
 
         return ResponseEntity.ok().body(
                 BaseResponse.ofSuccess(response)
@@ -82,14 +90,16 @@ public class CartController {
 
     /**
      * [고객] 장바구니 상품 삭제
-     * DELETE /api/carts/items/{itemId}?userId={userId}
-     * - 인증 적용 전 임시로 userId를 query param으로 받음
+     * - 로그인한 사용자 본인 장바구니만 삭제 가능
      */
     @DeleteMapping("/items/{itemId}")
-    public ResponseEntity<?> deleteCartItem(@PathVariable("itemId") UUID itemId,
-                                            @RequestParam("userId") UUID userId) {
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> deleteCartItem(
+            @CurrentUser UserDto userDto,
+            @PathVariable("itemId") UUID itemId
+    ) {
 
-        cartService.deleteCartItem(itemId, userId);
+        cartService.deleteCartItem(itemId, userDto.getId());
 
         return ResponseEntity.ok().body(
                 BaseResponse.ofSuccess(null)
@@ -98,13 +108,13 @@ public class CartController {
 
     /**
      * [고객] 장바구니 전체 비우기
-     * DELETE /api/carts/items?userId={userId}
-     * - 인증 적용 전 임시로 userId를 query param으로 받음
+     * - 로그인한 사용자 기준으로 전체 삭제
      */
     @DeleteMapping("/items")
-    public ResponseEntity<?> clearCart(@RequestParam("userId") UUID userId) {
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> clearCart(@CurrentUser UserDto userDto) {
 
-        cartService.clearCart(userId);
+        cartService.clearCart(userDto.getId());
 
         return ResponseEntity.ok().body(
                 BaseResponse.ofSuccess(null)
