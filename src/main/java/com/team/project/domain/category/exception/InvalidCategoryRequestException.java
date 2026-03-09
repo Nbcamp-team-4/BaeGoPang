@@ -7,9 +7,9 @@ import com.team.project.global.common.exception.BaseException;
 import lombok.Getter;
 
 @Getter
-public class CategoryNotFoundException extends BaseException {
+public class InvalidCategoryRequestException extends BaseException {
 
-	public CategoryNotFoundException() {
-		super(CategoryErrorCode.CATEGORY_NOT_FOUND.name(), HttpStatus.NOT_FOUND);
+	public InvalidCategoryRequestException() {
+		super(CategoryErrorCode.INVALID_CATEGORY_REQUEST.name(), HttpStatus.BAD_REQUEST);
 	}
 }
