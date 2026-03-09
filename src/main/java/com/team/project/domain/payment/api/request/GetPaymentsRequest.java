@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.team.project.domain.payment.model.vo.PaymentStatus;
+import com.team.project.global.common.annotation.AllowedPageSize;
 import com.team.project.global.common.dto.BaseRangeRequest;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,9 +15,10 @@ import lombok.Setter;
 @Setter
 public class GetPaymentsRequest {
 
-	@Schema(description = "페이지 번호", example = "0", defaultValue = "0")
+	@Schema(description = "페이지 번호", example = "0")
 	private Integer page = 0;
-	@Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+	@Schema(description = "페이지 크기", example = "10", defaultValue = "10", allowableValues = {"10", "30", "50"})
+	@AllowedPageSize(values = {10, 30, 50})
 	private Integer size = 10;
 	@Schema(description = "결제 상태", example = "PAID")
 	private PaymentStatus paymentStatus;

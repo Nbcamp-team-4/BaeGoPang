@@ -40,7 +40,8 @@ public class SecurityConfig {
 					"/favicon.ico",
 					"/api/auth/**",
 					"/swagger-ui/**",
-					"/v3/api-docs/**"
+					"/v3/api-docs/**",
+					"/api/**"
 				).permitAll()
 				.requestMatchers("/api/admin/**").hasRole("ADMIN")
 				.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")

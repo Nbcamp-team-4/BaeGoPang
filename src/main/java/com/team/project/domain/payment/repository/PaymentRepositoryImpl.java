@@ -83,7 +83,13 @@ public class PaymentRepositoryImpl implements PaymentRepository {
 	public Page<Payment> getPayments(PaymentStatus paymentStatus, BaseRangeRequest<Integer> rangeAmount,
 		BaseRangeRequest<LocalDateTime> rangePaidAt, UUID orderId, Pageable pageable) {
 
-		return paymentJpaRepository.findPayments(paymentStatus, orderId, rangeAmount.getMin(), rangeAmount.getMax(),
-			rangePaidAt.getMin(), rangePaidAt.getMax(), pageable);
+		Integer minAmount = rangeAmount != null ? rangeAmount.getMin() : null;
+		Integer maxAmount = rangeAmount != null ? rangeAmount.getMax() : null;
+
+		LocalDateTime minPaidAt = rangePaidAt != null ? rangePaidAt.getMin() : null;
+		LocalDateTime maxPaidAt = rangePaidAt != null ? rangePaidAt.getMax() : null;
+
+		return paymentJpaRepository.findPayments(paymentStatus, orderId, minAmount, maxAmount, minPaidAt, maxPaidAt,
+			pageable);
 	}
 }
