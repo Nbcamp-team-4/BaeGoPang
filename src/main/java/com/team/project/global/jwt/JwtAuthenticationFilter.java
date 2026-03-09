@@ -1,7 +1,6 @@
 package com.team.project.global.jwt;
 
 import java.io.IOException;
-import java.util.Set;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,18 +27,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final JwtTokenProvider jwtTokenProvider;
 	private final CustomUserDetailsService customUserDetailsService;
 
-	private static final Set<String> NO_CHECK_URLS = Set.of(
-		"/favicon.ico",
-		"/api/auth/login",
-		"/api/auth/reissue",
-		"/swagger-ui",
-		"/swagger-ui/index.html"
-	);
-
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String uri = request.getRequestURI();
-		return NO_CHECK_URLS.contains(uri) || uri.startsWith("/swagger-ui/") || uri.startsWith("/v3/api-docs/");
+
+		return uri.equals("/")
+				|| uri.equals("/error")
+				|| uri.equals("/favicon.ico")
+				|| uri.startsWith("/api/auth/")
+				|| uri.startsWith("/swagger-ui/")
+				|| uri.startsWith("/v3/api-docs/");
 	}
 
 	@Override
