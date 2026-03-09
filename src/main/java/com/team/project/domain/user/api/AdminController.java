@@ -29,17 +29,44 @@ public class AdminController {
 
     @Operation(summary = "유저 권한 추가", description = "관리자가 유저 권한을 추가합니다.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "유저 정보 추가 공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인가되지 않은 요청"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "유저 정보 추가 성공", content = @Content(
+            mediaType = "application/json",
+            schema = @Schema(implementation = ResponseEntity.class),
+            examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                    value = """
+                              {
+                                "userId" : "111"
+                            	"role": "ROLE_CUSTOMER"
+                              }
+                            """
+            ))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청",content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ResponseEntity.class),
+                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            value = """
+                              {
+                                    "Bad Request"
+                              }
+                            """
+                    ))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인가되지 않은 요청",content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = ResponseEntity.class),
+                    examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+                            value = """
+                              {
+                                    Unauthorized"
+                              }
+                            """
+                    ))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 정보 찾을 수 없음", content = @Content(
                     mediaType = "application/json",
                     schema = @Schema(implementation = ResponseEntity.class),
                     examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
                             value = """
                               {
-                                "userId" : "111"
-                            	"role": "ROLE_CUSTOMER"
+                                    "Not Found"
                               }
                             """
                     )
