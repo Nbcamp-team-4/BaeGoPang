@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.project.domain.auth.dto.CurrentUser;
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.payment.api.request.GetPaymentsRequest;
 import com.team.project.domain.payment.api.response.GetPaymentResponse;
 import com.team.project.domain.payment.api.response.GetPaymentsResponse;
@@ -132,10 +134,11 @@ public class PaymentController {
 	})
 	@DeleteMapping("/{paymentId}")
 	public ResponseEntity<BaseResponse<Void>> deletePayment(
-		@Parameter(description = "결제 ID", required = true) @PathVariable("paymentId") UUID paymentId) {
+		@Parameter(description = "결제 ID", required = true) @PathVariable("paymentId") UUID paymentId,
+		@CurrentUser UserDto userDto) {
 
 		// 1. service 호출
-		paymentService.deletePayment(paymentId);
+		paymentService.deletePayment(paymentId, userDto);
 
 		return ResponseEntity.ok().body(
 			BaseResponse.ofSuccess(
