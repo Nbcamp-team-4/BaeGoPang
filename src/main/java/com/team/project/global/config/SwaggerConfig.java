@@ -1,5 +1,7 @@
 package com.team.project.global.config;
 
+import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +10,11 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 
 @Configuration
+@SecurityScheme(
+		name = "BearerAuth",
+		type = SecuritySchemeType.HTTP,
+		scheme = "bearer",
+		bearerFormat = "JWT")
 public class SwaggerConfig {
 
 	@Bean
@@ -97,6 +104,13 @@ public class SwaggerConfig {
 			.group("user")
 			.pathsToMatch("/api/users/**")
 			.build();
+	}
+	@Bean
+	public GroupedOpenApi adminApi() {
+		return GroupedOpenApi.builder()
+				.group("admin")
+				.pathsToMatch("/api/admin/**")
+				.build();
 	}
 	@Bean
 	public GroupedOpenApi addressApi() {
