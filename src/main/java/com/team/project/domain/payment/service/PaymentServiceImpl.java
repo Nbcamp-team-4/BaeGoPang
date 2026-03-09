@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
@@ -82,7 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	/**
-	 *  결제 성공 시에 사용되는 메서드
+	 * 결제 성공 시에 사용되는 메서드
 	 */
 	@Override
 	@Transactional
@@ -170,7 +171,7 @@ public class PaymentServiceImpl implements PaymentService {
 	 */
 	@Override
 	@Transactional
-	public void deletePayment(UUID paymentId) {
+	public void deletePayment(UUID paymentId, UserDto userDto) {
 
 		// 1. 결제 기본키로 결제 데이터를 찾는다, 검색 결과가 없다면 예외 반환
 		Payment payment = getPaymentInnerWithException(paymentId);
@@ -181,7 +182,8 @@ public class PaymentServiceImpl implements PaymentService {
 		}
 
 		// 3. 삭제 표시한다.
-		payment.markDeleted(null); // 수정 필요
+		// 삭제자 권한 확
+		payment.markDeleted(userDto.getId());
 
 	}
 
