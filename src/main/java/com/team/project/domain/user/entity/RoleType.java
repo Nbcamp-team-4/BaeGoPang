@@ -5,10 +5,10 @@ import lombok.Getter;
 @Getter
 public enum RoleType {
 
-	CUSTOMER("ROLE_CUSTOMER"),
-	OWNER("ROLE_OWNER"),
-	MANAGER("ROLE_MANAGER"),
-	ADMIN("ROLE_ADMIN");
+	ROLE_CUSTOMER("ROLE_CUSTOMER"),
+	ROLE_OWNER("ROLE_OWNER"),
+	ROLE_MANAGER("ROLE_MANAGER"),
+	ROLE_ADMIN("ROLE_ADMIN");
 
 
 	private final String authority;

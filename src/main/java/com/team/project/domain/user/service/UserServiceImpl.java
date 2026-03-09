@@ -243,7 +243,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	private void validateSignUpRole(RoleType roleType) {
-		if (roleType == RoleType.ADMIN) {
+		if (roleType == RoleType.ROLE_ADMIN) {
 			throw new CustomException(HttpStatus.FORBIDDEN, "ADMIN 권한으로는 회원가입할 수 없습니다.");
 		}
 	}
