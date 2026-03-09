@@ -73,28 +73,22 @@ public class UserController {
 
 	// 본인 정보 조회
 	@GetMapping
-	public ResponseEntity<BaseResponse<UserResponse>> getMyInfo(
-		@CurrentUser UserDto userDto
-	) {
+	public ResponseEntity<BaseResponse<UserResponse>> getMyInfo(@CurrentUser UserDto userDto) {
 		UserResponse response = userService.getMyInfo(userDto);
 		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
 	}
 
 	// 유저 정보 수정
 	@PatchMapping("/{userId}")
-	public ResponseEntity<UserResponse> updateUser(
-		@PathVariable UUID userId,
-		@Valid @RequestBody UpdateUserRequest request
-	) {
+	public ResponseEntity<UserResponse> updateUser(@PathVariable UUID userId,
+		@Valid @RequestBody UpdateUserRequest request) {
 		return ResponseEntity.ok(userService.updateUser(userId, request));
 	}
 
 	// 본인 정보 수정
 	@PatchMapping
-	public ResponseEntity<BaseResponse<UserResponse>> updateMyInfo(
-		@CurrentUser UserDto userDto,
-		@RequestBody UpdateUserRequest request
-	) {
+	public ResponseEntity<BaseResponse<UserResponse>> updateMyInfo(@CurrentUser UserDto userDto,
+		@RequestBody UpdateUserRequest request) {
 		UserResponse response = userService.updateMyInfo(userDto, request);
 		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
 	}
@@ -108,9 +102,7 @@ public class UserController {
 
 	// 본인 탈퇴
 	@DeleteMapping
-	public ResponseEntity<BaseResponse<String>> deleteMyInfo(
-		@CurrentUser UserDto userDto
-	) {
+	public ResponseEntity<BaseResponse<String>> deleteMyInfo(@CurrentUser UserDto userDto) {
 		userService.deleteMyInfo(userDto);
 		return ResponseEntity.ok(BaseResponse.ofSuccess("회원 탈퇴가 완료되었습니다."));
 	}
