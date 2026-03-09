@@ -67,7 +67,7 @@ public class User extends BaseEntity {
 
 	public List<String> getRoleNames() {
 		return userRoles.stream()
-			.map(userRole -> userRole.getRole().getRole().name())
+			.map(userRole -> userRole.getRole().getType().name())
 			.distinct()
 			.toList();
 	}
