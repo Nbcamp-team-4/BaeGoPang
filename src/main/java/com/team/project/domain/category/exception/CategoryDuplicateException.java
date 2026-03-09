@@ -4,8 +4,12 @@ import org.springframework.http.HttpStatus;
 
 import com.team.project.global.common.exception.BaseException;
 
+import lombok.Getter;
+
+@Getter
 public class CategoryDuplicateException extends BaseException {
+
 	public CategoryDuplicateException() {
-		super("Category_Duplicate", HttpStatus.CONFLICT);
+		super(CategoryErrorCode.CATEGORY_DUPLICATE.name(), HttpStatus.CONFLICT);
 	}
 }

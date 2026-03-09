@@ -1,13 +1,7 @@
 package com.team.project.domain.region.service;
 
-import com.team.project.domain.region.api.request.CreateRegionRequest;
-import com.team.project.domain.region.api.request.UpdateRegionRequest;
-import com.team.project.domain.region.api.response.PagedRegionsResponse;
-import com.team.project.domain.region.api.response.RegionResponse;
-import com.team.project.domain.region.entity.Region;
-import com.team.project.domain.region.exception.RegionNotFoundException;
-import com.team.project.domain.region.repository.RegionRepository;
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
+
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.io.WKTReader;
@@ -16,7 +10,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import com.team.project.domain.region.api.request.CreateRegionRequest;
+import com.team.project.domain.region.api.request.UpdateRegionRequest;
+import com.team.project.domain.region.api.response.PagedRegionsResponse;
+import com.team.project.domain.region.api.response.RegionResponse;
+import com.team.project.domain.region.entity.Region;
+import com.team.project.domain.region.exception.InvalidRegionGeomException;
+import com.team.project.domain.region.exception.RegionNotFoundException;
+import com.team.project.domain.region.repository.RegionRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +45,7 @@ public class RegionServiceImpl implements RegionService {
     @Transactional(readOnly = true)
     public RegionResponse getRegion(UUID regionId) {
         Region region = regionRepository.findById(regionId)
-                .orElseThrow(RegionNotFoundException::new);
+            .orElseThrow(RegionNotFoundException::new);
         return RegionResponse.from(region);
     }
 
@@ -53,11 +56,11 @@ public class RegionServiceImpl implements RegionService {
         Page<Region> page = regionRepository.findAllByActiveTrueOrderByCreatedAtDesc(pageable);
 
         return new PagedRegionsResponse(
-                page.getContent().stream().map(RegionResponse::from).toList(),
-                page.getNumber(),
-                page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages()
+            page.getContent().stream().map(RegionResponse::from).toList(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements(),
+            page.getTotalPages()
         );
     }
 
@@ -68,25 +71,28 @@ public class RegionServiceImpl implements RegionService {
         Page<Region> page = regionRepository.findAllByOrderByCreatedAtDesc(pageable);
 
         return new PagedRegionsResponse(
-                page.getContent().stream().map(RegionResponse::from).toList(),
-                page.getNumber(),
-                page.getSize(),
-                page.getTotalElements(),
-                page.getTotalPages()
+            page.getContent().stream().map(RegionResponse::from).toList(),
+            page.getNumber(),
+            page.getSize(),
+            page.getTotalElements(),
+            page.getTotalPages()
         );
     }
 
     @Override
     public RegionResponse updateRegion(UUID regionId, UpdateRegionRequest request) {
         Region region = regionRepository.findById(regionId)
-                .orElseThrow(RegionNotFoundException::new);
+            .orElseThrow(RegionNotFoundException::new);
 
         MultiPolygon geom = toMultiPolygon(request.getGeomWkt());
         region.updateInfo(request.getName(), geom);
 
         if (request.getIsActive() != null) {
-            if (request.getIsActive()) region.activate();
-            else region.deactivate();
+            if (request.getIsActive()) {
+                region.activate();
+            } else {
+                region.deactivate();
+            }
         }
 
         return RegionResponse.from(region);
@@ -95,14 +101,14 @@ public class RegionServiceImpl implements RegionService {
     @Override
     public void deactivateRegion(UUID regionId) {
         Region region = regionRepository.findById(regionId)
-                .orElseThrow(RegionNotFoundException::new);
+            .orElseThrow(RegionNotFoundException::new);
         region.deactivate();
     }
 
     @Override
     public void activateRegion(UUID regionId) {
         Region region = regionRepository.findById(regionId)
-                .orElseThrow(RegionNotFoundException::new);
+            .orElseThrow(RegionNotFoundException::new);
         region.activate();
     }
 
@@ -111,11 +117,13 @@ public class RegionServiceImpl implements RegionService {
             Geometry g = new WKTReader().read(wkt);
             g.setSRID(4326);
             if (!(g instanceof MultiPolygon)) {
-                throw new IllegalArgumentException("geomWkt는 MULTIPOLYGON 형식이어야 합니다.");
+                throw new InvalidRegionGeomException();
             }
             return (MultiPolygon) g;
+        } catch (InvalidRegionGeomException e) {
+            throw e;
         } catch (Exception e) {
-            throw new IllegalArgumentException("geomWkt 형식 오류: MULTIPOLYGON(((...)))");
+            throw new InvalidRegionGeomException();
         }
     }
 }
