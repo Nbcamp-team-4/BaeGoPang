@@ -3,8 +3,6 @@ package com.team.project.domain.store.service;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.transaction.annotation.Transactional;
-
 import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.store.model.vo.StoreStatus;
 import com.team.project.domain.store.service.command.CreateStoreCommand;
@@ -39,7 +37,7 @@ public interface StoreService {
 	public List<StoreResult> searchByUserIdAddress(UUID addressId, SearchStoreCommand command);
 
 	// === [삭제] Soft Delete ===
-	@Transactional
-	void deleteStore(UUID storeId, UUID userId);
+	//@Transactional
+	//void deleteStore(UUID storeId, UUID userId);
 }
 
