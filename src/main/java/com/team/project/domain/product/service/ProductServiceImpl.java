@@ -23,6 +23,7 @@ import com.team.project.domain.product.service.command.UpdateProductCommand;
 import com.team.project.domain.product.service.result.GetProductResult;
 import com.team.project.domain.product.service.result.ProductResult;
 import com.team.project.domain.store.entity.Store;
+import com.team.project.domain.store.exception.StoreNotFoundException;
 import com.team.project.domain.store.repository.StoreRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResult createProduct(CreateProductCommand command) {
         Store store = storeRepository.findById(command.getStoreId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 가게입니다."));
+            .orElseThrow(StoreNotFoundException::new);
 
         String description = command.getDescription();
         String prompt = null;
@@ -50,14 +51,14 @@ public class ProductServiceImpl implements ProductService {
 
         if (Boolean.TRUE.equals(command.getUseAiDescription())) {
             prompt = """
-            다음 메뉴의 상품 설명을 작성해줘.
-            메뉴명: %s
-            조건:
-            - 배달앱 메뉴 설명
-            - 한글
-            - 50자 이하
-            - 설명만 출력
-            """.formatted(command.getName());
+                다음 메뉴의 상품 설명을 작성해줘.
+                메뉴명: %s
+                조건:
+                - 배달앱 메뉴 설명
+                - 한글
+                - 50자 이하
+                - 설명만 출력
+                """.formatted(command.getName());
 
             // 1. UUID 타입을 String으로 변환해서 3개의 인수를 채워줍니다.
             // 순서: (String query, String storeId, String category) 로 추정됩니다.
@@ -103,6 +104,7 @@ public class ProductServiceImpl implements ProductService {
 
         return ProductResult.from(savedProduct);
     }
+
     @Override
     public ProductResult updateProduct(UpdateProductCommand command) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(command.getProductId())
@@ -114,14 +116,14 @@ public class ProductServiceImpl implements ProductService {
 
         if (Boolean.TRUE.equals(command.getUseAiDescription())) {
             prompt = """
-            다음 메뉴의 상품 설명을 작성해줘.
-            메뉴명: %s
-            조건:
-            - 배달앱 메뉴 설명
-            - 한글
-            - 50자 이하
-            - 설명만 출력
-            """.formatted(command.getName());
+                다음 메뉴의 상품 설명을 작성해줘.
+                메뉴명: %s
+                조건:
+                - 배달앱 메뉴 설명
+                - 한글
+                - 50자 이하
+                - 설명만 출력
+                """.formatted(command.getName());
 
             // 1. updateProduct에서는 store 대신 product.getStore()를 사용합니다.
             ProcessAiRecommendRequest aiRequest = new ProcessAiRecommendRequest(
@@ -165,6 +167,7 @@ public class ProductServiceImpl implements ProductService {
 
         return ProductResult.from(product);
     }
+
     @Override
     public void deleteProduct(UUID productId, UUID userId) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)

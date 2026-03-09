@@ -85,6 +85,27 @@ public class User extends BaseEntity {
 		this.refreshToken = null;
 	}
 
+	public void updateInfo(String email, String name, String phone) {
+		if (email != null && !email.isBlank()) {
+			this.email = email;
+		}
+		if (name != null && !name.isBlank()) {
+			this.name = name;
+		}
+		if (phone != null && !phone.isBlank()) {
+			this.phone = phone;
+		}
+	}
+
+	public boolean isDeleted() {
+		return this.getDeletedAt() != null;
+	}
+
+	public void softDelete(UUID deletedBy) {
+		this.status = UserStatus.DELETED;
+		this.markDeleted(deletedBy);
+	}
+	
 	public List<String> getRoleNames() {
 		return userRoles.stream()
 			.map(userRole -> userRole.getRole().getType().name())
@@ -95,4 +116,7 @@ public class User extends BaseEntity {
 	public void addUserRole(UserRole userRole) {
 		userRoles.add(userRole);
 	}
+
+
+
 }

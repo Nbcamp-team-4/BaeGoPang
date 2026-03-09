@@ -1,8 +1,15 @@
 package com.team.project.domain.product.exception;
 
-public class ProductOptionItemNotFoundException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+import com.team.project.global.common.exception.BaseException;
+
+import lombok.Getter;
+
+@Getter
+public class ProductOptionItemNotFoundException extends BaseException {
 
 	public ProductOptionItemNotFoundException() {
-		super("상품 옵션 아이템을 찾을 수 없습니다.");
+		super(ProductErrorCode.PRODUCT_OPTION_ITEM_NOT_FOUND.name(), HttpStatus.NOT_FOUND);
 	}
 }

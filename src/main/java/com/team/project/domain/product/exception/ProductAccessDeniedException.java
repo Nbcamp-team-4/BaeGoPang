@@ -1,8 +1,15 @@
 package com.team.project.domain.product.exception;
 
-public class ProductAccessDeniedException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+import com.team.project.global.common.exception.BaseException;
+
+import lombok.Getter;
+
+@Getter
+public class ProductAccessDeniedException extends BaseException {
 
 	public ProductAccessDeniedException() {
-		super("해당 상품에 접근할 권한이 없습니다.");
+		super(ProductErrorCode.PRODUCT_ACCESS_DENIED.name(), HttpStatus.FORBIDDEN);
 	}
 }

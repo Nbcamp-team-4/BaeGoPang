@@ -4,8 +4,12 @@ import org.springframework.http.HttpStatus;
 
 import com.team.project.global.common.exception.BaseException;
 
+import lombok.Getter;
+
+@Getter
 public class RegionNotFoundException extends BaseException {
+
 	public RegionNotFoundException() {
-		super("REGION_NOT_FOUND", HttpStatus.NOT_FOUND);
+		super(RegionErrorCode.REGION_NOT_FOUND.name(), HttpStatus.NOT_FOUND);
 	}
 }

@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_user_address")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserAddress extends BaseEntity {
 
 	@Id
@@ -54,7 +56,33 @@ public class UserAddress extends BaseEntity {
 	@Column(name = "is_default", nullable = false)
 	private Boolean isDefault = false;
 
+	public UserAddress(User user, String addressName, String phone, String address, String detailAddress,
+		BigDecimal latitude,
+		BigDecimal longitude, Boolean isDefault) {
+		super();
+
+		this.user = user;
+		// this.user.addUserAddress(this);
+
+		this.addressName = addressName;
+		this.phone = phone;
+		this.address = address;
+		this.detailAddress = detailAddress;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.isDefault = isDefault;
+	}
+
+	public static UserAddress of(User user, String addressName, String phone, String address, String detailAddress,
+		BigDecimal latitude, BigDecimal longitude, Boolean isDefault) {
+		return new UserAddress(user, addressName, phone, address, detailAddress, latitude, longitude, isDefault);
+	}
+
 	public void markDeleted(UUID deletedBy) {
 		super.markDeleted(deletedBy);
+	}
+
+	public void updateIsDefault(boolean isDefault) {
+		this.isDefault = isDefault;
 	}
 }
