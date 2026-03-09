@@ -9,7 +9,7 @@ import com.team.project.domain.address.dto.GetUserAddressQuery;
 
 public interface UserAddressService {
 
-	CreateUserAddressQuery createUserAdress(CreateUserAddressCommand command, UserDto userDto);
+	CreateUserAddressQuery createUserAddress(CreateUserAddressCommand command, UserDto userDto);
 
 	GetUserAddressQuery getUserAddress(UUID userAddressId, UserDto userDto);
 }

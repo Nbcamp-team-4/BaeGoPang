@@ -29,7 +29,7 @@ public class UserAddressServiceImpl implements UserAddressService {
 
 	@Transactional
 	@Override
-	public CreateUserAddressQuery createUserAdress(CreateUserAddressCommand command, UserDto userDto) {
+	public CreateUserAddressQuery createUserAddress(CreateUserAddressCommand command, UserDto userDto) {
 
 		// 1. 사용자 객체를 찾아온다.
 		User found = userRepository.findById(userDto.getId()).orElseThrow(UserNotFoundException::new);

@@ -41,7 +41,7 @@ public class UserAddressController {
 			request.getLongitude(), request.getIsDefault());
 
 		// 2. service 호출
-		CreateUserAddressQuery query = userAddressService.createUserAdress(command, userDto);
+		CreateUserAddressQuery query = userAddressService.createUserAddress(command, userDto);
 
 		// 3. dto 변환
 		CreateUserAddressResponse response = CreateUserAddressResponse.from(query);
