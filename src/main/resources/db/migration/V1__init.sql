@@ -4,43 +4,64 @@
 
 -- 1) Extensions
 -- -----------------------------------------------------
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";   -- gen_random_uuid()
-CREATE EXTENSION IF NOT EXISTS "postgis";    -- geometry(Point/MultiPolygon)
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- 2) ENUM Types
 -- -----------------------------------------------------
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status') THEN
-CREATE TYPE user_status AS ENUM ('ACTIVE','BLOCKED','WITHDRAWN','DELETED');
+CREATE TYPE user_status AS ENUM ('ACTIVE', 'BLOCKED', 'WITHDRAWN', 'DELETED');
 END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_type') THEN
-CREATE TYPE role_type AS ENUM ('CUSTOMER','OWNER','MANAGER','ADMIN');
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'role_type') THEN
+CREATE TYPE role_type AS ENUM (
+        'ROLE_CUSTOMER',
+        'ROLE_OWNER',
+        'ROLE_MANAGER',
+        'ROLE_ADMIN'
+    );
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'store_status') THEN
-CREATE TYPE store_status AS ENUM ('OPEN','CLOSED','INACTIVE');
+CREATE TYPE store_status AS ENUM ('OPEN', 'CLOSED', 'INACTIVE');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
-CREATE TYPE order_status AS ENUM ('PENDING','PAID','CANCELED','COMPLETED');
+CREATE TYPE order_status AS ENUM (
+      'PENDING_PAYMENT',
+      'PAID',
+      'ACCEPTED',
+      'REJECTED',
+      'COOKING',
+      'DELIVERING',
+      'COMPLETED',
+      'CANCELED'
+    );
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'cart_status') THEN
-CREATE TYPE cart_status AS ENUM ('ACTIVE','ORDERED','ABANDONED');
+CREATE TYPE cart_status AS ENUM ('ACTIVE', 'ORDERED', 'ABANDONED');
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_status') THEN
-CREATE TYPE payment_status AS ENUM ('READY','PAID','CANCELED');
+CREATE TYPE payment_status AS ENUM ('READY', 'PAID', 'CANCELED', 'CANCEL_FAILED');
+END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_log_status') THEN
+CREATE TYPE payment_log_status AS ENUM (
+      'PAY_SUCCESS',
+      'PAY_FAILURE',
+      'CANCEL_SUCCESS',
+      'CANCEL_FAILURE',
+      'REFUND_SUCCESS',
+      'REFUND_FAILURE'
+    );
 END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pg_provider_status') THEN
-CREATE TYPE pg_provider_status AS ENUM ('ACTIVE','DEACTIVE');
-END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'pg_log_status') THEN
-CREATE TYPE pg_log_status AS ENUM ('SUCCESS','FAIL');
+CREATE TYPE pg_provider_status AS ENUM ('ACTIVE', 'DEACTIVE');
 END IF;
 END $$;
 
@@ -50,34 +71,38 @@ END $$;
 -- =======================
 -- p_user
 -- =======================
+-- =======================
+-- p_user
+-- =======================
 CREATE TABLE IF NOT EXISTS p_user (
-                                      id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    login_id     varchar(50)  NOT NULL UNIQUE,
-    email        varchar(255) NOT NULL UNIQUE,
-    password     varchar(255) NOT NULL,
-    name         varchar(100) NOT NULL,
-    phone        varchar(20)  NOT NULL UNIQUE,
-    status       user_status  NOT NULL DEFAULT 'ACTIVE',
+                                      id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    login_id      varchar(50)  NOT NULL UNIQUE,
+    email         varchar(255) NOT NULL UNIQUE,
+    password      varchar(255) NOT NULL,
+    name          varchar(100) NOT NULL,
+    phone         varchar(20)  NOT NULL UNIQUE,
+    status        user_status  NOT NULL DEFAULT 'ACTIVE',
+    refresh_token varchar(500) NULL,
 
-    created_at   timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by   uuid         NULL,
-    updated_at   timestamp    NULL,
-    updated_by   uuid         NULL,
-    deleted_at   timestamp    NULL,
-    deleted_by   uuid         NULL
-    );
+    created_at    timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by    uuid         NULL,
+    updated_at    timestamp    NULL,
+    updated_by    uuid         NULL,
+    deleted_at    timestamp    NULL,
+    deleted_by    uuid         NULL
+);
 
 ALTER TABLE p_user
     ADD CONSTRAINT fk_user_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_user_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_user_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_user_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_user_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 -- =======================
 -- p_role
 -- =======================
 CREATE TABLE IF NOT EXISTS p_role (
-                                      id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    role        role_type NOT NULL UNIQUE,
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    type        role_type NOT NULL UNIQUE,
 
     created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by  uuid NULL,
@@ -85,15 +110,15 @@ CREATE TABLE IF NOT EXISTS p_role (
     updated_by  uuid NULL,
     deleted_at  timestamp NULL,
     deleted_by  uuid NULL
-    );
+);
 
 ALTER TABLE p_role
     ADD CONSTRAINT fk_role_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_role_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_role_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_role_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_role_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 -- =======================
--- p_user_roles (M:N)
+-- p_user_roles
 -- =======================
 CREATE TABLE IF NOT EXISTS p_user_roles (
                                             id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -112,10 +137,10 @@ CREATE TABLE IF NOT EXISTS p_user_roles (
 
 ALTER TABLE p_user_roles
     ADD CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES p_user(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id) REFERENCES p_role(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_user_roles_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_user_roles_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_user_roles_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id) REFERENCES p_role(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_user_roles_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_user_roles_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_user_roles_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_user_roles_user_id ON p_user_roles(user_id);
 CREATE INDEX IF NOT EXISTS ix_user_roles_role_id ON p_user_roles(role_id);
@@ -148,8 +173,8 @@ CREATE TABLE IF NOT EXISTS p_category (
 
 ALTER TABLE p_category
     ADD CONSTRAINT fk_category_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_category_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_category_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_category_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_category_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 -- =======================
 -- p_store
@@ -177,6 +202,11 @@ CREATE TABLE IF NOT EXISTS p_store (
     delivery_fee          int NOT NULL DEFAULT 0,
     minimum_order_amount  int NOT NULL DEFAULT 0,
 
+    -- [추가] 평점 및 리뷰 관련 컬럼
+    average_rating        double precision NOT NULL DEFAULT 0.0,
+    review_count          int NOT NULL DEFAULT 0,
+    total_rating_sum      int NOT NULL DEFAULT 0,
+
     created_at            timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by            uuid NULL,
     updated_at            timestamp NULL,
@@ -187,10 +217,11 @@ CREATE TABLE IF NOT EXISTS p_store (
 
 ALTER TABLE p_store
     ADD CONSTRAINT fk_store_user FOREIGN KEY (user_id) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_store_region FOREIGN KEY (region_id) REFERENCES p_region(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_store_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_store_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_store_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_store_region FOREIGN KEY (region_id) REFERENCES p_region(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_store_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_store_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_store_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_store_delivery_time_range CHECK (delivery_min_minutes <= delivery_max_minutes);
 
 CREATE INDEX IF NOT EXISTS ix_store_region_id ON p_store(region_id);
 CREATE INDEX IF NOT EXISTS ix_store_user_id ON p_store(user_id);
@@ -215,10 +246,10 @@ CREATE TABLE IF NOT EXISTS p_store_category (
 
 ALTER TABLE p_store_category
     ADD CONSTRAINT fk_store_category_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_store_category_category FOREIGN KEY (category_id) REFERENCES p_category(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_store_category_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_store_category_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_store_category_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_store_category_category FOREIGN KEY (category_id) REFERENCES p_category(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_store_category_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_store_category_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_store_category_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_store_category_store_id ON p_store_category(store_id);
 CREATE INDEX IF NOT EXISTS ix_store_category_category_id ON p_store_category(category_id);
@@ -228,7 +259,7 @@ CREATE INDEX IF NOT EXISTS ix_store_category_category_id ON p_store_category(cat
 -- =======================
 CREATE TABLE IF NOT EXISTS p_product (
                                          id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    store_id            uuid NOT NULL,
+    store_id           uuid NOT NULL,
 
     name               varchar(200) NOT NULL,
     price              int NOT NULL,
@@ -236,8 +267,8 @@ CREATE TABLE IF NOT EXISTS p_product (
     use_ai_description boolean NOT NULL DEFAULT false,
     image_url          varchar(500) NULL,
 
-    is_sold_out         boolean NOT NULL DEFAULT false,
-    is_hidden           boolean NOT NULL DEFAULT false,
+    is_sold_out        boolean NOT NULL DEFAULT false,
+    is_hidden          boolean NOT NULL DEFAULT false,
 
     created_at         timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_by         uuid NULL,
@@ -249,9 +280,10 @@ CREATE TABLE IF NOT EXISTS p_product (
 
 ALTER TABLE p_product
     ADD CONSTRAINT fk_product_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_product_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_product_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_product_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_product_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_product_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_product_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_product_price_non_negative CHECK (price >= 0);
 
 CREATE INDEX IF NOT EXISTS ix_product_store_id ON p_product(store_id);
 
@@ -275,9 +307,9 @@ CREATE TABLE IF NOT EXISTS p_product_option (
 
 ALTER TABLE p_product_option
     ADD CONSTRAINT fk_product_option_product FOREIGN KEY (product_id) REFERENCES p_product(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_product_option_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_product_option_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_product_option_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_product_option_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_product_option_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_product_option_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_product_option_product_id ON p_product_option(product_id);
 
@@ -301,42 +333,43 @@ CREATE TABLE IF NOT EXISTS p_product_option_item (
 
 ALTER TABLE p_product_option_item
     ADD CONSTRAINT fk_option_item_option FOREIGN KEY (product_option_id) REFERENCES p_product_option(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_option_item_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_option_item_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_option_item_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_option_item_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_option_item_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_option_item_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_option_item_additional_price_non_negative CHECK (additional_price >= 0);
 
 CREATE INDEX IF NOT EXISTS ix_option_item_option_id ON p_product_option_item(product_option_id);
 
 -- =======================
--- p_ai_log (유지: p_product_ai_log와 통합 안 함)
+-- p_ai_log
 -- =======================
 CREATE TABLE IF NOT EXISTS p_ai_log (
-                                        id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    product_id   uuid NOT NULL,
-
+                                        id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id    uuid NOT NULL,
+    task_type     varchar(255) NULL,
     request_text  text NOT NULL,
     response_text text NOT NULL,
     ai_model      varchar(100) NOT NULL,
 
-    created_at   timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by   uuid NULL,
-    updated_at   timestamp NULL,
-    updated_by   uuid NULL,
-    deleted_at   timestamp NULL,
-    deleted_by   uuid NULL
+    created_at    timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by    uuid NULL,
+    updated_at    timestamp NULL,
+    updated_by    uuid NULL,
+    deleted_at    timestamp NULL,
+    deleted_by    uuid NULL
     );
 
 ALTER TABLE p_ai_log
     ADD CONSTRAINT fk_ai_log_product FOREIGN KEY (product_id) REFERENCES p_product(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_ai_log_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_ai_log_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_ai_log_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_ai_log_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_ai_log_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_ai_log_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_ai_log_product_id ON p_ai_log(product_id);
 CREATE INDEX IF NOT EXISTS ix_ai_log_created_at ON p_ai_log(created_at DESC);
 
 -- =======================
--- p_product_ai_log  (p_ai_log 대체로 쓰는 걸 추천)
+-- p_product_ai_log
 -- =======================
 CREATE TABLE IF NOT EXISTS p_product_ai_log (
                                                 id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -352,7 +385,7 @@ CREATE TABLE IF NOT EXISTS p_product_ai_log (
 
 ALTER TABLE p_product_ai_log
     ADD CONSTRAINT fk_product_ai_log_product FOREIGN KEY (product_id) REFERENCES p_product(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_product_ai_log_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_product_ai_log_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_product_ai_log_product_id ON p_product_ai_log(product_id);
 
@@ -360,36 +393,35 @@ CREATE INDEX IF NOT EXISTS ix_product_ai_log_product_id ON p_product_ai_log(prod
 -- p_user_address
 -- =======================
 CREATE TABLE IF NOT EXISTS p_user_address (
-                                              id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                                              id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id         uuid NOT NULL,
 
-    address_name   varchar(50) NOT NULL,
-    phone          varchar(20) NOT NULL,
-    address        varchar(255) NOT NULL,
-    detail_address varchar(255) NULL,
+    address_name    varchar(50) NOT NULL,
+    phone           varchar(20) NOT NULL,
+    address         varchar(255) NOT NULL,
+    detail_address  varchar(255) NULL,
 
-    latitude       decimal(10,7) NULL,
-    longitude      decimal(10,7) NULL,
+    latitude        decimal(10,7) NULL,
+    longitude       decimal(10,7) NULL,
 
-    is_default     boolean NOT NULL DEFAULT false,
+    is_default      boolean NOT NULL DEFAULT false,
 
-    created_at     timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by     uuid NULL,
-    updated_at     timestamp NULL,
-    updated_by     uuid NULL,
-    deleted_at     timestamp NULL,
-    deleted_by     uuid NULL
+    created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by      uuid NULL,
+    updated_at      timestamp NULL,
+    updated_by      uuid NULL,
+    deleted_at      timestamp NULL,
+    deleted_by      uuid NULL
     );
 
 ALTER TABLE p_user_address
     ADD CONSTRAINT fk_user_address_user FOREIGN KEY (user_id) REFERENCES p_user(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_user_address_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_user_address_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_user_address_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_user_address_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_user_address_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_user_address_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_user_address_user_id ON p_user_address(user_id);
 
--- Postgres partial unique index: 유저당 기본주소는 1개만
 CREATE UNIQUE INDEX IF NOT EXISTS uq_user_address_default_per_user
     ON p_user_address(user_id)
     WHERE is_default = true AND deleted_at IS NULL;
@@ -404,7 +436,7 @@ CREATE TABLE IF NOT EXISTS p_order (
     delivery_address_id uuid NULL,
 
     order_no            varchar(50) NOT NULL UNIQUE,
-    status              order_status NOT NULL DEFAULT 'PENDING',
+    status              order_status NOT NULL DEFAULT 'PENDING_PAYMENT',
 
     request_memo        varchar(255) NULL,
     canceled_reason     varchar(255) NULL,
@@ -423,11 +455,12 @@ CREATE TABLE IF NOT EXISTS p_order (
 
 ALTER TABLE p_order
     ADD CONSTRAINT fk_order_user FOREIGN KEY (user_id) REFERENCES p_user(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_order_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_order_delivery_address FOREIGN KEY (delivery_address_id) REFERENCES p_user_address(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_order_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_order_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_order_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_order_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_order_delivery_address FOREIGN KEY (delivery_address_id) REFERENCES p_user_address(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_order_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_order_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_order_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_order_total_amount_non_negative CHECK (total_amount >= 0);
 
 CREATE INDEX IF NOT EXISTS ix_order_user_date ON p_order(user_id, order_date DESC);
 CREATE INDEX IF NOT EXISTS ix_order_store_status ON p_order(store_id, status);
@@ -437,28 +470,31 @@ CREATE INDEX IF NOT EXISTS ix_order_store_status ON p_order(store_id, status);
 -- =======================
 CREATE TABLE IF NOT EXISTS p_order_item (
                                             id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id           uuid NOT NULL,
-    product_id         uuid NOT NULL,
+    order_id          uuid NOT NULL,
+    product_id        uuid NOT NULL,
 
-    product_name       varchar(255) NOT NULL,
-    unit_price         int NOT NULL,
-    quantity           int NOT NULL,
-    line_total_amount  int NOT NULL,
+    product_name      varchar(255) NOT NULL,
+    unit_price        int NOT NULL,
+    quantity          int NOT NULL,
+    line_total_amount int NOT NULL,
 
-    created_at         timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by         uuid NULL,
-    updated_at         timestamp NULL,
-    updated_by         uuid NULL,
-    deleted_at         timestamp NULL,
-    deleted_by         uuid NULL
+    created_at        timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by        uuid NULL,
+    updated_at        timestamp NULL,
+    updated_by        uuid NULL,
+    deleted_at        timestamp NULL,
+    deleted_by        uuid NULL
     );
 
 ALTER TABLE p_order_item
     ADD CONSTRAINT fk_order_item_order FOREIGN KEY (order_id) REFERENCES p_order(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_order_item_product FOREIGN KEY (product_id) REFERENCES p_product(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_order_item_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_order_item_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_order_item_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_order_item_product FOREIGN KEY (product_id) REFERENCES p_product(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_order_item_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_order_item_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_order_item_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_order_item_quantity_positive CHECK (quantity >= 1),
+    ADD CONSTRAINT ck_order_item_unit_price_non_negative CHECK (unit_price >= 0),
+    ADD CONSTRAINT ck_order_item_line_total_non_negative CHECK (line_total_amount >= 0);
 
 CREATE INDEX IF NOT EXISTS ix_order_item_order_id ON p_order_item(order_id);
 
@@ -466,26 +502,27 @@ CREATE INDEX IF NOT EXISTS ix_order_item_order_id ON p_order_item(order_id);
 -- p_order_item_option
 -- =======================
 CREATE TABLE IF NOT EXISTS p_order_item_option (
-                                                   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_item_id   uuid NOT NULL,
+                                                   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_item_id    uuid NOT NULL,
 
-    option_name     varchar(100) NOT NULL,
+    option_name      varchar(100) NOT NULL,
     option_item_name varchar(100) NOT NULL,
-    extra_price     int NOT NULL DEFAULT 0,
+    extra_price      int NOT NULL DEFAULT 0,
 
-    created_at      timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by      uuid NULL,
-    updated_at      timestamp NULL,
-    updated_by      uuid NULL,
-    deleted_at      timestamp NULL,
-    deleted_by      uuid NULL
+    created_at       timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by       uuid NULL,
+    updated_at       timestamp NULL,
+    updated_by       uuid NULL,
+    deleted_at       timestamp NULL,
+    deleted_by       uuid NULL
     );
 
 ALTER TABLE p_order_item_option
     ADD CONSTRAINT fk_order_item_option_item FOREIGN KEY (order_item_id) REFERENCES p_order_item(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_order_item_option_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_order_item_option_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_order_item_option_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_order_item_option_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_order_item_option_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_order_item_option_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_order_item_option_extra_price_non_negative CHECK (extra_price >= 0);
 
 CREATE INDEX IF NOT EXISTS ix_order_item_option_order_item_id ON p_order_item_option(order_item_id);
 
@@ -512,11 +549,12 @@ CREATE TABLE IF NOT EXISTS p_review (
 
 ALTER TABLE p_review
     ADD CONSTRAINT fk_review_order FOREIGN KEY (order_id) REFERENCES p_order(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_review_user FOREIGN KEY (user_id) REFERENCES p_user(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_review_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_review_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_review_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_review_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_review_user FOREIGN KEY (user_id) REFERENCES p_user(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_review_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_review_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_review_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_review_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_review_rating_range CHECK (rating BETWEEN 1 AND 5);
 
 CREATE INDEX IF NOT EXISTS ix_review_store_id ON p_review(store_id);
 
@@ -540,9 +578,10 @@ CREATE TABLE IF NOT EXISTS p_review_image (
 
 ALTER TABLE p_review_image
     ADD CONSTRAINT fk_review_image_review FOREIGN KEY (review_id) REFERENCES p_review(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_review_image_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_review_image_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_review_image_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_review_image_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_review_image_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_review_image_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_review_image_sort_order_non_negative CHECK (sort_order >= 0);
 
 CREATE INDEX IF NOT EXISTS ix_review_image_review_id ON p_review_image(review_id);
 
@@ -551,28 +590,27 @@ CREATE INDEX IF NOT EXISTS ix_review_image_review_id ON p_review_image(review_id
 -- =======================
 CREATE TABLE IF NOT EXISTS p_cart (
                                       id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     uuid NOT NULL,
-    store_id    uuid NOT NULL,
-    status      cart_status NOT NULL DEFAULT 'ACTIVE',
+    user_id    uuid NOT NULL,
+    store_id   uuid NOT NULL,
+    status     cart_status NOT NULL DEFAULT 'ACTIVE',
 
-    created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by  uuid NULL,
-    updated_at  timestamp NULL,
-    updated_by  uuid NULL,
-    deleted_at  timestamp NULL,
-    deleted_by  uuid NULL
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by uuid NULL,
+    updated_at timestamp NULL,
+    updated_by uuid NULL,
+    deleted_at timestamp NULL,
+    deleted_by uuid NULL
     );
 
 ALTER TABLE p_cart
     ADD CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES p_user(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_cart_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_cart_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_cart_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_cart_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_cart_store FOREIGN KEY (store_id) REFERENCES p_store(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_cart_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_cart_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_cart_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_cart_user_status ON p_cart(user_id, status);
 
--- 유저당 ACTIVE 카트 1개 제한 (soft delete 고려)
 CREATE UNIQUE INDEX IF NOT EXISTS uq_cart_one_active_per_user
     ON p_cart(user_id)
     WHERE status = 'ACTIVE' AND deleted_at IS NULL;
@@ -582,25 +620,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_cart_one_active_per_user
 -- =======================
 CREATE TABLE IF NOT EXISTS p_cart_item (
                                            id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    cart_id     uuid NOT NULL,
-    product_id  uuid NOT NULL,
+    cart_id    uuid NOT NULL,
+    product_id uuid NOT NULL,
 
     quantity   int NOT NULL,
 
-    created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by  uuid NULL,
-    updated_at  timestamp NULL,
-    updated_by  uuid NULL,
-    deleted_at  timestamp NULL,
-    deleted_by  uuid NULL
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by uuid NULL,
+    updated_at timestamp NULL,
+    updated_by uuid NULL,
+    deleted_at timestamp NULL,
+    deleted_by uuid NULL
     );
 
 ALTER TABLE p_cart_item
     ADD CONSTRAINT fk_cart_item_cart FOREIGN KEY (cart_id) REFERENCES p_cart(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_cart_item_product FOREIGN KEY (product_id) REFERENCES p_product(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_cart_item_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_cart_item_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_cart_item_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_cart_item_product FOREIGN KEY (product_id) REFERENCES p_product(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_cart_item_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_cart_item_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_cart_item_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_cart_item_quantity_positive CHECK (quantity >= 1);
 
 CREATE INDEX IF NOT EXISTS ix_cart_item_cart_id ON p_cart_item(cart_id);
 
@@ -608,26 +647,26 @@ CREATE INDEX IF NOT EXISTS ix_cart_item_cart_id ON p_cart_item(cart_id);
 -- p_cart_item_option
 -- =======================
 CREATE TABLE IF NOT EXISTS p_cart_item_option (
-                                                  id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                                                  id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     cart_item_id           uuid NOT NULL,
     product_option_id      uuid NOT NULL,
     product_option_item_id uuid NOT NULL,
 
-    created_at            timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by            uuid NULL,
-    updated_at            timestamp NULL,
-    updated_by            uuid NULL,
-    deleted_at            timestamp NULL,
-    deleted_by            uuid NULL
+    created_at             timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by             uuid NULL,
+    updated_at             timestamp NULL,
+    updated_by             uuid NULL,
+    deleted_at             timestamp NULL,
+    deleted_by             uuid NULL
     );
 
 ALTER TABLE p_cart_item_option
     ADD CONSTRAINT fk_cart_item_option_cart_item FOREIGN KEY (cart_item_id) REFERENCES p_cart_item(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_cart_item_option_option FOREIGN KEY (product_option_id) REFERENCES p_product_option(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_cart_item_option_option_item FOREIGN KEY (product_option_item_id) REFERENCES p_product_option_item(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_cart_item_option_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_cart_item_option_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_cart_item_option_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_cart_item_option_option FOREIGN KEY (product_option_id) REFERENCES p_product_option(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_cart_item_option_option_item FOREIGN KEY (product_option_item_id) REFERENCES p_product_option_item(id) ON DELETE RESTRICT,
+    ADD CONSTRAINT fk_cart_item_option_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_cart_item_option_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_cart_item_option_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_cart_item_option_cart_item_id ON p_cart_item_option(cart_item_id);
 
@@ -650,35 +689,36 @@ CREATE TABLE IF NOT EXISTS p_pg_provider (
 
 ALTER TABLE p_pg_provider
     ADD CONSTRAINT uq_pg_provider_code UNIQUE (code),
-  ADD CONSTRAINT fk_pg_provider_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_pg_provider_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_pg_provider_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_pg_provider_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_pg_provider_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_pg_provider_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 -- =======================
 -- p_payment
 -- =======================
 CREATE TABLE IF NOT EXISTS p_payment (
-                                         id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+                                         id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id    uuid NOT NULL,
 
-    method     varchar(50) NULL,
-    status     payment_status NOT NULL DEFAULT 'READY',
-    amount     int NOT NULL,
-    paid_at    timestamp NULL,
+    status      payment_status NOT NULL DEFAULT 'READY',
+    amount      int NOT NULL,
+    payment_key varchar(255) NULL,
+    paid_at     timestamp NULL,
 
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by uuid NULL,
-    updated_at timestamp NULL,
-    updated_by uuid NULL,
-    deleted_at timestamp NULL,
-    deleted_by uuid NULL
+    created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by  uuid NULL,
+    updated_at  timestamp NULL,
+    updated_by  uuid NULL,
+    deleted_at  timestamp NULL,
+    deleted_by  uuid NULL
     );
 
 ALTER TABLE p_payment
     ADD CONSTRAINT fk_payment_order FOREIGN KEY (order_id) REFERENCES p_order(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_payment_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_payment_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_payment_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_payment_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_payment_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_payment_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT ck_payment_amount_non_negative CHECK (amount >= 0);
 
 CREATE INDEX IF NOT EXISTS ix_payment_order_id ON p_payment(order_id);
 
@@ -686,26 +726,25 @@ CREATE INDEX IF NOT EXISTS ix_payment_order_id ON p_payment(order_id);
 -- p_payment_log
 -- =======================
 CREATE TABLE IF NOT EXISTS p_payment_log (
-                                             id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    payment_id      uuid NOT NULL,
-    pg_provider_id  uuid NOT NULL,
+                                             id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    payment_id  uuid NOT NULL,
 
-    status         pg_log_status NULL,
-    pg_tid         varchar(255) NULL,
-    reason         text NULL,
+    payment_key varchar(255) NULL,
+    status      payment_log_status NOT NULL,
+    reason      text NULL,
 
-    created_at     timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by     uuid NULL,
-
-    deleted_at     timestamp NULL,
-    deleted_by     uuid NULL
+    created_at  timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by  uuid NULL,
+    updated_at  timestamp NULL,
+    updated_by  uuid NULL,
+    deleted_at  timestamp NULL,
+    deleted_by  uuid NULL
     );
 
 ALTER TABLE p_payment_log
     ADD CONSTRAINT fk_payment_log_payment FOREIGN KEY (payment_id) REFERENCES p_payment(id) ON DELETE CASCADE,
-  ADD CONSTRAINT fk_payment_log_pg_provider FOREIGN KEY (pg_provider_id) REFERENCES p_pg_provider(id) ON DELETE RESTRICT,
-  ADD CONSTRAINT fk_payment_log_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
-  ADD CONSTRAINT fk_payment_log_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
+    ADD CONSTRAINT fk_payment_log_created_by FOREIGN KEY (created_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_payment_log_updated_by FOREIGN KEY (updated_by) REFERENCES p_user(id) ON DELETE SET NULL,
+    ADD CONSTRAINT fk_payment_log_deleted_by FOREIGN KEY (deleted_by) REFERENCES p_user(id) ON DELETE SET NULL;
 
 CREATE INDEX IF NOT EXISTS ix_payment_log_payment_id ON p_payment_log(payment_id);
-CREATE INDEX IF NOT EXISTS ix_payment_log_pg_provider_id ON p_payment_log(pg_provider_id);

@@ -17,7 +17,26 @@ spring:
   jpa:
     show-sql: true
 
+toss:
+  payments:
+    secret-key: test_sk_dummy
+    base-url: https://api.tosspayments.com
+
 logging:
   level:
     org.flywaydb: DEBUG
     org.springframework.boot.context.config: DEBUG
+
+file:
+  upload-dir: uploads
+
+# TODO: 추후 S3 전환 시 추가 예정
+# cloud:
+#   aws:
+#     credentials:
+#       access-key: ${AWS_ACCESS_KEY}
+#       secret-key: ${AWS_SECRET_KEY}
+#     region:
+#       static: ap-northeast-2
+#     s3:
+#       bucket: ${AWS_S3_BUCKET}
