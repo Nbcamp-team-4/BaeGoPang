@@ -114,30 +114,6 @@ public class Store extends BaseEntity {
 	@Column(name = "total_rating_sum", nullable = false)
 	private Integer totalRatingSum = 0;
 
-	/**
-	 * 리뷰 등록 시 평점 갱신 (N+1 문제 해결)
-	 */
-	public void addReviewRating(int newRating) {
-		this.totalRatingSum += newRating;
-		this.reviewCount += 1;
-		this.averageRating = (double) this.totalRatingSum / this.reviewCount;
-	}
-	/**
-	 * 리뷰 삭제 시 평점 차감
-	 */
-	public void removeReviewRating(int oldRating) {
-		if (this.reviewCount > 0) {
-			this.totalRatingSum -= oldRating;
-			this.reviewCount -= 1;
-			this.averageRating = this.reviewCount > 0
-				? (double) this.totalRatingSum / this.reviewCount
-				: 0.0;
-		}
-	}
-	/* ============================================================================
-	 * 2. 생성자 및 정적 팩토리 메서드 영역 (1번 방식 핵심)
-	 * ============================================================================ */
-
 	// 빌더는 '필수 초기화가 필요한 필드'만 받도록 생성자에 지정합니다.
 	@Builder
 	public Store(User user, Region region, Point location, String name, String description,
@@ -188,6 +164,31 @@ public class Store extends BaseEntity {
 		}
 		return store;
 	}
+	/* ============================================================================
+	 * 2. 생성자 및 정적 팩토리 메서드 영역 (1번 방식 핵심)
+	 * ============================================================================ */
+
+	/**
+	 * 리뷰 등록 시 평점 갱신 (N+1 문제 해결)
+	 */
+	public void addReviewRating(int newRating) {
+		this.totalRatingSum += newRating;
+		this.reviewCount += 1;
+		this.averageRating = (double) this.totalRatingSum / this.reviewCount;
+	}
+
+	/**
+	 * 리뷰 삭제 시 평점 차감
+	 */
+	public void removeReviewRating(int oldRating) {
+		if (this.reviewCount > 0) {
+			this.totalRatingSum -= oldRating;
+			this.reviewCount -= 1;
+			this.averageRating = this.reviewCount > 0
+				? (double) this.totalRatingSum / this.reviewCount
+				: 0.0;
+		}
+	}
 
 	/* ============================================================================
 	 * 3. 비즈니스 로직 (Public 메서드)
@@ -200,7 +201,7 @@ public class Store extends BaseEntity {
 
 		// 이미지 처리 로직
 		this.imageUrl = (command.getImageUrl() == null || command.getImageUrl().isBlank())
-			? "https://raw.githubusercontent.com/.../default-store.png" // 실제 디폴트 URL로 교체 필요
+			? null
 			: command.getImageUrl();
 
 		this.openTime = command.getOpenTime();
