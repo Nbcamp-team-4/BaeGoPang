@@ -14,10 +14,11 @@ public class CreateUserAddressCommand {
 	private String detailAddress;
 	private BigDecimal latitude;
 	private BigDecimal longitude;
+	private Boolean isDefault;
 
 	public static CreateUserAddressCommand of(String name, String phone, String address, String detailAddress,
-		BigDecimal latitude, BigDecimal longitude) {
-		return new CreateUserAddressCommand(name, phone, address, detailAddress, latitude, longitude);
+		BigDecimal latitude, BigDecimal longitude, Boolean isDefault) {
+		return new CreateUserAddressCommand(name, phone, address, detailAddress, latitude, longitude, isDefault);
 	}
 
 }

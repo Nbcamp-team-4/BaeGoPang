@@ -235,11 +235,17 @@ public class UserServiceImpl implements UserService {
 		// 1. 사용자 객체를 찾아온다.
 		User found = userRepository.findById(userDto.getId()).orElseThrow(UserNotFoundException::new);
 
-		// 2. 주소 객체를 생성한다.
-		UserAddress address = UserAddress.of(found, command.getName(), command.getPhone(), command.getAddress(),
-			command.getDetailAddress(), command.getLatitude(), command.getLongitude(), false);
+		// 2. 새 주소가 기본주소면, 기존 기본주소 해제한다.
+		if (Boolean.TRUE.equals(command.getIsDefault())) {
+			userAddressRepository.findDefaultAddressByUser(found)
+				.forEach(defaultAddress -> defaultAddress.updateIsDefault(false));
+		}
 
-		// 3. 저장한다.
+		// 3. 주소 객체를 생성한다.
+		UserAddress address = UserAddress.of(found, command.getName(), command.getPhone(), command.getAddress(),
+			command.getDetailAddress(), command.getLatitude(), command.getLongitude(), command.getIsDefault());
+
+		// 4. 저장한다.
 		UserAddress saved = userAddressRepository.save(address);
 
 		return CreateUserAddressQuery.from(saved, userDto);
