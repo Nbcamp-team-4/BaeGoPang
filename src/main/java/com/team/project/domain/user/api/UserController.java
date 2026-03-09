@@ -1,17 +1,17 @@
 package com.team.project.domain.user.api;
 
-import com.team.project.domain.user.api.request.LoginUserRequest;
 import com.team.project.domain.user.api.request.SignUpRequest;
+import com.team.project.domain.user.api.request.UpdateUserRequest;
 import com.team.project.domain.user.api.response.ApiResponse;
 import com.team.project.domain.user.api.response.SignUpResponse;
+import com.team.project.domain.user.api.response.UserResponse;
 import com.team.project.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,7 +29,23 @@ public class UserController {
         );
     }
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponse> getUser(@PathVariable UUID userId) {
+        return ResponseEntity.ok(userService.getUser(userId));
+    }
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable UUID userId,
+            @Valid @RequestBody UpdateUserRequest request
+    ) {
+        return ResponseEntity.ok(userService.updateUser(userId, request));
+    }
 
+    @PatchMapping("/withdraw/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {

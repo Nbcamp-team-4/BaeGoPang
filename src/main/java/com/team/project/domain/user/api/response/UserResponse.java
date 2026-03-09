@@ -6,6 +6,7 @@ import com.team.project.domain.user.entity.UserStatus;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -18,9 +19,9 @@ public class UserResponse {
     private String name;
     private String phone;
     private UserStatus status;
-    private RoleType role;
+    private List<RoleType> roles;
 
-    public static UserResponse from(User user, RoleType role) {
+    public static UserResponse from(User user, List<RoleType> roles) {
         return UserResponse.builder()
                 .id(user.getId())
                 .loginId(user.getLoginId())
@@ -28,7 +29,7 @@ public class UserResponse {
                 .name(user.getName())
                 .phone(user.getPhone())
                 .status(user.getStatus())
-                .role(role)
+                .roles(roles)
                 .build();
     }
 }

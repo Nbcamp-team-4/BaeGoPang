@@ -1,8 +1,9 @@
 package com.team.project.domain.user.service;
 
-import com.team.project.domain.auth.util.JwtProvider;
-import com.team.project.domain.user.api.request.LoginUserRequest;
+import com.team.project.domain.review.api.response.ReviewResponse;
+import com.team.project.domain.review.entity.Review;
 import com.team.project.domain.user.api.request.SignUpRequest;
+import com.team.project.domain.user.api.request.UpdateUserRequest;
 import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
 import com.team.project.domain.user.entity.*;
@@ -17,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -58,13 +60,59 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Transactional
     public UserResponse getUser(UUID userId) {
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
+        List<UserRole> userRoles = userRoleRepository.findByUser(user);
+        List<RoleType> roles = userRoles.stream()
+                .map(userRole -> userRole.getRole().getRole())
+                .toList();
+        return UserResponse.from(user, roles);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+    }
 
-        return new UserResponse.from(user,extractRole(user));
+    @Override
+    @Transactional
+    public UserResponse updateUser(UUID userId, UpdateUserRequest request) {
+        User user = findActiveUser(userId);
+
+        validateUpdatableUser(user);
+
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            }
+        }
+
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+            if (userRepository.existsByPhone(request.getPhone())) {
+                throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+            }
+        }
+
+        user.updateInfo(
+                request.getEmail(),
+                request.getName(),
+                request.getPhone()
+        );
+
+        return UserResponse.from(user, extractRoles(user));
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(UUID userId) {
+        User user = findActiveUser(userId);
+
+        if (user.getStatus() == UserStatus.DELETED || user.isDeleted()) {
+            throw new IllegalArgumentException("이미 삭제된 유저입니다.");
+        }
+
+        user.softDelete(userId);
+    }
+    private User findActiveUser(UUID userId) {
+        return userRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 유저가 존재하지 않거나 삭제되었습니다."));
     }
 
     @Override
@@ -79,6 +127,13 @@ public class UserServiceImpl implements UserService {
         UserRole userRole = UserRole.create(user, role);
         userRoleRepository.save(userRole);
     }
+
+    private List<RoleType> extractRoles(User user) {
+        return userRoleRepository.findByUser(user).stream()
+                .map(userRole -> userRole.getRole().getRole())
+                .toList();
+    }
+
     private void validateDuplicate(SignUpRequest request) {
         if (userRepository.existsByLoginId(request.getLoginId())) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 loginId 입니다.");
@@ -95,6 +150,14 @@ public class UserServiceImpl implements UserService {
     private void validateSignUpRole(RoleType roleType) {
         if (roleType == RoleType.ADMIN) {
             throw new CustomException(HttpStatus.FORBIDDEN, "ADMIN 권한으로는 회원가입할 수 없습니다.");
+        }
+    }
+    private void validateUpdatableUser(User user) {
+        if (user.getStatus() == UserStatus.WITHDRAWN) {
+            throw new IllegalArgumentException("탈퇴한 유저는 수정할 수 없습니다.");
+        }
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new IllegalArgumentException("차단된 유저는 수정할 수 없습니다.");
         }
     }
 }

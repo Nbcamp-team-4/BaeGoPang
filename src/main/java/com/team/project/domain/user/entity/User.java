@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_user")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Builder
 public class User extends BaseEntity {
 
 	@Id
@@ -92,44 +91,26 @@ public class User extends BaseEntity {
 		this.status = status;
 	}
 
-	public static User create(
-			String loginId,
-			String email,
-			String password,
-			String name,
-			String phone,
-			UUID actorId
-	) {
-		User user = User.builder()
-				.id(UUID.randomUUID())
-				.loginId(loginId)
-				.email(email)
-				.password(password)
-				.name(name)
-				.phone(phone)
-				.status(UserStatus.ACTIVE)
-				.build();
-		return user;
-	}
-
 	public void addUserRole(UserRole userRole) {
 		this.userRoles.add(userRole);
 	}
 
-	public void updateUser(String name, String phone, UUID userId) {
-		this.name = name;
-		this.phone = phone;
-	}
-
-	public void changePassword(String password, UUID userId) {
-		this.password = password;
-	}
-
-	public void changeStatus(UserStatus status, UUID userId) {
-		this.status = status;
+	public void updateInfo(String email, String name, String phone) {
+		if (email != null && !email.isBlank()) {
+			this.email = email;
+		}
+		if (name != null && !name.isBlank()) {
+			this.name = name;
+		}
+		if (phone != null && !phone.isBlank()) {
+			this.phone = phone;
+		}
 	}
 
 	public void softDelete(UUID userId) {
 		this.status = UserStatus.DELETED;
+	}
+	public boolean isDeleted() {
+		return getDeletedAt() != null || this.status == UserStatus.DELETED;
 	}
 }
