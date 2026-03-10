@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddUserRoleRequest {
 
-    @NotNull(message = "추가할 권한은 필수입니다.")
     private RoleType roleType;
 }

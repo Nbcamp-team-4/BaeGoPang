@@ -21,6 +21,10 @@ toss:
   payments:
     secret-key: test_sk_dummy
     base-url: https://api.tosspayments.com
+jwt:
+  secret: my-super-secret-key-my-super-secret-key
+  access-token-expiration-seconds: 3600000
+  refresh-token-expiration-seconds: 1209600000
 
 logging:
   level:

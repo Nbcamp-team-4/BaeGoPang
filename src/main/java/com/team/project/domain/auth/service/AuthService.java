@@ -3,8 +3,12 @@ package com.team.project.domain.auth.service;
 import java.util.List;
 import java.util.UUID;
 
+import com.team.project.domain.address.dto.CreateUserAddressCommand;
+import com.team.project.domain.address.dto.CreateUserAddressQuery;
+import com.team.project.domain.address.service.UserAddressService;
 import com.team.project.domain.auth.api.request.SignUpRequest;
 import com.team.project.domain.auth.api.response.SignUpResponse;
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.user.exception.CustomException;
 import com.team.project.domain.user.repository.UserRoleRepository;
 import org.springframework.http.HttpStatus;
@@ -42,6 +46,7 @@ public class AuthService {
 	private final RoleRepository roleRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final UserRoleRepository userRoleRepository;
+	private final UserAddressService userAddressService;
 
 	public LoginResponse login(LoginRequest request) {
 		Authentication authentication = authenticationManager.authenticate(
@@ -103,9 +108,11 @@ public class AuthService {
 		validateDuplicate(request);
 		validateSignUpRole(request.getRole());
 
+		// role 조회
 		Role role = roleRepository.findByType(request.getRole())
 				.orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 권한이 존재하지 않습니다."));
 
+		// 유저 생성
 		User user = new User(
 				request.getLoginId(),
 				request.getEmail(),
@@ -113,15 +120,28 @@ public class AuthService {
 				request.getName(),
 				request.getPhone()
 		);
-
 		User savedUser = userRepository.save(user);
-
+		// 권한 연결
 		UserRole userRole = new UserRole(savedUser, role);
 		userRoleRepository.save(userRole);
-
 		savedUser.addUserRole(userRole);
+		// 주소 command 생성
+		CreateUserAddressCommand command = CreateUserAddressCommand.of(
+				request.getAddressName(),
+				request.getAddressPhone(),
+				request.getAddress(),
+				request.getDetailAddress(),
+				request.getLatitude(),
+				request.getLongitude(),
+				request.getIsDefault()
+		);
+		// User → UserDto 변환
+		UserDto userDto = UserDto.from(savedUser);
+		// 주소 생성
+		CreateUserAddressQuery addressQuery = userAddressService.createUserAddress(command, userDto);
+		//응답 반환
+		return SignUpResponse.from(savedUser, role.getType(), addressQuery);
 
-		return SignUpResponse.from(savedUser, role.getType());
 	}
 	private void validateSignUpRole(RoleType roleType) {
 		if (roleType == RoleType.ROLE_ADMIN) {
