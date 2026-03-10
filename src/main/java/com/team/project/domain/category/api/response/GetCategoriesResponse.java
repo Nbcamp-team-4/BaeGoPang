@@ -2,16 +2,17 @@ package com.team.project.domain.category.api.response;
 
 import java.util.List;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import com.team.project.global.common.dto.BasePageResponse;
 
-@Getter
-@AllArgsConstructor
-public class GetCategoriesResponse {
+public class GetCategoriesResponse extends BasePageResponse<CategoryResponse> {
 
-    private List<CategoryResponse> items;
-    private int page;
-    private int size;
-    private long totalElements;
-    private int totalPages;
+    public GetCategoriesResponse(
+        List<CategoryResponse> content,
+        Integer page,
+        Integer size,
+        Long totalElements,
+        Integer totalPages
+    ) {
+        super(content, page, size, totalElements, totalPages);
+    }
 }

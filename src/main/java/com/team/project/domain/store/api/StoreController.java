@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -142,7 +141,7 @@ public class StoreController {
 		return ResponseEntity.ok(GetStoresResponse.of(results, request));
 	}
 
-	// === [MANAGER/MASTER] 가게 삭제 ===
+	/*// === [MANAGER/MASTER] 가게 삭제 ===
 	@Operation(summary = "가게 삭제", description = "관리자가 가게를 삭제합니다.")
 	@DeleteMapping("/{storeId}")
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 권한 유지!
@@ -151,5 +150,5 @@ public class StoreController {
 		@RequestParam UUID userId) { // TODO: @AuthenticationPrincipal 적용 예정
 		storeService.deleteStore(storeId, userId);
 		return ResponseEntity.noContent().build();
-	}
+	}*/
 }
