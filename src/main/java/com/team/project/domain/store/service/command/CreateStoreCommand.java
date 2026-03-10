@@ -12,6 +12,7 @@ import lombok.Getter;
 @Builder
 @AllArgsConstructor
 public class CreateStoreCommand {
+
 	private final UUID userId;
 	private final UUID regionId;
 	private final String name;
