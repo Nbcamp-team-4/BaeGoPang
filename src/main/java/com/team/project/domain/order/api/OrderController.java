@@ -67,7 +67,7 @@ public class OrderController {
 	 * [고객] 결제 성공 처리
 	 * - 로그인한 사용자 본인 주문만 결제 가능/payment/success
 	 */
-	@PostMapping("/{orderId}")
+	@PostMapping("/{orderId}/payment/success")
 	@PreAuthorize("hasRole('CUSTOMER')")
 	public ResponseEntity<?> confirmOrderPayment(
 		@CurrentUser UserDto userDto,
