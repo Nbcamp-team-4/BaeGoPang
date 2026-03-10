@@ -1,17 +1,5 @@
 package com.team.project.domain.user.api;
 
-import java.util.UUID;
-
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.team.project.domain.auth.dto.CurrentUser;
 import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
@@ -21,7 +9,6 @@ import com.team.project.domain.user.model.dto.UserList;
 import com.team.project.domain.user.service.UserService;
 import com.team.project.global.common.dto.BasePageResponse;
 import com.team.project.global.common.dto.BaseResponse;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,6 +16,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @Tag(name = "User", description = "유저 API")
 @RestController
@@ -210,7 +202,7 @@ public class UserController {
 	// 본인 정보 수정
 	@PatchMapping
 	public ResponseEntity<BaseResponse<UserResponse>> updateMyInfo(@CurrentUser UserDto userDto,
-		@RequestBody UpdateUserRequest request) {
+																   @Valid @RequestBody UpdateUserRequest request) {
 		UserResponse response = userService.updateMyInfo(userDto, request);
 		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
 	}
