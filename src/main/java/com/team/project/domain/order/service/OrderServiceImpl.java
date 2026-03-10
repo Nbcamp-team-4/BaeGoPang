@@ -43,8 +43,8 @@ import com.team.project.domain.product.repository.ProductRepository;
 import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.repository.StoreRepository;
 import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.entity.UserAddress;
-import com.team.project.domain.user.repository.UserAddressRepository;
+import com.team.project.domain.address.entity.UserAddress;
+import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
