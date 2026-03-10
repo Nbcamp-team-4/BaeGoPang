@@ -1,32 +1,26 @@
 package com.team.project.domain.user.service;
 
-import java.util.List;
-import java.util.UUID;
-
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.user.api.request.AddUserRoleRequest;
+import com.team.project.domain.user.api.request.UpdateUserRequest;
 import com.team.project.domain.user.api.request.UserListRequest;
+import com.team.project.domain.user.api.response.UserResponse;
+import com.team.project.domain.user.entity.*;
 import com.team.project.domain.user.model.dto.UserList;
+import com.team.project.domain.user.repository.RoleRepository;
+import com.team.project.domain.user.repository.UserRepository;
+import com.team.project.domain.user.repository.UserRoleRepository;
 import com.team.project.global.common.dto.BasePageResponse;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.team.project.domain.auth.dto.UserDto;
-import com.team.project.domain.user.api.request.UpdateUserRequest;
-import com.team.project.domain.user.api.response.UserResponse;
-import com.team.project.domain.user.entity.Role;
-import com.team.project.domain.user.entity.RoleType;
-import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.entity.UserRole;
-import com.team.project.domain.user.entity.UserStatus;
-import com.team.project.domain.user.repository.RoleRepository;
-import com.team.project.domain.user.repository.UserRepository;
-import com.team.project.domain.user.repository.UserRoleRepository;
-
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -70,18 +64,7 @@ public class UserServiceImpl implements UserService {
 		User user = findActiveUser(userId);
 
 		validateUpdatableUser(user);
-
-		if (request.getEmail() != null && !request.getEmail().isBlank()) {
-			if (userRepository.existsByEmail(request.getEmail())) {
-				throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-			}
-		}
-
-		if (request.getPhone() != null && !request.getPhone().isBlank()) {
-			if (userRepository.existsByPhone(request.getPhone())) {
-				throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
-			}
-		}
+		validateDuplicateForUpdate(user, request);
 
 		user.updateInfo(
 			request.getEmail(),
@@ -99,16 +82,8 @@ public class UserServiceImpl implements UserService {
 		User user = userRepository.findById(userDto.getId())
 			.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
 		validateUpdatableUser(user);
-		if (request.getEmail() != null && !request.getEmail().isBlank()) {
-			if (userRepository.existsByEmail(request.getEmail())) {
-				throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
-			}
-		}
-		if (request.getPhone() != null && !request.getPhone().isBlank()) {
-			if (userRepository.existsByPhone(request.getPhone())) {
-				throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
-			}
-		}
+		validateDuplicateForUpdate(user, request);
+
 		user.updateInfo(
 			request.getEmail(),
 			request.getName(),
@@ -201,5 +176,19 @@ public class UserServiceImpl implements UserService {
 			throw new IllegalArgumentException("차단된 유저는 수정할 수 없습니다.");
 		}
 	}
+	private void validateDuplicateForUpdate(User user, UpdateUserRequest request) {
+		if (request.getEmail() != null && !request.getEmail().isBlank()) {
+			if (!request.getEmail().equals(user.getEmail())
+					&& userRepository.existsByEmail(request.getEmail())) {
+				throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+			}
+		}
 
+		if (request.getPhone() != null && !request.getPhone().isBlank()) {
+			if (!request.getPhone().equals(user.getPhone())
+					&& userRepository.existsByPhone(request.getPhone())) {
+				throw new IllegalArgumentException("이미 사용 중인 전화번호입니다.");
+			}
+		}
+	}
 }
