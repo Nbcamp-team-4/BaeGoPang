@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.model.vo.OrderStatus;
@@ -20,7 +21,7 @@ import com.team.project.domain.review.repository.ReviewRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.web.multipart.MultipartFile;
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,7 +32,13 @@ public class ReviewServiceImpl implements ReviewService {
 	private final OrderRepository orderRepository;
 
 	@Override
-	public ReviewResponse createReview(UUID orderId, UUID userId, CreateReviewRequest request) {
+	@Transactional
+	public ReviewResponse createReview(
+		UUID orderId,
+		UUID userId,
+		CreateReviewRequest request,
+		List<MultipartFile> images) {
+
 		// 1. 주문 조회
 		Order order = orderRepository.findById(orderId)
 			.orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));

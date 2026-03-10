@@ -6,11 +6,11 @@ import java.util.UUID;
 import com.team.project.domain.review.api.request.CreateReviewRequest;
 import com.team.project.domain.review.api.response.ReviewResponse;
 import com.team.project.domain.review.api.response.UpdateReviewRequest;
-
+import org.springframework.web.multipart.MultipartFile;
 public interface ReviewService {
 
 	//  매개변수 이름을 reviewId로 통일
-	ReviewResponse createReview(UUID orderId, UUID userId,CreateReviewRequest request);
+	ReviewResponse createReview(UUID orderId, UUID userId,CreateReviewRequest request, List<MultipartFile> images);
 
 	ReviewResponse getReview(UUID reviewId);
 
