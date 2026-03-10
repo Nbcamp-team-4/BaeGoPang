@@ -39,7 +39,7 @@ public class SignUpRequest {
 	@Schema(description = "번호", example = "010-1111-1111")
 	@NotBlank(message = "phone은 빈 값이 허용되지 않습니다.")
 	private final String phone;
-
+	@NotNull(message = "role은 필수입니다.")
 	@Schema(description = "권한", example = "ROLE_ADMIN")
 	private final RoleType role;
 
