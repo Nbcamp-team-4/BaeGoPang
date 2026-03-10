@@ -22,6 +22,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 	@Override
 	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
+		System.out.println("loadUserByUsername loginId = [" + loginId + "]");
+
 		User user = userRepository.findByLoginId(loginId)
 			.orElseThrow(() -> new UserNotFoundException());
 
