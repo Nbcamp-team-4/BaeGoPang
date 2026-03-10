@@ -19,12 +19,11 @@ public class PaymentSuccessEventListener {
 	@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
 	public void handle(PaymentSuccessEvent event) {
 		try {
+			log.info("결제 성공 이벤트 수신. userId={}", event.userId());
 			cartService.clearCart(event.userId());
+			log.info("결제 성공 후 장바구니 전체 삭제 완료. userId={}", event.userId());
 		} catch (Exception e) {
-			log.error(
-				"결제 성공 후 장바구니 삭제 실패. userId={}",
-				event.userId()
-			);
+			log.error("결제 성공 후 장바구니 삭제 실패. userId={}", event.userId(), e);
 		}
 	}
 }
