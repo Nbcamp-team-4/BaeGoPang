@@ -53,7 +53,8 @@ public class SecurityConfig {
 					"/api/stores/**",
 					"/api/images/**"
 				).permitAll()
-				.requestMatchers("/api/admin/**").hasRole("ADMIN")
+                    .requestMatchers("/api/auth/logout").authenticated()
+                    .requestMatchers("/api/admin/**").hasRole("ADMIN")
 				.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
 				.requestMatchers("/api/carts/**").hasRole("CUSTOMER")
 				.requestMatchers("/api/orders/**").authenticated()
@@ -94,7 +95,7 @@ public class SecurityConfig {
 
 	@Bean
 	public AuthenticationManager authenticationManager(
-		PasswordEncoder passwordEncoder
+			PasswordEncoder passwordEncoder
 	) {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 		provider.setUserDetailsService(customUserDetailsService);

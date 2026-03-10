@@ -39,10 +39,12 @@ import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class StoreServiceImpl implements StoreService {
 
 	private static final double NEARBY_DISTANCE_METERS = 3000.0;
