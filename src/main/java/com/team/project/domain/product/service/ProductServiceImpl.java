@@ -3,12 +3,18 @@ package com.team.project.domain.product.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.ai.api.request.ProcessAiRecommendRequest;
 import com.team.project.domain.ai.api.response.SearchAiRecommendResponse;
 import com.team.project.domain.ai.service.AiService;
+import com.team.project.domain.product.api.request.ProductSearchRequest;
 import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.product.entity.ProductAiLog;
 import com.team.project.domain.product.entity.ProductOption;
@@ -27,6 +33,7 @@ import com.team.project.domain.store.exception.StoreNotFoundException;
 import com.team.project.domain.store.repository.StoreRepository;
 
 import lombok.RequiredArgsConstructor;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -40,10 +47,14 @@ public class ProductServiceImpl implements ProductService {
     private final ProductAiLogRepository productAiLogRepository;
     private final AiService aiService;
 
+
+    //상품 생성
     @Override
-    public ProductResult createProduct(CreateProductCommand command) {
+    public ProductResult createProduct(UUID userId, String role, CreateProductCommand command) {
         Store store = storeRepository.findById(command.getStoreId())
             .orElseThrow(StoreNotFoundException::new);
+
+        validateStoreAuthority(store, userId, role);
 
         String description = command.getDescription();
         String prompt = null;
@@ -60,18 +71,14 @@ public class ProductServiceImpl implements ProductService {
                 - 설명만 출력
                 """.formatted(command.getName());
 
-            // 1. UUID 타입을 String으로 변환해서 3개의 인수를 채워줍니다.
-            // 순서: (String query, String storeId, String category) 로 추정됩니다.
             ProcessAiRecommendRequest aiRequest = new ProcessAiRecommendRequest(
                 prompt,
-                store.getId().toString(), // UUID를 String으로 변환! 👈 핵심 수정 사항
-                null                      // 세 번째 인수는 일단 null로 처리
+                store.getId().toString(),
+                null
             );
 
-            // 2. 서비스 호출 (List 응답)
             List<SearchAiRecommendResponse> aiResponses = aiService.recommendMenu(aiRequest);
 
-            // 3. record 타입에서 데이터 추출 (.description() 호출)
             if (aiResponses != null && !aiResponses.isEmpty()) {
                 aiResponse = aiResponses.get(0).description();
             }
@@ -84,7 +91,7 @@ public class ProductServiceImpl implements ProductService {
             command.getName(),
             command.getPrice(),
             description,
-            Boolean.TRUE.equals(command.getUseAiDescription()),
+            command.getUseAiDescription(),
             command.getImageUrl()
         );
 
@@ -105,10 +112,13 @@ public class ProductServiceImpl implements ProductService {
         return ProductResult.from(savedProduct);
     }
 
+    //상품 업데이트
     @Override
-    public ProductResult updateProduct(UpdateProductCommand command) {
+    public ProductResult updateProduct(UUID userId, String role, UpdateProductCommand command) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(command.getProductId())
             .orElseThrow(ProductNotFoundException::new);
+
+        validateProductAuthority(product, userId, role);
 
         String description = command.getDescription();
         String prompt = null;
@@ -125,17 +135,14 @@ public class ProductServiceImpl implements ProductService {
                 - 설명만 출력
                 """.formatted(command.getName());
 
-            // 1. updateProduct에서는 store 대신 product.getStore()를 사용합니다.
             ProcessAiRecommendRequest aiRequest = new ProcessAiRecommendRequest(
                 prompt,
-                product.getStore().getId().toString(), // product에서 store를 꺼내서 ID를 String으로 변환!
+                product.getStore().getId().toString(),
                 null
             );
 
-            // 2. 서비스 호출
             List<SearchAiRecommendResponse> aiResponses = aiService.recommendMenu(aiRequest);
 
-            // 3. record 타입 호출 (.description())
             if (aiResponses != null && !aiResponses.isEmpty()) {
                 aiResponse = aiResponses.get(0).description();
             }
@@ -168,10 +175,14 @@ public class ProductServiceImpl implements ProductService {
         return ProductResult.from(product);
     }
 
+
+    //상품삭제
     @Override
-    public void deleteProduct(UUID productId, UUID userId) {
+    public void deleteProduct(UUID productId, UUID userId, String role) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
+
+        validateProductAuthority(product, userId, role);
 
         List<ProductOption> optionGroups =
             productOptionRepository.findAllByProductIdAndDeletedAtIsNull(productId);
@@ -183,23 +194,58 @@ public class ProductServiceImpl implements ProductService {
         product.delete(userId);
     }
 
+    //사용자용 목록 조회
     @Override
     @Transactional(readOnly = true)
     public List<ProductResult> getProducts(UUID storeId) {
         return productRepository
-            .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalseAndIsSoldOutFalse(storeId)
+            .findAllByStoreIdAndDeletedAtIsNullAndIsHiddenFalse(storeId)
             .stream()
             .map(ProductResult::from)
             .toList();
     }
+    //관리자용 목록 조회
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductResult> getProductsForAdmin(UUID userId, String role, ProductSearchRequest request) {
+        if (request.getStoreId() == null) {
+            throw new StoreNotFoundException();
+        }
 
+        Store store = storeRepository.findById(request.getStoreId())
+            .orElseThrow(StoreNotFoundException::new);
+
+        validateStoreAuthority(store, userId, role);
+
+        Pageable pageable = PageRequest.of(
+            request.getPage(),
+            request.getSize(),
+            Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        Page<Product> productPage;
+        String keyword = request.getKeyword();
+
+        if (keyword == null || keyword.isBlank()) {
+            productPage = productRepository.findAllByStoreIdAndDeletedAtIsNull(request.getStoreId(), pageable);
+        } else {
+            productPage = productRepository.findAllByStoreIdAndDeletedAtIsNullAndNameContainingIgnoreCase(
+                request.getStoreId(),
+                keyword.trim(),
+                pageable
+            );
+        }
+
+        return productPage.map(ProductResult::from);
+    }
+    //사용자 단건 조회
     @Override
     @Transactional(readOnly = true)
     public GetProductResult getProduct(UUID productId) {
         Product product = getActiveProduct(productId);
         return toGetProductResult(product);
     }
-
+    //관리자 단건 조회
     @Override
     @Transactional(readOnly = true)
     public GetProductResult getProductForAdmin(UUID productId) {
@@ -208,44 +254,94 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public ProductResult markSoldOut(UUID productId, UUID userId) {
+    public ProductResult markSoldOut(UUID productId, UUID userId, String role) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
+
+        validateProductAuthority(product, userId, role);
 
         product.markSoldOut();
         return ProductResult.from(product);
     }
 
     @Override
-    public ProductResult markAvailable(UUID productId, UUID userId) {
+    public ProductResult markAvailable(UUID productId, UUID userId, String role) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
+
+        validateProductAuthority(product, userId, role);
 
         product.markAvailable();
         return ProductResult.from(product);
     }
 
     @Override
-    public ProductResult hideProduct(UUID productId, UUID userId) {
+    public ProductResult hideProduct(UUID productId, UUID userId, String role) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
+
+        validateProductAuthority(product, userId, role);
 
         product.hide();
         return ProductResult.from(product);
     }
 
     @Override
-    public ProductResult unhideProduct(UUID productId, UUID userId) {
+    public ProductResult unhideProduct(UUID productId, UUID userId, String role) {
         Product product = productRepository.findByIdAndDeletedAtIsNull(productId)
             .orElseThrow(ProductNotFoundException::new);
+
+        validateProductAuthority(product, userId, role);
 
         product.unhide();
         return ProductResult.from(product);
     }
 
+    private void validateStoreAuthority(Store store, UUID userId, String role) {
+        if (isManagerOrMaster(role)) {
+            return;
+        }
+
+        if (!"OWNER".equals(role)) {
+            throw new AccessDeniedException("해당 작업에 대한 권한이 없습니다.");
+        }
+
+        if (store.getUser() == null || store.getUser().getId() == null) {
+            throw new AccessDeniedException("가게 소유자 정보가 없습니다.");
+        }
+
+        if (!store.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("본인 가게의 상품만 등록할 수 있습니다.");
+        }
+    }
+
+    private void validateProductAuthority(Product product, UUID userId, String role) {
+        if (isManagerOrMaster(role)) {
+            return;
+        }
+
+        if (!"OWNER".equals(role)) {
+            throw new AccessDeniedException("해당 작업에 대한 권한이 없습니다.");
+        }
+
+        Store store = product.getStore();
+
+        if (store == null || store.getUser() == null || store.getUser().getId() == null) {
+            throw new AccessDeniedException("가게 소유자 정보가 없습니다.");
+        }
+
+        if (!store.getUser().getId().equals(userId)) {
+            throw new AccessDeniedException("본인 가게의 상품만 수정할 수 있습니다.");
+        }
+    }
+
+    private boolean isManagerOrMaster(String role) {
+        return "MANAGER".equals(role) || "MASTER".equals(role);
+    }
+
     private Product getActiveProduct(UUID productId) {
         return productRepository
-            .findByIdAndDeletedAtIsNullAndIsHiddenFalseAndIsSoldOutFalse(productId)
+            .findByIdAndDeletedAtIsNullAndIsHiddenFalse(productId)
             .orElseThrow(ProductNotFoundException::new);
     }
 
