@@ -26,7 +26,19 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, null);
     }
 
-    public static ApiResponse<Void> fail(String message) {
-        return new ApiResponse<>(false, message, null);
+    public static <T> ApiResponse<T> ofSuccess(String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .message(message)
+                .data(data)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> ofFail(String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .data(data)
+                .build();
     }
 }

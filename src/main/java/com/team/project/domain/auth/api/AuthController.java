@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -124,8 +125,7 @@ public class AuthController {
 	public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
 		SignUpResponse response = authService.signUp(request);
 
-		return ResponseEntity.ok(
-				ApiResponse.ok("회원가입이 완료되었습니다.", response)
-		);
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(ApiResponse.ofSuccess("회원가입이 완료되었습니다.", response));
 	}
 }
