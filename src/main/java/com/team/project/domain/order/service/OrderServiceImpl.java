@@ -2,16 +2,15 @@ package com.team.project.domain.order.service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import com.team.project.domain.order.model.dto.GetOrdersCommand;
-import com.team.project.domain.order.model.dto.GetOrdersQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.team.project.domain.address.entity.UserAddress;
+import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.order.api.request.CancelOrderRequest;
 import com.team.project.domain.order.api.request.ConfirmOrderPaymentRequest;
 import com.team.project.domain.order.api.request.CreateOrderRequest;
@@ -20,7 +19,6 @@ import com.team.project.domain.order.api.response.CancelOrderResponse;
 import com.team.project.domain.order.api.response.ConfirmOrderPaymentResponse;
 import com.team.project.domain.order.api.response.CreateOrderResponse;
 import com.team.project.domain.order.api.response.GetOrderDetailResponse;
-import com.team.project.domain.order.api.response.GetOrderSummaryResponse;
 import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.entity.OrderItem;
@@ -30,6 +28,8 @@ import com.team.project.domain.order.exception.OrderAlreadyCanceledException;
 import com.team.project.domain.order.exception.OrderCannotCancelException;
 import com.team.project.domain.order.exception.OrderForbiddenException;
 import com.team.project.domain.order.exception.OrderNotFoundException;
+import com.team.project.domain.order.model.dto.GetOrdersCommand;
+import com.team.project.domain.order.model.dto.GetOrdersQuery;
 import com.team.project.domain.order.model.vo.OrderStatus;
 import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.payment.entity.Payment;
@@ -43,8 +43,6 @@ import com.team.project.domain.product.repository.ProductRepository;
 import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.repository.StoreRepository;
 import com.team.project.domain.user.entity.User;
-import com.team.project.domain.address.entity.UserAddress;
-import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
@@ -69,7 +67,7 @@ public class OrderServiceImpl implements OrderService {
 	 */
 	private Store getOwnedStore(UUID ownerUserId, UUID storeId) {
 		return storeRepository.findByIdAndUserId(storeId, ownerUserId)
-				.orElseThrow(OrderForbiddenException::new);
+			.orElseThrow(OrderForbiddenException::new);
 	}
 
 	@Override
@@ -78,62 +76,62 @@ public class OrderServiceImpl implements OrderService {
 
 		// 로그인 사용자 기준으로 유저 조회
 		User user = userRepository.findById(userId)
-				.orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+			.orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
 
 		// 가게 존재 확인
 		Store store = storeRepository.findById(request.getStoreId())
-				.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
+			.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
 
 		// 주문번호 생성
 		String orderNo = "ORD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
 		// 총 주문 금액 계산
 		int totalAmount = request.getItems().stream()
-				.mapToInt(item -> {
-					int optionSum = 0;
-					if (item.getOptions() != null) {
-						optionSum = item.getOptions().stream()
-								.mapToInt(opt -> opt.getExtraPrice() == null ? 0 : opt.getExtraPrice())
-								.sum();
-					}
-					return (item.getUnitPrice() + optionSum) * item.getQuantity();
-				})
-				.sum();
+			.mapToInt(item -> {
+				int optionSum = 0;
+				if (item.getOptions() != null) {
+					optionSum = item.getOptions().stream()
+						.mapToInt(opt -> opt.getExtraPrice() == null ? 0 : opt.getExtraPrice())
+						.sum();
+				}
+				return (item.getUnitPrice() + optionSum) * item.getQuantity();
+			})
+			.sum();
 
 		// 로그인 사용자 본인 배송지만 허용
 		UserAddress deliveryAddress = null;
 		if (request.getDeliveryAddressId() != null) {
 			deliveryAddress = userAddressRepository
-					.findByIdAndUserId(request.getDeliveryAddressId(), userId)
-					.orElseThrow(() -> new IllegalArgumentException("DELIVERY_ADDRESS_NOT_FOUND"));
+				.findByIdAndUserId(request.getDeliveryAddressId(), userId)
+				.orElseThrow(() -> new IllegalArgumentException("DELIVERY_ADDRESS_NOT_FOUND"));
 		}
 
 		Order order = new Order(
-				user,
-				store,
-				deliveryAddress,
-				orderNo,
-				totalAmount,
-				request.getRequestMemo()
+			user,
+			store,
+			deliveryAddress,
+			orderNo,
+			totalAmount,
+			request.getRequestMemo()
 		);
 
 		for (CreateOrderRequest.CreateOrderItemRequest itemReq : request.getItems()) {
 			Product product = productRepository.findById(itemReq.getProductId())
-					.orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
+				.orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
 
 			OrderItem orderItem = new OrderItem(
-					product,
-					itemReq.getProductName(),
-					itemReq.getUnitPrice(),
-					itemReq.getQuantity()
+				product,
+				itemReq.getProductName(),
+				itemReq.getUnitPrice(),
+				itemReq.getQuantity()
 			);
 
 			if (itemReq.getOptions() != null) {
 				for (CreateOrderRequest.CreateOrderItemOptionRequest optReq : itemReq.getOptions()) {
 					OrderItemOption option = new OrderItemOption(
-							optReq.getOptionName(),
-							optReq.getOptionItemName(),
-							optReq.getExtraPrice()
+						optReq.getOptionName(),
+						optReq.getOptionItemName(),
+						optReq.getExtraPrice()
 					);
 					orderItem.addOption(option);
 				}
@@ -146,7 +144,7 @@ public class OrderServiceImpl implements OrderService {
 
 		// 주문 생성 후 결제 엔티티 생성
 		paymentService.createPayment(
-				CreatePaymentCommand.of(savedOrder, savedOrder.getTotalAmount())
+			CreatePaymentCommand.of(savedOrder, savedOrder.getTotalAmount())
 		);
 
 		return CreateOrderResponse.from(savedOrder);
@@ -154,10 +152,11 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	@Transactional
-	public ConfirmOrderPaymentResponse confirmOrderPayment(UUID userId, UUID orderId, ConfirmOrderPaymentRequest request) {
+	public ConfirmOrderPaymentResponse confirmOrderPayment(UUID userId, UUID orderId,
+		ConfirmOrderPaymentRequest request) {
 
 		Order order = orderRepository.findById(orderId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		// 로그인한 사용자 본인 주문인지 확인
 		if (!order.getUser().getId().equals(userId)) {
@@ -175,7 +174,7 @@ public class OrderServiceImpl implements OrderService {
 		}
 
 		PayPaymentQuery payPaymentQuery = paymentService.payPayment(
-				PayPaymentCommand.of(orderId, request.getPaymentKey(), request.getAmount())
+			PayPaymentCommand.of(orderId, request.getPaymentKey(), request.getAmount(), userId)
 		);
 
 		order.markPaid();
@@ -188,7 +187,7 @@ public class OrderServiceImpl implements OrderService {
 
 		// 로그인 사용자 기준 주문 상세 조회
 		Order order = orderRepository.findDetailByIdAndUserId(orderId, userId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
 
@@ -201,34 +200,34 @@ public class OrderServiceImpl implements OrderService {
 		Pageable pageable = PageRequest.of(command.getPage(), command.getSize());
 
 		Page<Order> orderPage = orderRepository.searchMyOrders(
-				userId,
-				command.getStatus(),
-				command.getRangeCreatedAt(),
-				pageable
+			userId,
+			command.getStatus(),
+			command.getRangeCreatedAt(),
+			pageable
 		);
 
 		List<GetOrdersQuery.Item> items = orderPage.getContent()
-				.stream()
-				.map(order -> GetOrdersQuery.Item.builder()
-						.id(order.getId())
-						.orderNo(order.getOrderNo())
-						.status(order.getStatus())
-						.totalAmount(order.getTotalAmount())
-						.createdAt(order.getCreatedAt())
-						.storeId(order.getStore().getId())
-						.storeName(order.getStore().getName())
-						.userId(order.getUser().getId())
-						.userName(order.getUser().getName())
-						.build())
-				.toList();
+			.stream()
+			.map(order -> GetOrdersQuery.Item.builder()
+				.id(order.getId())
+				.orderNo(order.getOrderNo())
+				.status(order.getStatus())
+				.totalAmount(order.getTotalAmount())
+				.createdAt(order.getCreatedAt())
+				.storeId(order.getStore().getId())
+				.storeName(order.getStore().getName())
+				.userId(order.getUser().getId())
+				.userName(order.getUser().getName())
+				.build())
+			.toList();
 
 		return GetOrdersQuery.builder()
-				.content(items)
-				.page(orderPage.getNumber())
-				.size(orderPage.getSize())
-				.totalElements(orderPage.getTotalElements())
-				.totalPages(orderPage.getTotalPages())
-				.build();
+			.content(items)
+			.page(orderPage.getNumber())
+			.size(orderPage.getSize())
+			.totalElements(orderPage.getTotalElements())
+			.totalPages(orderPage.getTotalPages())
+			.build();
 	}
 
 	@Override
@@ -236,7 +235,7 @@ public class OrderServiceImpl implements OrderService {
 	public CancelOrderResponse cancelOrder(UUID orderId, UUID userId, CancelOrderRequest request) {
 
 		Order order = orderRepository.findDetailById(orderId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		// 본인 주문인지 확인
 		if (!order.getUser().getId().equals(userId)) {
@@ -255,8 +254,8 @@ public class OrderServiceImpl implements OrderService {
 
 		// 현재 정책상 취소 가능한 주문 상태인지 확인
 		if (order.getStatus() != OrderStatus.PENDING_PAYMENT
-				&& order.getStatus() != OrderStatus.PAID
-				&& order.getStatus() != OrderStatus.ACCEPTED) {
+			&& order.getStatus() != OrderStatus.PAID
+			&& order.getStatus() != OrderStatus.ACCEPTED) {
 			throw new InvalidOrderStatusException();
 		}
 
@@ -267,7 +266,7 @@ public class OrderServiceImpl implements OrderService {
 
 		// 결제 취소 처리
 		CancelPaymentQuery cancelPaymentQuery =
-				orderPaymentProcessor.cancelForOrder(order.getId(), request.getReason());
+			orderPaymentProcessor.cancelForOrder(order.getId(), request.getReason());
 
 		// 주문 상태 취소 처리
 		order.cancel(request.getReason());
@@ -280,7 +279,7 @@ public class OrderServiceImpl implements OrderService {
 	public void deleteOrder(UUID orderId, UUID userId) {
 
 		Order order = orderRepository.findById(orderId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		// 본인 주문인지 확인
 		if (!order.getUser().getId().equals(userId)) {
@@ -300,34 +299,34 @@ public class OrderServiceImpl implements OrderService {
 		Pageable pageable = PageRequest.of(command.getPage(), command.getSize());
 
 		Page<Order> orderPage = orderRepository.searchStoreOrders(
-				storeId,
-				command.getStatus(),
-				command.getRangeCreatedAt(),
-				pageable
+			storeId,
+			command.getStatus(),
+			command.getRangeCreatedAt(),
+			pageable
 		);
 
 		List<GetOrdersQuery.Item> items = orderPage.getContent()
-				.stream()
-				.map(order -> GetOrdersQuery.Item.builder()
-						.id(order.getId())
-						.orderNo(order.getOrderNo())
-						.status(order.getStatus())
-						.totalAmount(order.getTotalAmount())
-						.createdAt(order.getCreatedAt())
-						.storeId(order.getStore().getId())
-						.storeName(order.getStore().getName())
-						.userId(order.getUser().getId())
-						.userName(order.getUser().getName())
-						.build())
-				.toList();
+			.stream()
+			.map(order -> GetOrdersQuery.Item.builder()
+				.id(order.getId())
+				.orderNo(order.getOrderNo())
+				.status(order.getStatus())
+				.totalAmount(order.getTotalAmount())
+				.createdAt(order.getCreatedAt())
+				.storeId(order.getStore().getId())
+				.storeName(order.getStore().getName())
+				.userId(order.getUser().getId())
+				.userName(order.getUser().getName())
+				.build())
+			.toList();
 
 		return GetOrdersQuery.builder()
-				.content(items)
-				.page(orderPage.getNumber())
-				.size(orderPage.getSize())
-				.totalElements(orderPage.getTotalElements())
-				.totalPages(orderPage.getTotalPages())
-				.build();
+			.content(items)
+			.page(orderPage.getNumber())
+			.size(orderPage.getSize())
+			.totalElements(orderPage.getTotalElements())
+			.totalPages(orderPage.getTotalPages())
+			.build();
 	}
 
 	@Override
@@ -337,7 +336,7 @@ public class OrderServiceImpl implements OrderService {
 		getOwnedStore(ownerUserId, storeId);
 
 		Order order = orderRepository.findDetailByIdAndStoreId(orderId, storeId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		Payment payment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
 
@@ -352,7 +351,7 @@ public class OrderServiceImpl implements OrderService {
 		getOwnedStore(ownerUserId, storeId);
 
 		Order order = orderRepository.findById(orderId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		// 해당 가게 주문인지 확인
 		if (!order.getStore().getId().equals(storeId)) {
@@ -378,7 +377,7 @@ public class OrderServiceImpl implements OrderService {
 		getOwnedStore(ownerUserId, storeId);
 
 		Order order = orderRepository.findById(orderId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		// 해당 가게 주문인지 확인
 		if (!order.getStore().getId().equals(storeId)) {
@@ -396,7 +395,7 @@ public class OrderServiceImpl implements OrderService {
 		}
 
 		CancelPaymentQuery cancelPaymentQuery =
-				orderPaymentProcessor.refundForRejectedOrder(order.getId(), reason);
+			orderPaymentProcessor.refundForRejectedOrder(order.getId(), reason);
 
 		order.reject(reason);
 
@@ -406,13 +405,13 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	@Transactional
 	public UpdateOrderStatusResponse updateOrderStatusByStore(UUID ownerUserId, UUID orderId, UUID storeId,
-															  UpdateOrderStatusRequest request) {
+		UpdateOrderStatusRequest request) {
 
 		// 로그인한 OWNER의 가게인지 확인
 		getOwnedStore(ownerUserId, storeId);
 
 		Order order = orderRepository.findById(orderId)
-				.orElseThrow(OrderNotFoundException::new);
+			.orElseThrow(OrderNotFoundException::new);
 
 		// 해당 가게 주문인지 확인
 		if (!order.getStore().getId().equals(storeId)) {
@@ -437,14 +436,14 @@ public class OrderServiceImpl implements OrderService {
 			String reason = "STORE_STATUS_UPDATE";
 
 			CancelPaymentQuery cancelPaymentQuery =
-					orderPaymentProcessor.refundForRejectedOrder(order.getId(), reason);
+				orderPaymentProcessor.refundForRejectedOrder(order.getId(), reason);
 
 			order.reject(reason);
 
 			return UpdateOrderStatusResponse.from(
-					order,
-					cancelPaymentQuery.getId(),
-					cancelPaymentQuery.getStatus()
+				order,
+				cancelPaymentQuery.getId(),
+				cancelPaymentQuery.getStatus()
 			);
 
 		} else {

@@ -11,8 +11,9 @@ public class PayPaymentCommand {
 	UUID orderId;
 	String paymentKey;
 	Integer amount;
+	UUID userId;
 
-	public static PayPaymentCommand of(UUID orderId, String paymentKey, Integer amount) {
-		return new PayPaymentCommand(orderId, paymentKey, amount);
+	public static PayPaymentCommand of(UUID orderId, String paymentKey, Integer amount, UUID userId) {
+		return new PayPaymentCommand(orderId, paymentKey, amount, userId);
 	}
 }
