@@ -1,10 +1,10 @@
-package com.team.project.domain.user.dto;
+package com.team.project.domain.address.dto;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 import com.team.project.domain.auth.dto.UserDto;
-import com.team.project.domain.user.entity.UserAddress;
+import com.team.project.domain.address.entity.UserAddress;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
