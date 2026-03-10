@@ -3,6 +3,7 @@ package com.team.project.domain.cart.repository;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.team.project.domain.cart.entity.CartItem;
 import org.springframework.stereotype.Repository;
 
 import com.team.project.domain.cart.entity.Cart;
@@ -73,18 +74,15 @@ public class CartRepositoryImpl implements CartRepositoryCustom {
 
 	@Override
 	public void fetchItemOptionsByCartId(UUID cartId) {
-		// cart.items는 이미 1번 쿼리에서 fetch됨
-		// 여기서는 items.options만 한 번에 땡겨서 영속성 컨텍스트에 로딩시키는 용도
 		em.createQuery("""
-        select distinct c
-        from Cart c
-        join fetch c.items ci
+        select distinct ci
+        from CartItem ci
         left join fetch ci.options cio
         left join fetch cio.productOption po
         left join fetch cio.productOptionItem poi
-        where c.id = :cartId
-          and c.deletedAt is null
-    """, Cart.class)
+        where ci.cart.id = :cartId
+          and ci.cart.deletedAt is null
+    """, CartItem.class)
 				.setParameter("cartId", cartId)
 				.getResultList();
 	}
