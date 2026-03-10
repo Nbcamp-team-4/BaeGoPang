@@ -147,4 +147,14 @@ public class StoreController {
 		storeService.deleteStore(storeId, userDto);
 		return ResponseEntity.noContent().build();
 	}
+
+	@Operation(summary = "고객용 가게 목록 조회", description = "고객이 전체 오픈된 가게 목록을 조회합니다.")
+	@GetMapping("/public")
+	public ResponseEntity<GetStoresResponse> getPublicStores(
+			@ModelAttribute GetStoresRequest request
+	) {
+		SearchStoreCommand command = request.toCommand(null);
+		Page<StoreResult> results = storeService.searchStores(command);
+		return ResponseEntity.ok(GetStoresResponse.of(results));
+	}
 }
