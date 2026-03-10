@@ -26,7 +26,7 @@ public class LocalImageService implements ImageService {
 	@Override
 	public String upload(MultipartFile file, ImageType imageType) {
 		validateFile(file);
-
+		System.out.println("▶ 현재 [로컬] 저장소 서비스가 활성화되었습니다.");
 		String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
 		String extension = extractExtension(originalFilename);
 		String savedFileName = UUID.randomUUID() + "." + extension;
@@ -84,5 +84,7 @@ public class LocalImageService implements ImageService {
 		}
 
 		return fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+
 	}
+
 }

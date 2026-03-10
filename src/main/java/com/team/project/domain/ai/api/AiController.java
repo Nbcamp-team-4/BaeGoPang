@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping(value = "/api/ai", produces = MediaType.APPLICATION_JSON_VALUE)
 @RequiredArgsConstructor
+//@CrossOrigin(origins = "http://localhost:3000")
 public class AiController {
 
 	private final AiService aiService;

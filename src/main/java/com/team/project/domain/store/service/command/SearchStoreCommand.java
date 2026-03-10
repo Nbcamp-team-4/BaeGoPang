@@ -2,21 +2,34 @@ package com.team.project.domain.store.service.command;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+
 import com.team.project.domain.store.model.vo.StoreStatus;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
+@AllArgsConstructor
 public class SearchStoreCommand {
-	private String name;        // 추가 검색 조건
-	private StoreStatus status; // 인터페이스에 있던 것
-	private UUID regionId;      // 인터페이스에 있던 것
-	private UUID userId;        // 인터페이스에 있던 것 (점주 필터 등)
-	private UUID categoryId;    // 카테고리 필터
 
-	// 페이징 정보까지 한 번에!
+	private UUID userId;
+	private String keyword;
+	private StoreStatus status;
+	private UUID regionId;
+	private UUID categoryId;
 	private Integer page;
 	private Integer size;
+
+	public Pageable toPageable() {
+		return PageRequest.of(
+			page == null || page < 0 ? 0 : page,
+			size == null ? 10 : size,
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+	}
 }

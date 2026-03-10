@@ -1,9 +1,9 @@
-package com.team.project.domain.user.api.response;
+package com.team.project.domain.address.api.response;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-import com.team.project.domain.user.dto.CreateUserAddressQuery;
+import com.team.project.domain.address.dto.CreateUserAddressQuery;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

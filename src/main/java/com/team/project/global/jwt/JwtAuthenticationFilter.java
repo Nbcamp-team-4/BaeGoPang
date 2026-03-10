@@ -29,14 +29,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
+
+		// 1. OPTIONS 요청은 필터를 타지 않게 함 (CORS 해결의 핵심)
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			return true;
+		}
 		String uri = request.getRequestURI();
 
 		return uri.equals("/")
-			|| uri.equals("/error")
-			|| uri.equals("/favicon.ico")
-			|| uri.startsWith("/api/auth/")
-			|| uri.startsWith("/swagger-ui/")
-			|| uri.startsWith("/v3/api-docs/");
+				|| uri.equals("/error")
+				|| uri.equals("/favicon.ico")
+				|| uri.equals("/api/auth/login")
+				|| uri.equals("/api/auth/signup")
+				|| uri.equals("/api/auth/reissue")
+				|| uri.startsWith("/swagger-ui/")
+				|| uri.startsWith("/v3/api-docs/");
 	}
 
 	@Override

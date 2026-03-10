@@ -6,35 +6,38 @@ import com.team.project.domain.store.model.vo.StoreStatus;
 import com.team.project.domain.store.service.command.SearchStoreCommand;
 import com.team.project.global.common.dto.BasePageRequest;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Builder
+@AllArgsConstructor
 public class GetStoresRequest extends BasePageRequest {
-	private String name;        // 가게 이름 검색
-	private StoreStatus status; // 영업 상태 필터
-	private UUID regionId;      // 지역별 필터
-	private UUID categoryId;    // 카테고리별 필터
 
-	public GetStoresRequest(Integer page, Integer size, String name,
-		StoreStatus status, UUID regionId, UUID categoryId) {
-		this.name = name;
-		this.status = status;
-		this.regionId = regionId;
-		this.categoryId = categoryId;
-	}
+	@Schema(description = "가게명 검색어")
+	private String keyword;
 
-	// 서비스로 넘길 쿼리 객체로 변환
-	public SearchStoreCommand toCommand(UUID userId) { // 인증된 유저 ID를 받아서 처리
+	@Schema(description = "가게 상태")
+	private StoreStatus status;
+
+	@Schema(description = "지역 ID")
+	private UUID regionId;
+
+	@Schema(description = "카테고리 ID")
+	private UUID categoryId;
+
+
+	public SearchStoreCommand toCommand(UUID userId) {
 		return SearchStoreCommand.builder()
-			.name(this.name)
-			.status(this.status)
-			.regionId(this.regionId)
-			.categoryId(this.categoryId)
-			.userId(userId) // <- 여기서 userId 주입!
-			.page(this.getPage())
-			.size(this.getSize())
+			.userId(userId)
+			.keyword(keyword)
+			.status(status)
+			.regionId(regionId)
+			.categoryId(categoryId)
+			.page(getPage())
+			.size(getSize())
 			.build();
 	}
 }

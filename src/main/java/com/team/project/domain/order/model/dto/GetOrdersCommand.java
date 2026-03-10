@@ -17,6 +17,8 @@ public class GetOrdersCommand {
     private final BaseRangeRequest<LocalDateTime> rangeCreatedAt;
     private final UUID storeId;
     private final UUID userId;
+    private final String sortBy;
+    private final String direction;
 
     public GetOrdersCommand(
             Integer page,
@@ -24,7 +26,9 @@ public class GetOrdersCommand {
             OrderStatus status,
             BaseRangeRequest<LocalDateTime> rangeCreatedAt,
             UUID storeId,
-            UUID userId
+            UUID userId,
+            String sortBy,
+            String direction
     ) {
         this.page = page;
         this.size = size;
@@ -32,6 +36,8 @@ public class GetOrdersCommand {
         this.rangeCreatedAt = rangeCreatedAt;
         this.storeId = storeId;
         this.userId = userId;
+        this.sortBy = sortBy;
+        this.direction = direction;
     }
 
     public static GetOrdersCommand of(
@@ -40,8 +46,19 @@ public class GetOrdersCommand {
             OrderStatus status,
             BaseRangeRequest<LocalDateTime> rangeCreatedAt,
             UUID storeId,
-            UUID userId
+            UUID userId,
+            String sortBy,
+            String direction
     ) {
-        return new GetOrdersCommand(page, size, status, rangeCreatedAt, storeId, userId);
+        return new GetOrdersCommand(
+                page,
+                size,
+                status,
+                rangeCreatedAt,
+                storeId,
+                userId,
+                sortBy,
+                direction
+        );
     }
 }

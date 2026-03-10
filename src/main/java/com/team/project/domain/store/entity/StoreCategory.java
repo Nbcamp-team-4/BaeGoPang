@@ -45,8 +45,8 @@ public class StoreCategory extends BaseEntity {
 		this.store = store;
 		this.category = category;
 	}
-	public void delete(UUID userId) {
-		markDeleted(userId);
+	public void markDeleted(UUID deletedBy) {
+		super.markDeleted(deletedBy);
 	}
 
 }

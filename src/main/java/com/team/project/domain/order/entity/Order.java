@@ -12,7 +12,7 @@ import org.hibernate.type.SqlTypes;
 import com.team.project.domain.order.model.vo.OrderStatus;
 import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.entity.UserAddress;
+import com.team.project.domain.address.entity.UserAddress;
 import com.team.project.global.common.entity.BaseEntity;
 
 import jakarta.persistence.CascadeType;

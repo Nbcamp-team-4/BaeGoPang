@@ -3,6 +3,7 @@ package com.team.project.domain.cart.repository;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.team.project.domain.cart.entity.CartItem;
 import org.springframework.stereotype.Repository;
 
 import com.team.project.domain.cart.entity.Cart;
@@ -17,26 +18,24 @@ public class CartRepositoryImpl implements CartRepositoryCustom {
 
     private final EntityManager em;
 
-    @Override
-    public Optional<Cart> findActiveCartDetailByUserId(UUID userId) {
-        // 유저의 ACTIVE 장바구니를 "상세"로 조회
-        // - cart + store + items + itemOptions 까지 한번에 가져오기(fetch join)
-        // - 컬렉션(items/options) fetch join은 row가 늘어날 수 있어서 distinct로 중복 제거
+	@Override
+	public Optional<Cart> findActiveCartDetailByUserId(UUID userId) {
 		return em.createQuery("""
-			select distinct c
-			from Cart c
-			join fetch c.store s
-			left join fetch c.items ci
-			left join fetch ci.product p
-			where c.user.id = :userId
-			  and c.status = :status
-			  and c.deletedAt is null
-		""", Cart.class)
-		.setParameter("userId", userId)
-		.setParameter("status", CartStatus.ACTIVE)
-		.getResultStream()
-		.findFirst();
-    }
+        select distinct c
+        from Cart c
+        join fetch c.user u
+        join fetch c.store s
+        left join fetch c.items ci
+        left join fetch ci.product p
+        where c.user.id = :userId
+          and c.status = :status
+          and c.deletedAt is null
+    """, Cart.class)
+				.setParameter("userId", userId)
+				.setParameter("status", CartStatus.ACTIVE)
+				.getResultStream()
+				.findFirst();
+	}
 
 	@Override
 	public Optional<Cart> findCartDetailById(UUID cartId) {
@@ -75,18 +74,15 @@ public class CartRepositoryImpl implements CartRepositoryCustom {
 
 	@Override
 	public void fetchItemOptionsByCartId(UUID cartId) {
-		// cart.items는 이미 1번 쿼리에서 fetch됨
-		// 여기서는 items.options만 한 번에 땡겨서 영속성 컨텍스트에 로딩시키는 용도
 		em.createQuery("""
-        select distinct c
-        from Cart c
-        join fetch c.items ci
+        select distinct ci
+        from CartItem ci
         left join fetch ci.options cio
         left join fetch cio.productOption po
         left join fetch cio.productOptionItem poi
-        where c.id = :cartId
-          and c.deletedAt is null
-    """, Cart.class)
+        where ci.cart.id = :cartId
+          and ci.cart.deletedAt is null
+    """, CartItem.class)
 				.setParameter("cartId", cartId)
 				.getResultList();
 	}

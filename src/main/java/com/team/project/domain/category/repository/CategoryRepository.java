@@ -1,5 +1,6 @@
 package com.team.project.domain.category.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,18 +12,16 @@ import com.team.project.domain.category.entity.Category;
 
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
-    Optional<Category> findById(UUID id);
+    Optional<Category> findByIdAndDeletedAtIsNull(UUID categoryId);
 
-    Optional<Category> findByName(String name);
+    boolean existsByNameAndDeletedAtIsNull(String name);
 
-    boolean existsByName(String name);
-
-    //관리자
-    Page<Category> findAll(Pageable pageable);
-
-    //사용자
     Page<Category> findAllByDeletedAtIsNull(Pageable pageable);
 
+    Page<Category> findByNameContainingIgnoreCaseAndDeletedAtIsNull(String name, Pageable pageable);
 
+    Page<Category> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
+    //가게 생성 시 검증
+    List<Category> findAllByIdInAndDeletedAtIsNull(List<UUID> ids);
 }
