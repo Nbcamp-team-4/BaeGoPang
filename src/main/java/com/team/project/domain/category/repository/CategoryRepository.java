@@ -1,5 +1,6 @@
 package com.team.project.domain.category.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,4 +22,6 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     Page<Category> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
+    //가게 생성 시 검증
+    List<Category> findAllByIdInAndDeletedAtIsNull(List<UUID> ids);
 }

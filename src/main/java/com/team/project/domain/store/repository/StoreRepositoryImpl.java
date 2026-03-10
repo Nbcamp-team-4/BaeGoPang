@@ -1,6 +1,8 @@
 package com.team.project.domain.store.repository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,6 +12,7 @@ import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.model.vo.StoreStatus;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import lombok.RequiredArgsConstructor;
 
 @Repository
@@ -41,21 +44,38 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 			.getResultList();
 	}
 
-	@Override
 	public List<Store> findAllWithFilters(StoreStatus status, UUID regionId, UUID userId) {
-		// JPQL로 동적 필터 처리 (단순화를 위해 null 체크 로직 포함)
-		return em.createQuery("""
-                select s from Store s
-                where (:status is null or s.status = :status)
-                  and (:regionId is null or s.region.id = :regionId)
-                  and (:userId is null or s.user.id = :userId)
-                  and s.deletedAt is null
-                order by s.createdAt desc
-            """, Store.class)
-			.setParameter("status", status)
-			.setParameter("regionId", regionId)
-			.setParameter("userId", userId)
-			.getResultList();
+		StringBuilder jpql = new StringBuilder("""
+        select s from Store s
+        where s.deletedAt is null
+    """);
+
+		Map<String, Object> params = new HashMap<>();
+
+		if (status != null) {
+			jpql.append(" and s.status = :status");
+			params.put("status", status);
+		}
+
+		if (regionId != null) {
+			jpql.append(" and s.region.id = :regionId");
+			params.put("regionId", regionId);
+		}
+
+		if (userId != null) {
+			jpql.append(" and s.user.id = :userId");
+			params.put("userId", userId);
+		}
+
+		jpql.append(" order by s.createdAt desc");
+
+		TypedQuery<Store> query = em.createQuery(jpql.toString(), Store.class);
+
+		for (Map.Entry<String, Object> entry : params.entrySet()) {
+			query.setParameter(entry.getKey(), entry.getValue());
+		}
+
+		return query.getResultList();
 	}
 
 	@Override
