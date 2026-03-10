@@ -56,33 +56,52 @@ public class AuthService {
 			)
 		);
 
-		CustomUserPrincipal principal = (CustomUserPrincipal)authentication.getPrincipal();
+		CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
 
 		String accessToken = jwtTokenProvider.createAccessToken(principal);
 		String refreshToken = jwtTokenProvider.createRefreshToken(principal);
 
 		User user = userRepository.findById(principal.getUserId())
-			.orElseThrow(() -> new UserNotFoundException());
+				.orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."));
+
 		user.updateRefreshToken(refreshToken);
 
-		List<RoleType> types = user.getUserRoles().stream().map(r -> r.getRole().getType()).toList();
+		List<RoleType> roleTypes = user.getUserRoles().stream()
+				.map(userRole -> userRole.getRole().getType())
+				.toList();
 
-		return new LoginResponse(accessToken, refreshToken, user.getLoginId(), user.getName(), types);
+		return new LoginResponse(
+				accessToken,
+				refreshToken,
+				user.getLoginId(),
+				user.getName(),
+				roleTypes
+		);
 	}
 
 	public LoginResponse reissue(String refreshToken) {
+		if (refreshToken == null || refreshToken.isBlank()) {
+			throw new CustomException(HttpStatus.BAD_REQUEST, "Refresh-Token 헤더는 필수입니다.");
+		}
+
 		if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
-			throw new InvalidTokenException(); // 토큰이 유효하지 않은 경우
+			throw new CustomException(HttpStatus.UNAUTHORIZED, "유효한 Refresh Token이 아닙니다.");
 		}
 
 		DecodedJWT decodedJWT = jwtTokenProvider.verify(refreshToken);
-		UUID userId = UUID.fromString(decodedJWT.getClaim("userId").asString());
+		String userIdValue = decodedJWT.getClaim("userId").asString();
+
+		if (userIdValue == null || userIdValue.isBlank()) {
+			throw new CustomException(HttpStatus.UNAUTHORIZED, "토큰에 userId 정보가 없습니다.");
+		}
+
+		UUID userId = UUID.fromString(userIdValue);
 
 		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new UserNotFoundException());
+				.orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."));
 
 		if (user.getRefreshToken() == null || !user.getRefreshToken().equals(refreshToken)) {
-			throw new InvalidTokenException(); // 저장된 토큰과 불일치
+			throw new CustomException(HttpStatus.UNAUTHORIZED, "저장된 Refresh Token과 일치하지 않습니다.");
 		}
 
 		CustomUserPrincipal principal = CustomUserPrincipal.from(user);
@@ -92,14 +111,23 @@ public class AuthService {
 
 		user.updateRefreshToken(newRefreshToken);
 
-		List<RoleType> roleTypes = user.getUserRoles().stream().map(r -> r.getRole().getType()).toList();
+		List<RoleType> roleTypes = user.getUserRoles().stream()
+				.map(userRole -> userRole.getRole().getType())
+				.toList();
 
-		return new LoginResponse(newAccessToken, newRefreshToken, user.getLoginId(), user.getName(), roleTypes);
+		return new LoginResponse(
+				newAccessToken,
+				newRefreshToken,
+				user.getLoginId(),
+				user.getName(),
+				roleTypes
+		);
 	}
 
 	public void logout(UUID userId) {
 		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new UserNotFoundException());
+				.orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "유저를 찾을 수 없습니다."));
+
 		user.clearRefreshToken();
 	}
 
