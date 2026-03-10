@@ -52,4 +52,8 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 		  and p.isSoldOut = false
 	""")
 	List<Product> findAllRecommendableProducts();
+
+	//AI가 조회시 필요한쿼리
+	@Query("SELECT p FROM Product p JOIN FETCH p.store s WHERE p.deletedAt IS NULL AND p.isHidden = false")
+	List<Product> findAllActiveProductsWithStore();
 }

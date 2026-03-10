@@ -29,6 +29,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
+
+		// 1. OPTIONS 요청은 필터를 타지 않게 함 (CORS 해결의 핵심)
+		if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+			return true;
+		}
 		String uri = request.getRequestURI();
 
 		return uri.equals("/")
