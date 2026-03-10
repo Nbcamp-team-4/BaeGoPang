@@ -27,4 +27,12 @@ public class AdminGetOrdersRequest extends BasePageRequest {
 
     @Schema(description = "사용자 ID", format = "uuid")
     private UUID userId;
+
+    @Schema(description = "정렬 기준", example = "createdAt", allowableValues = {
+            "createdAt", "updatedAt", "orderDate", "totalAmount", "status"
+    })
+    private String sortBy = "createdAt";
+
+    @Schema(description = "정렬 방향", example = "desc", allowableValues = {"asc", "desc"})
+    private String direction = "desc";
 }

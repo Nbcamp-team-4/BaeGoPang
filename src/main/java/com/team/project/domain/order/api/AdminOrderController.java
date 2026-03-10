@@ -73,7 +73,9 @@ public class AdminOrderController {
                 request.getStatus(),
                 request.getRangeCreatedAt(),
                 request.getStoreId(),
-                request.getUserId()
+                request.getUserId(),
+                request.getSortBy(),
+                request.getDirection()
         );
 
         GetOrdersQuery query = orderAdminService.getAllOrders(command);

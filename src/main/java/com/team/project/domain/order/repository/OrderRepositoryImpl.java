@@ -61,8 +61,10 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
         from Order o
         join fetch o.user u
         join fetch o.store s
+        left join fetch o.deliveryAddress a
         left join fetch o.items i
         left join fetch i.product p
+        left join fetch i.options io
         where o.id = :orderId
           and u.id = :userId
     """;
@@ -114,8 +116,10 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
         from Order o
         join fetch o.user u
         join fetch o.store s
+        left join fetch o.deliveryAddress a
         left join fetch o.items i
         left join fetch i.product p
+        left join fetch i.options io
         where o.id = :orderId
           and s.id = :storeId
     """;
@@ -139,10 +143,10 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
 		CriteriaBuilder cb = em.getCriteriaBuilder();
 
-		// content query
 		CriteriaQuery<Order> cq = cb.createQuery(Order.class);
 		Root<Order> order = cq.from(Order.class);
 		order.fetch("store");
+		order.fetch("user");
 
 		List<Predicate> predicates = new ArrayList<>();
 		predicates.add(cb.equal(order.get("user").get("id"), userId));
@@ -161,15 +165,14 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 
 		cq.select(order).distinct(true);
 		cq.where(predicates.toArray(new Predicate[0]));
-		cq.orderBy(cb.desc(order.get("createdAt")));
+		cq.orderBy(OrderSortUtils.toJpaOrders(pageable.getSort(), cb, order));
 
 		TypedQuery<Order> query = em.createQuery(cq);
-		query.setFirstResult((int)pageable.getOffset());
+		query.setFirstResult((int) pageable.getOffset());
 		query.setMaxResults(pageable.getPageSize());
 
 		List<Order> content = query.getResultList();
 
-		// count query
 		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
 		Root<Order> countRoot = countQuery.from(Order.class);
 

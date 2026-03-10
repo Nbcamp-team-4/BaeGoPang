@@ -100,12 +100,14 @@ public class OrderController {
 		@ParameterObject @ModelAttribute GetOrdersRequest request
 	) {
 		GetOrdersCommand command = GetOrdersCommand.of(
-			request.getPage(),
-			request.getSize(),
-			request.getStatus(),
-			request.getRangeCreatedAt(),
-			null,
-			null
+				request.getPage(),
+				request.getSize(),
+				request.getStatus(),
+				request.getRangeCreatedAt(),
+				null,
+				null,
+				request.getSortBy(),
+				request.getDirection()
 		);
 
 		GetOrdersQuery query = orderService.getMyOrders(userDto.getId(), command);

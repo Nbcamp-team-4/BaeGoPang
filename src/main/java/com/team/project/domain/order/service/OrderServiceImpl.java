@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -197,7 +198,7 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	public GetOrdersQuery getMyOrders(UUID userId, GetOrdersCommand command) {
 
-		Pageable pageable = PageRequest.of(command.getPage(), command.getSize());
+		Pageable pageable = createPageable(command);
 
 		Page<Order> orderPage = orderRepository.searchMyOrders(
 			userId,
@@ -296,7 +297,7 @@ public class OrderServiceImpl implements OrderService {
 		// 로그인한 OWNER의 가게인지 확인
 		getOwnedStore(ownerUserId, storeId);
 
-		Pageable pageable = PageRequest.of(command.getPage(), command.getSize());
+		Pageable pageable = createPageable(command);
 
 		Page<Order> orderPage = orderRepository.searchStoreOrders(
 			storeId,
@@ -452,5 +453,16 @@ public class OrderServiceImpl implements OrderService {
 
 		Payment updatedPayment = orderPaymentProcessor.getLatestPaymentOrNull(order.getId());
 		return UpdateOrderStatusResponse.from(order, updatedPayment);
+	}
+
+	private Pageable createPageable(GetOrdersCommand command) {
+		String sortBy = StringUtils.hasText(command.getSortBy()) ? command.getSortBy() : "createdAt";
+		String direction = StringUtils.hasText(command.getDirection()) ? command.getDirection() : "desc";
+
+		Sort sort = "asc".equalsIgnoreCase(direction)
+				? Sort.by(sortBy).ascending()
+				: Sort.by(sortBy).descending();
+
+		return PageRequest.of(command.getPage(), command.getSize(), sort);
 	}
 }
