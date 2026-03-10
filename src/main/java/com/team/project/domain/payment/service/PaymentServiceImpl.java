@@ -15,6 +15,7 @@ import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.exception.PaymentAlreadyPaidException;
+import com.team.project.domain.payment.exception.PaymentForbiddenException;
 import com.team.project.domain.payment.exception.PaymentNotFoundException;
 import com.team.project.domain.payment.infrastructure.exception.PgProviderBaseException;
 import com.team.project.domain.payment.model.dto.CancelPaymentCommand;
@@ -180,8 +181,12 @@ public class PaymentServiceImpl implements PaymentService {
 			throw new InvalidPaymentRequestException();
 		}
 
-		// 3. 삭제 표시한다.
-		// 삭제자 권한 확
+		// 3. 삭제 권한을 확인한다.
+		if (!payment.getCreatedBy().equals(userDto.getLoginId())) {
+			throw new PaymentForbiddenException();
+		}
+
+		// 4. 삭제 표시한다.
 		payment.markDeleted(userDto.getId());
 
 	}
