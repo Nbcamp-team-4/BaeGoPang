@@ -4,23 +4,30 @@ import java.util.List;
 import java.util.UUID;
 
 import org.locationtech.jts.geom.Point;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.address.entity.UserAddress;
 import com.team.project.domain.address.repository.UserAddressRepository;
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.category.entity.Category;
 import com.team.project.domain.category.repository.CategoryRepository;
 import com.team.project.domain.product.entity.Product;
+import com.team.project.domain.product.entity.ProductOption;
+import com.team.project.domain.product.repository.ProductOptionRepository;
 import com.team.project.domain.product.repository.ProductRepository;
+import com.team.project.domain.product.service.ProductOptionManager;
 import com.team.project.domain.region.entity.Region;
 import com.team.project.domain.region.repository.RegionRepository;
 import com.team.project.domain.store.entity.Store;
+import com.team.project.domain.store.entity.StoreCategory;
 import com.team.project.domain.store.exception.InvalidStoreRequestException;
 import com.team.project.domain.store.exception.StoreForbiddenException;
 import com.team.project.domain.store.exception.StoreNotFoundException;
 import com.team.project.domain.store.exception.StoreNotOperatingException;
 import com.team.project.domain.store.model.vo.StoreStatus;
+import com.team.project.domain.store.repository.StoreCategoryRepository;
 import com.team.project.domain.store.repository.StoreRepository;
 import com.team.project.domain.store.service.command.CreateStoreCommand;
 import com.team.project.domain.store.service.command.SearchStoreCommand;
@@ -32,11 +39,15 @@ import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class StoreServiceImpl implements StoreService {
+
+	private static final double NEARBY_DISTANCE_METERS = 3000.0;
 
 	private final StoreRepository storeRepository;
 	private final UserRepository userRepository;
@@ -44,6 +55,9 @@ public class StoreServiceImpl implements StoreService {
 	private final CategoryRepository categoryRepository;
 	private final UserAddressRepository userAddressRepository;
 	private final ProductRepository productRepository;
+	private final ProductOptionRepository productOptionRepository;
+	private final StoreCategoryRepository storeCategoryRepository;
+	private final ProductOptionManager productOptionManager;
 
 	@Override
 	public StoreResult createStore(CreateStoreCommand command) {
@@ -56,15 +70,14 @@ public class StoreServiceImpl implements StoreService {
 		Region region = regionRepository.findActiveRegionContaining(command.getLongitude(), command.getLatitude())
 			.orElseThrow(InvalidStoreRequestException::new);
 
-		//카테고리 검증
-		List<Category> categories =
-			categoryRepository.findAllByIdInAndDeletedAtIsNull(command.getCategoryIds());
+		// 카테고리 검증
+		List<Category> categories = categoryRepository.findAllByIdInAndDeletedAtIsNull(command.getCategoryIds());
 
 		if (categories.size() != command.getCategoryIds().size()) {
 			throw new InvalidStoreRequestException();
 		}
-		Store store = Store.create(command, user, region, location, categories);
 
+		Store store = Store.create(command, user, region, location, categories);
 		return StoreResult.from(storeRepository.save(store));
 	}
 
@@ -72,8 +85,7 @@ public class StoreServiceImpl implements StoreService {
 	public StoreResult updateStoreByOwner(UUID storeId, UpdateOwnerFieldsCommand command) {
 		UUID userId = command.getUserId();
 
-		Store store = storeRepository.findById(storeId)
-			.orElseThrow(StoreNotFoundException::new);
+		Store store = findStoreById(storeId);
 
 		if (!store.getUser().getId().equals(userId)) {
 			throw new StoreForbiddenException();
@@ -82,10 +94,12 @@ public class StoreServiceImpl implements StoreService {
 		store.updateByOwner(command);
 
 		if (command.getCategoryIds() != null && !command.getCategoryIds().isEmpty()) {
-			List<Category> newCategories = categoryRepository.findAllById(command.getCategoryIds());
+			List<Category> newCategories = categoryRepository.findAllByIdInAndDeletedAtIsNull(command.getCategoryIds());
+
 			if (newCategories.size() != command.getCategoryIds().size()) {
 				throw new InvalidStoreRequestException();
 			}
+
 			store.updateCategories(newCategories);
 		}
 
@@ -94,8 +108,7 @@ public class StoreServiceImpl implements StoreService {
 
 	@Override
 	public StoreResult updateStoreByAdmin(UUID storeId, UpdateStoreByAdminCommand command) {
-		Store store = storeRepository.findById(storeId)
-			.orElseThrow(StoreNotFoundException::new);
+		Store store = findStoreById(storeId);
 
 		Region region = store.getRegion();
 		if (command.getRegionId() != null && !command.getRegionId().equals(region.getId())) {
@@ -106,10 +119,12 @@ public class StoreServiceImpl implements StoreService {
 		store.updateByAdmin(command, region);
 
 		if (command.getCategoryIds() != null && !command.getCategoryIds().isEmpty()) {
-			List<Category> newCategories = categoryRepository.findAllById(command.getCategoryIds());
+			List<Category> newCategories = categoryRepository.findAllByIdInAndDeletedAtIsNull(command.getCategoryIds());
+
 			if (newCategories.size() != command.getCategoryIds().size()) {
 				throw new InvalidStoreRequestException();
 			}
+
 			store.updateCategories(newCategories);
 		}
 
@@ -118,7 +133,7 @@ public class StoreServiceImpl implements StoreService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<StoreResult> searchByUserIdAddress(UUID addressId, SearchStoreCommand command) {
+	public Page<StoreResult> searchByUserIdAddress(UUID addressId, SearchStoreCommand command) {
 		UserAddress address = userAddressRepository.findById(addressId)
 			.orElseThrow(InvalidStoreRequestException::new);
 
@@ -129,39 +144,34 @@ public class StoreServiceImpl implements StoreService {
 		Double latitude = address.getLatitude().doubleValue();
 		Double longitude = address.getLongitude().doubleValue();
 
-		List<Store> stores = storeRepository.findNearbyStores(
+		Page<Store> page = storeRepository.findNearbyStores(
 			longitude,
 			latitude,
-			3000.0,
-			command.getCategoryId()
+			NEARBY_DISTANCE_METERS,
+			command.getCategoryId(),
+			command.toPageable()
 		);
 
-		return stores.stream()
-			.map(StoreResult::from)
-			.toList();
+		return page.map(StoreResult::from);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<StoreResult> searchNearbyStores(Double latitude, Double longitude, UUID categoryId) {
-		double distanceMeters = 3000.0;
-
-		List<Store> stores = storeRepository.findNearbyStores(
+	public Page<StoreResult> searchNearbyStores(Double latitude, Double longitude, SearchStoreCommand command) {
+		Page<Store> page = storeRepository.findNearbyStores(
 			longitude,
 			latitude,
-			distanceMeters,
-			categoryId
+			NEARBY_DISTANCE_METERS,
+			command.getCategoryId(),
+			command.toPageable()
 		);
 
-		return stores.stream()
-			.map(StoreResult::from)
-			.toList();
+		return page.map(StoreResult::from);
 	}
 
 	@Override
 	public StoreResult updateStatus(UUID storeId, StoreStatus newStatus, UUID userId, String role) {
-		Store store = storeRepository.findById(storeId)
-			.orElseThrow(StoreNotFoundException::new);
+		Store store = findStoreById(storeId);
 
 		if ("ROLE_MANAGER".equals(role) || "ROLE_MASTER".equals(role)
 			|| "MANAGER".equals(role) || "MASTER".equals(role)) {
@@ -195,20 +205,23 @@ public class StoreServiceImpl implements StoreService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<StoreResult> searchStores(SearchStoreCommand command) {
-		return storeRepository.findAllWithFilters(
-				command.getStatus(),
-				command.getRegionId(),
-				command.getUserId()
-			).stream()
-			.map(StoreResult::from)
-			.toList();
+	public Page<StoreResult> searchStores(SearchStoreCommand command) {
+		Page<Store> page = storeRepository.findAllWithFilters(
+			command.getKeyword(),
+			command.getStatus(),
+			command.getRegionId(),
+			command.getUserId(),
+			command.getCategoryId(),
+			command.toPageable()
+		);
+
+		return page.map(StoreResult::from);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public StoreResult getStoreDetail(UUID storeId) {
-		Store store = storeRepository.findById(storeId)
+		Store store = storeRepository.findDetailById(storeId)
 			.orElseThrow(StoreNotFoundException::new);
 
 		if (store.getStatus() == StoreStatus.CLOSED || store.getDeletedAt() != null) {
@@ -218,22 +231,17 @@ public class StoreServiceImpl implements StoreService {
 		return StoreResult.from(store);
 	}
 
-	// === 메뉴 메서드 ===
 	@Override
 	@Transactional(readOnly = true)
 	public List<Product> getStoreProducts(UUID storeId) {
 		return productRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
 	}
 
-	// === [삭제] Soft Delete ===
-	/*@Override
-	@Transactional
-	public void deleteStore(UUID storeId, UUID userId) {
-		Store store = findStoreById(storeId);
+	@Override
+	public void deleteStore(UUID storeId, UserDto userDto) {
+		UUID userId = userDto.getId();
 
-		if (!store.getUser().getId().equals(userId)) {
-			throw new StoreForbiddenException();
-		}
+		Store store = findStoreById(storeId);
 
 		List<Product> products = productRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
 
@@ -252,16 +260,16 @@ public class StoreServiceImpl implements StoreService {
 			storeCategoryRepository.findAllByStore_IdAndDeletedAtIsNull(storeId);
 
 		for (StoreCategory storeCategory : storeCategories) {
-			storeCategory.delete(userId);
+			storeCategory.markDeleted(userId);
 		}
 
 		store.markDeleted(userId);
-	}*/
+	}
 
 	// 내부 헬퍼: 삭제되지 않은 가게만 조회
 	private Store findStoreById(UUID storeId) {
 		return storeRepository.findById(storeId)
-			.filter(s -> s.getDeletedAt() == null) // Soft Delete 체크
+			.filter(store -> store.getDeletedAt() == null)
 			.orElseThrow(StoreNotFoundException::new);
 	}
 }

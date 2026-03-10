@@ -84,7 +84,7 @@ public class ProductServiceImpl implements ProductService {
             command.getName(),
             command.getPrice(),
             description,
-            command.getUseAiDescription(),
+            Boolean.TRUE.equals(command.getUseAiDescription()),
             command.getImageUrl()
         );
 
