@@ -1,7 +1,15 @@
 package com.team.project.domain.store.exception;
 
-public class StoreNotFoundException extends RuntimeException {
+import org.springframework.http.HttpStatus;
+
+import com.team.project.global.common.exception.BaseException;
+
+import lombok.Getter;
+
+@Getter
+public class StoreNotFoundException extends BaseException {
+
 	public StoreNotFoundException() {
-		super("해당 가게를 찾을 수 없습니다.");
+		super(StoreErrorCode.STORE_NOT_FOUND.name(), HttpStatus.NOT_FOUND);
 	}
 }

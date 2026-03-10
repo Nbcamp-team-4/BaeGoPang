@@ -4,38 +4,27 @@ spring:
       api-key: ${OPENAI_API_KEY}
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/baegopang
-    username: postgres
-    password: postgres
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   flyway:
-    enabled: false
+    enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
 
 jwt:
-  secret:
-    YmFlZ29wYW5nLWp3dC1zZWNyZXQta2V5LWZvci1sb2NhbC1kZXYtMTIzNDU2
-  access-token-expiration-seconds:
-    1800000 # 30분
-  refresh-token-expiration-seconds:
-    604800000 # 7일
-  #swagger
-  springdoc:
-    swagger-ui:
-      path: /swagger-ui.html
-      operations-sorter: method
-      tags-sorter: alpha
-      display-request-duration: true
-    api-docs:
-      path: /v3/api-docs
+  secret: ${JWT_SECRET}
+  access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION:1800000}
+  refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000}
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:uploads}

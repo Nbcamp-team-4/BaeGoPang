@@ -19,10 +19,10 @@ public interface CartService {
 
     // 장바구니 상품 담기
     // - 다른 가게 상품이면 기존 장바구니 비우고 store 교체
-    AddCartItemResponse addCartItem(AddCartItemRequest request);
+    AddCartItemResponse addCartItem(UUID userId, AddCartItemRequest request);
 
     // 장바구니 상품 수량/옵션 수정
-    UpdateCartItemResponse updateCartItem(UUID cartId, UUID itemId, UpdateCartItemRequest request);
+    UpdateCartItemResponse updateCartItem(UUID userId, UUID cartId, UUID itemId, UpdateCartItemRequest request);
 
     // 장바구니 상품 삭제
     void deleteCartItem(UUID itemId, UUID userId);

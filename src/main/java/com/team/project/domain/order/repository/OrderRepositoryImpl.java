@@ -11,6 +11,22 @@ import com.team.project.domain.order.entity.Order;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
+import com.team.project.domain.order.model.vo.OrderStatus;
+import com.team.project.global.common.dto.BaseRangeRequest;
+
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+
 @Repository
 @RequiredArgsConstructor
 public class OrderRepositoryImpl implements OrderRepositoryCustom {
@@ -110,4 +126,230 @@ public class OrderRepositoryImpl implements OrderRepositoryCustom {
 				.getResultStream()
 				.findFirst();
 	}
+
+	@Override
+	public Page<Order> searchMyOrders(
+			UUID userId,
+			OrderStatus status,
+			BaseRangeRequest<LocalDateTime> rangeCreatedAt,
+			Pageable pageable
+	) {
+		LocalDateTime minCreatedAt = rangeCreatedAt != null ? rangeCreatedAt.getMin() : null;
+		LocalDateTime maxCreatedAt = rangeCreatedAt != null ? rangeCreatedAt.getMax() : null;
+
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+
+		// content query
+		CriteriaQuery<Order> cq = cb.createQuery(Order.class);
+		Root<Order> order = cq.from(Order.class);
+		order.fetch("store");
+
+		List<Predicate> predicates = new ArrayList<>();
+		predicates.add(cb.equal(order.get("user").get("id"), userId));
+
+		if (status != null) {
+			predicates.add(cb.equal(order.get("status"), status));
+		}
+
+		if (minCreatedAt != null) {
+			predicates.add(cb.greaterThanOrEqualTo(order.get("createdAt"), minCreatedAt));
+		}
+
+		if (maxCreatedAt != null) {
+			predicates.add(cb.lessThanOrEqualTo(order.get("createdAt"), maxCreatedAt));
+		}
+
+		cq.select(order).distinct(true);
+		cq.where(predicates.toArray(new Predicate[0]));
+		cq.orderBy(cb.desc(order.get("createdAt")));
+
+		TypedQuery<Order> query = em.createQuery(cq);
+		query.setFirstResult((int)pageable.getOffset());
+		query.setMaxResults(pageable.getPageSize());
+
+		List<Order> content = query.getResultList();
+
+		// count query
+		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+		Root<Order> countRoot = countQuery.from(Order.class);
+
+		List<Predicate> countPredicates = new ArrayList<>();
+		countPredicates.add(cb.equal(countRoot.get("user").get("id"), userId));
+
+		if (status != null) {
+			countPredicates.add(cb.equal(countRoot.get("status"), status));
+		}
+
+		if (minCreatedAt != null) {
+			countPredicates.add(cb.greaterThanOrEqualTo(countRoot.get("createdAt"), minCreatedAt));
+		}
+
+		if (maxCreatedAt != null) {
+			countPredicates.add(cb.lessThanOrEqualTo(countRoot.get("createdAt"), maxCreatedAt));
+		}
+
+		countQuery.select(cb.count(countRoot));
+		countQuery.where(countPredicates.toArray(new Predicate[0]));
+
+		Long total = em.createQuery(countQuery).getSingleResult();
+
+		return new PageImpl<>(content, pageable, total);
+	}
+
+	@Override
+	public Page<Order> searchStoreOrders(
+			UUID storeId,
+			OrderStatus status,
+			BaseRangeRequest<LocalDateTime> rangeCreatedAt,
+			Pageable pageable
+	) {
+		LocalDateTime minCreatedAt = rangeCreatedAt != null ? rangeCreatedAt.getMin() : null;
+		LocalDateTime maxCreatedAt = rangeCreatedAt != null ? rangeCreatedAt.getMax() : null;
+
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+
+		// content query
+		CriteriaQuery<Order> cq = cb.createQuery(Order.class);
+		Root<Order> order = cq.from(Order.class);
+		order.fetch("user");
+		order.fetch("store");
+
+		List<Predicate> predicates = new ArrayList<>();
+		predicates.add(cb.equal(order.get("store").get("id"), storeId));
+
+		if (status != null) {
+			predicates.add(cb.equal(order.get("status"), status));
+		}
+
+		if (minCreatedAt != null) {
+			predicates.add(cb.greaterThanOrEqualTo(order.get("createdAt"), minCreatedAt));
+		}
+
+		if (maxCreatedAt != null) {
+			predicates.add(cb.lessThanOrEqualTo(order.get("createdAt"), maxCreatedAt));
+		}
+
+		cq.select(order).distinct(true);
+		cq.where(predicates.toArray(new Predicate[0]));
+		cq.orderBy(cb.desc(order.get("createdAt")));
+
+		TypedQuery<Order> query = em.createQuery(cq);
+		query.setFirstResult((int)pageable.getOffset());
+		query.setMaxResults(pageable.getPageSize());
+
+		List<Order> content = query.getResultList();
+
+		// count query
+		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+		Root<Order> countRoot = countQuery.from(Order.class);
+
+		List<Predicate> countPredicates = new ArrayList<>();
+		countPredicates.add(cb.equal(countRoot.get("store").get("id"), storeId));
+
+		if (status != null) {
+			countPredicates.add(cb.equal(countRoot.get("status"), status));
+		}
+
+		if (minCreatedAt != null) {
+			countPredicates.add(cb.greaterThanOrEqualTo(countRoot.get("createdAt"), minCreatedAt));
+		}
+
+		if (maxCreatedAt != null) {
+			countPredicates.add(cb.lessThanOrEqualTo(countRoot.get("createdAt"), maxCreatedAt));
+		}
+
+		countQuery.select(cb.count(countRoot));
+		countQuery.where(countPredicates.toArray(new Predicate[0]));
+
+		Long total = em.createQuery(countQuery).getSingleResult();
+
+		return new PageImpl<>(content, pageable, total);
+	}
+
+	@Override
+	public Page<Order> searchAdminOrders(
+			UUID storeId,
+			UUID userId,
+			OrderStatus status,
+			BaseRangeRequest<LocalDateTime> rangeCreatedAt,
+			Pageable pageable
+	) {
+		LocalDateTime minCreatedAt = rangeCreatedAt != null ? rangeCreatedAt.getMin() : null;
+		LocalDateTime maxCreatedAt = rangeCreatedAt != null ? rangeCreatedAt.getMax() : null;
+
+		CriteriaBuilder cb = em.getCriteriaBuilder();
+
+		// content query
+		CriteriaQuery<Order> cq = cb.createQuery(Order.class);
+		Root<Order> order = cq.from(Order.class);
+		order.fetch("user");
+		order.fetch("store");
+
+		List<Predicate> predicates = new ArrayList<>();
+
+		if (storeId != null) {
+			predicates.add(cb.equal(order.get("store").get("id"), storeId));
+		}
+
+		if (userId != null) {
+			predicates.add(cb.equal(order.get("user").get("id"), userId));
+		}
+
+		if (status != null) {
+			predicates.add(cb.equal(order.get("status"), status));
+		}
+
+		if (minCreatedAt != null) {
+			predicates.add(cb.greaterThanOrEqualTo(order.get("createdAt"), minCreatedAt));
+		}
+
+		if (maxCreatedAt != null) {
+			predicates.add(cb.lessThanOrEqualTo(order.get("createdAt"), maxCreatedAt));
+		}
+
+		cq.select(order).distinct(true);
+		cq.where(predicates.toArray(new Predicate[0]));
+		cq.orderBy(cb.desc(order.get("createdAt")));
+
+		TypedQuery<Order> query = em.createQuery(cq);
+		query.setFirstResult((int)pageable.getOffset());
+		query.setMaxResults(pageable.getPageSize());
+
+		List<Order> content = query.getResultList();
+
+		// count query
+		CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+		Root<Order> countRoot = countQuery.from(Order.class);
+
+		List<Predicate> countPredicates = new ArrayList<>();
+
+		if (storeId != null) {
+			countPredicates.add(cb.equal(countRoot.get("store").get("id"), storeId));
+		}
+
+		if (userId != null) {
+			countPredicates.add(cb.equal(countRoot.get("user").get("id"), userId));
+		}
+
+		if (status != null) {
+			countPredicates.add(cb.equal(countRoot.get("status"), status));
+		}
+
+		if (minCreatedAt != null) {
+			countPredicates.add(cb.greaterThanOrEqualTo(countRoot.get("createdAt"), minCreatedAt));
+		}
+
+		if (maxCreatedAt != null) {
+			countPredicates.add(cb.lessThanOrEqualTo(countRoot.get("createdAt"), maxCreatedAt));
+		}
+
+		countQuery.select(cb.count(countRoot));
+		countQuery.where(countPredicates.toArray(new Predicate[0]));
+
+		Long total = em.createQuery(countQuery).getSingleResult();
+
+		return new PageImpl<>(content, pageable, total);
+	}
+
+
 }

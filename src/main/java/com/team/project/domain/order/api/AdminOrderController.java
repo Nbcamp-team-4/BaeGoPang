@@ -20,10 +20,26 @@ import com.team.project.domain.order.api.response.UpdateOrderStatusResponse;
 import com.team.project.domain.order.service.OrderAdminService;
 import com.team.project.global.common.dto.BaseResponse;
 
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.web.bind.annotation.ModelAttribute;
+
+import com.team.project.domain.order.api.request.AdminGetOrdersRequest;
+import com.team.project.domain.order.api.response.GetOrdersResponse;
+import com.team.project.domain.order.model.dto.GetOrdersCommand;
+import com.team.project.domain.order.model.dto.GetOrdersQuery;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Tag(name = "AdminOrder", description = "관리자 주문 API")
 @RestController
 @RequestMapping("/api/admin/orders")
 @Slf4j
@@ -36,9 +52,33 @@ public class AdminOrderController {
      * [관리자] 주문 전체 조회
      * GET /api/admin/orders
      */
+    @Operation(summary = "관리자 주문 목록 조회", description = "조건에 따라 주문 목록을 페이지 단위로 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "주문 목록 조회 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = GetOrdersResponse.class)
+                    )
+            )
+    })
     @GetMapping
-    public ResponseEntity<?> getAllOrders() {
-        List<GetOrderSummaryResponse> response = orderAdminService.getAllOrders();
+    public ResponseEntity<BaseResponse<GetOrdersResponse>> getAllOrders(
+            @ParameterObject @ModelAttribute AdminGetOrdersRequest request
+    ) {
+        GetOrdersCommand command = GetOrdersCommand.of(
+                request.getPage(),
+                request.getSize(),
+                request.getStatus(),
+                request.getRangeCreatedAt(),
+                request.getStoreId(),
+                request.getUserId()
+        );
+
+        GetOrdersQuery query = orderAdminService.getAllOrders(command);
+        GetOrdersResponse response = GetOrdersResponse.from(query);
+
         return ResponseEntity.ok().body(BaseResponse.ofSuccess(response));
     }
 

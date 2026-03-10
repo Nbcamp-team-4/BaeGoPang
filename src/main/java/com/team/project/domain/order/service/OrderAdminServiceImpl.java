@@ -20,6 +20,16 @@ import com.team.project.domain.payment.entity.Payment;
 import com.team.project.domain.payment.repository.PaymentRepository;
 import com.team.project.domain.payment.service.PaymentService;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import com.team.project.domain.order.entity.Order;
+import com.team.project.domain.order.model.dto.GetOrdersCommand;
+import com.team.project.domain.order.model.dto.GetOrdersQuery;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
@@ -32,19 +42,39 @@ public class OrderAdminServiceImpl implements OrderAdminService {
 	private final PaymentService paymentService;
 
 	@Override
-	public List<GetOrderSummaryResponse> getAllOrders() {
+	public GetOrdersQuery getAllOrders(GetOrdersCommand command) {
+		Pageable pageable = PageRequest.of(command.getPage(), command.getSize());
 
-		// 1) 전체 주문 조회
-		List<Order> orders = orderRepository.findAll();
+		Page<Order> orderPage = orderRepository.searchAdminOrders(
+				command.getStoreId(),
+				command.getUserId(),
+				command.getStatus(),
+				command.getRangeCreatedAt(),
+				pageable
+		);
 
-		// 2) 각 주문마다 최신 결제를 조회해서 응답 변환
-		return orders.stream()
-			.map(order -> {
-				Payment payment = paymentRepository.getLatestPaymentByOrderId(order.getId())
-					.orElse(null);
-				return GetOrderSummaryResponse.from(order, payment);
-			})
-			.collect(Collectors.toList());
+		List<GetOrdersQuery.Item> items = orderPage.getContent()
+				.stream()
+				.map(order -> GetOrdersQuery.Item.builder()
+						.id(order.getId())
+						.orderNo(order.getOrderNo())
+						.status(order.getStatus())
+						.totalAmount(order.getTotalAmount())
+						.createdAt(order.getCreatedAt())
+						.storeId(order.getStore().getId())
+						.storeName(order.getStore().getName())
+						.userId(order.getUser().getId())
+						.userName(order.getUser().getName())
+						.build())
+				.toList();
+
+		return GetOrdersQuery.builder()
+				.content(items)
+				.page(orderPage.getNumber())
+				.size(orderPage.getSize())
+				.totalElements(orderPage.getTotalElements())
+				.totalPages(orderPage.getTotalPages())
+				.build();
 	}
 
 	@Override

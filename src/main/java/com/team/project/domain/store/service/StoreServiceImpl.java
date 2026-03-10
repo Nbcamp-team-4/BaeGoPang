@@ -18,7 +18,10 @@ import com.team.project.domain.region.entity.Region;
 import com.team.project.domain.region.repository.RegionRepository;
 import com.team.project.domain.store.entity.Store;
 import com.team.project.domain.store.entity.StoreCategory;
+import com.team.project.domain.store.exception.InvalidStoreRequestException;
+import com.team.project.domain.store.exception.StoreForbiddenException;
 import com.team.project.domain.store.exception.StoreNotFoundException;
+import com.team.project.domain.store.exception.StoreNotOperatingException;
 import com.team.project.domain.store.model.vo.StoreStatus;
 import com.team.project.domain.store.repository.StoreCategoryRepository;
 import com.team.project.domain.store.repository.StoreRepository;
@@ -50,6 +53,7 @@ public class StoreServiceImpl implements StoreService {
 	private final StoreCategoryRepository storeCategoryRepository;
 	private final UserAddressRepository userAddressRepository;
 
+
 	// === [점주] 가게 입점 신청 ===
 	@Override
 	@Transactional
@@ -60,16 +64,16 @@ public class StoreServiceImpl implements StoreService {
 
 		// 2. 유저 확인
 		User user = userRepository.findById(command.getUserId())
-			.orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
+			.orElseThrow(InvalidStoreRequestException::new);
 
 		// 3. 지역 확인
 		Region region = regionRepository.findActiveRegionContaining(command.getLongitude(), command.getLatitude())
-			.orElseThrow(() -> new IllegalArgumentException("AREA_NOT_SUPPORTED"));
+			.orElseThrow(InvalidStoreRequestException::new);
 
 		// 4. 카테고리 검증 및 조회 (Command에 List<UUID> categoryIds 가 있다고 가정)
 		List<Category> categories = categoryRepository.findAllById(command.getCategoryIds());
 		if (categories.isEmpty() || categories.size() != command.getCategoryIds().size()) {
-			throw new IllegalArgumentException("CATEGORY_NOT_FOUND");
+			throw new InvalidStoreRequestException();
 		}
 
 		// 5. 가게 생성 (정적 팩토리 메서드 호출 한 줄로 끝!)
@@ -78,7 +82,6 @@ public class StoreServiceImpl implements StoreService {
 		return StoreResult.from(storeRepository.save(store));
 	}
 
-
 	// === [점주] 가게 정보 수정 ===
 	@Override
 	@Transactional
@@ -86,11 +89,11 @@ public class StoreServiceImpl implements StoreService {
 		// TODO: SecurityContext (@AuthenticationPrincipal)를 통해 유저 정보 받아오도록 수정 예정
 
 		Store store = storeRepository.findById(storeId)
-			.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
+			.orElseThrow(StoreNotFoundException::new);
 
 		// 1. 권한 검증
 		if (!store.getUser().getId().equals(userId)) {
-			throw new IllegalArgumentException("UNAUTHORIZED_UPDATE");
+			throw new StoreForbiddenException();
 		}
 
 		// 2. 점주 전용 기본 정보 수정
@@ -100,7 +103,7 @@ public class StoreServiceImpl implements StoreService {
 		if (command.getCategoryIds() != null && !command.getCategoryIds().isEmpty()) {
 			List<Category> newCategories = categoryRepository.findAllById(command.getCategoryIds());
 			if (newCategories.size() != command.getCategoryIds().size()) {
-				throw new IllegalArgumentException("CATEGORY_NOT_FOUND");
+				throw new InvalidStoreRequestException();
 			}
 			store.updateCategories(newCategories);
 		}
@@ -115,13 +118,13 @@ public class StoreServiceImpl implements StoreService {
 		// TODO: SecurityContext (@AuthenticationPrincipal)를 통해 유저 정보 받아오도록 수정 예정
 
 		Store store = storeRepository.findById(storeId)
-			.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
+			.orElseThrow(StoreNotFoundException::new);
 
 		// 1. 지역(Region) 변경 여부 확인 및 조회
 		Region region = store.getRegion();
 		if (command.getRegionId() != null && !command.getRegionId().equals(region.getId())) {
 			region = regionRepository.findById(command.getRegionId())
-				.orElseThrow(() -> new IllegalArgumentException("REGION_NOT_FOUND"));
+				.orElseThrow(InvalidStoreRequestException::new);
 		}
 
 		// 2. 관리자 전용 모든 정보 수정
@@ -131,7 +134,7 @@ public class StoreServiceImpl implements StoreService {
 		if (command.getCategoryIds() != null && !command.getCategoryIds().isEmpty()) {
 			List<Category> newCategories = categoryRepository.findAllById(command.getCategoryIds());
 			if (newCategories.size() != command.getCategoryIds().size()) {
-				throw new IllegalArgumentException("CATEGORY_NOT_FOUND");
+				throw new InvalidStoreRequestException();
 			}
 			store.updateCategories(newCategories);
 		}
@@ -147,7 +150,7 @@ public class StoreServiceImpl implements StoreService {
 
 		// 1. 사용자 주소 조회
 		UserAddress address = userAddressRepository.findById(addressId)
-			.orElseThrow(() -> new IllegalArgumentException("존재하지 않는 주소입니다."));
+			.orElseThrow(InvalidStoreRequestException::new);
 
 		// 2. 주소의 위도/경도를 Double 값으로 변환
 		Double latitude = address.getLatitude().doubleValue();
@@ -193,7 +196,7 @@ public class StoreServiceImpl implements StoreService {
 	@Transactional
 	public StoreResult updateStatus(UUID storeId, UUID userId, StoreStatus newStatus, String role) {
 		Store store = storeRepository.findById(storeId)
-			.orElseThrow(() -> new StoreNotFoundException());
+			.orElseThrow(StoreNotFoundException::new);
 
 		// 1. 관리자(MANAGER/MASTER)인 경우: 모든 상태로 변경 가능 (승인/차단 등)
 		if ("MANAGER".equals(role) || "MASTER".equals(role)) {
@@ -201,13 +204,13 @@ public class StoreServiceImpl implements StoreService {
 		}
 		// 2. 점주(OWNER)인 경우: 본인 가게여야 하고, OPEN <-> CLOSED 사이만 가능
 		else if ("OWNER".equals(role)) {
-			if (!store.getUser().equals(userId)) {
-				throw new IllegalStateException("본인 가게의 상태만 변경할 수 있습니다.");
+			if (!store.getUser().getId().equals(userId)) {
+				throw new StoreForbiddenException();
 			}
 
 			// 점주는 스스로 '승인(INACTIVE -> OPEN)'을 할 수 없음
 			if (store.getStatus() == StoreStatus.INACTIVE && newStatus == StoreStatus.OPEN) {
-				throw new IllegalStateException("가게 승인은 관리자만 가능합니다.");
+				throw new StoreForbiddenException();
 			}
 
 			store.updateStatus(newStatus);
@@ -241,27 +244,28 @@ public class StoreServiceImpl implements StoreService {
 			.toList();
 	}
 
-
 	// === [공통] 가게 단건 조회 (메뉴 포함용) ===
 	@Override // 이름이 getStore -> getStoreDetail 로 변경됨!
 	@Transactional(readOnly = true)
 	public StoreResult getStoreDetail(UUID storeId) {
 		Store store = storeRepository.findById(storeId)
-			.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
+			.orElseThrow(StoreNotFoundException::new);
 
 		// 상태가 CLOSED이거나 삭제된 가게는 조회 불가 처리
 		if (store.getStatus() == StoreStatus.CLOSED || store.getDeletedAt() != null) {
-			throw new IllegalArgumentException("STORE_CLOSED_OR_DELETED");
+			throw new StoreNotOperatingException();
 		}
 
 		return StoreResult.from(store);
 	}
+
 	// === 메뉴 메서드 ===
 	@Override
 	@Transactional(readOnly = true)
 	public List<Product> getStoreProducts(UUID storeId) {
 		return productRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
 	}
+
 	// === [삭제] Soft Delete ===
 	@Override
 	@Transactional
@@ -269,7 +273,7 @@ public class StoreServiceImpl implements StoreService {
 		Store store = findStoreById(storeId);
 
 		if (!store.getUser().getId().equals(userId)) {
-			throw new IllegalArgumentException("ACCESS_DENIED");
+			throw new StoreForbiddenException();
 		}
 
 		List<Product> products = productRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
@@ -299,6 +303,6 @@ public class StoreServiceImpl implements StoreService {
 	private Store findStoreById(UUID storeId) {
 		return storeRepository.findById(storeId)
 			.filter(s -> s.getDeletedAt() == null) // Soft Delete 체크
-			.orElseThrow(() -> new IllegalArgumentException("STORE_NOT_FOUND"));
+			.orElseThrow(StoreNotFoundException::new);
 	}
 }
