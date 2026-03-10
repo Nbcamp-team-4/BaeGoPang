@@ -3,6 +3,7 @@ package com.team.project.domain.review.api;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.team.project.domain.review.api.request.CreateReviewRequest;
+import com.team.project.domain.review.api.request.PageReviewRequest;
 import com.team.project.domain.review.api.response.ReviewResponse;
 import com.team.project.domain.review.api.response.UpdateReviewRequest;
 import com.team.project.domain.review.service.ReviewService;
@@ -59,11 +61,15 @@ public class ReviewController {
 
 	@Operation(summary = "리뷰 목록 조회", description = "특정 가게의 리뷰를 조회합니다.")
 	@GetMapping("/stores/{storeId}")
-	public ResponseEntity<List<ReviewResponse>> getStoreReviews(@PathVariable UUID storeId) {
-		return ResponseEntity.ok(reviewService.getReviewsByStore(storeId));
+	public ResponseEntity<BaseResponse<Page<ReviewResponse>>> getStoreReviews(
+		@PathVariable UUID storeId,
+		PageReviewRequest pageRequest) { // @ModelAttribute가 생략된 형태입니다.
+
+		Page<ReviewResponse> response = reviewService.getReviewsByStore(storeId, pageRequest);
+		return ResponseEntity.ok(BaseResponse.ofSuccess(response));
 	}
 
-	@Operation(summary = "리뷰 수정")
+	@Operation(summary = "리뷰 수정", description = "특정 가게의 리뷰를 페이징 및 정렬(최신순/평점순)하여 조회합니다.")
 	@PutMapping("/{reviewId}")
 	public ResponseEntity<BaseResponse<ReviewResponse>> updateReview(
 		@PathVariable UUID reviewId,

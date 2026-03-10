@@ -2,26 +2,29 @@ package com.team.project.domain.review.service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.model.vo.OrderStatus;
 import com.team.project.domain.order.repository.OrderRepository;
 import com.team.project.domain.review.api.request.CreateReviewRequest;
+import com.team.project.domain.review.api.request.PageReviewRequest;
 import com.team.project.domain.review.api.response.ReviewResponse;
 import com.team.project.domain.review.api.response.UpdateReviewRequest;
 import com.team.project.domain.review.entity.Review;
 import com.team.project.domain.review.entity.ReviewImage;
 import com.team.project.domain.review.repository.ReviewImageRepository;
 import com.team.project.domain.review.repository.ReviewRepository;
-
 import jakarta.persistence.EntityNotFoundException;
+import com.team.project.domain.review.api.response.ReviewResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -86,12 +89,19 @@ public class ReviewServiceImpl implements ReviewService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<ReviewResponse> getReviewsByStore(UUID storeId) {
-		// Repository에 findAllByStoreIdAndDeletedAtIsNull 메서드가 있어야 합니다.
-		List<Review> reviews = reviewRepository.findAllByStoreIdAndDeletedAtIsNull(storeId);
-		return reviews.stream()
-			.map(ReviewResponse::from)
-			.collect(Collectors.toList());
+	public Page<ReviewResponse> getReviewsByStore(UUID storeId, PageReviewRequest request) {
+
+		// 1. PageReviewRequest의 데이터를 바탕으로 정렬(Sort) 객체 생성
+		Sort sort = request.isDesc()
+			? Sort.by(request.getSortBy()).descending()
+			: Sort.by(request.getSortBy()).ascending();
+
+		// 2. Pageable 객체 생성 (페이지 번호, 사이즈, 정렬 조건 포함)
+		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
+
+		// 3. Repository 호출 및 엔티티를 DTO로 변환하여 반환
+		return reviewRepository.findAllByStoreIdAndDeletedAtIsNull(storeId, pageable)
+			.map(review -> ReviewResponse.from(review));
 	}
 
 	@Override
