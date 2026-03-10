@@ -98,34 +98,44 @@ public class SwaggerConfig {
 			.pathsToMatch("/api/users/**")
 			.build();
 	}
+
 	@Bean
 	public GroupedOpenApi adminApi() {
 		return GroupedOpenApi.builder()
-				.group("admin")
-				.pathsToMatch("/api/admin/**")
-				.build();
+			.group("admin")
+			.pathsToMatch("/api/admin/**")
+			.build();
 	}
+
 	@Bean
 	public GroupedOpenApi addressApi() {
 		return GroupedOpenApi.builder()
-				.group("address")
-				.pathsToMatch("/api/address/**")
-				.build();
+			.group("address")
+			.pathsToMatch("/api/address/**")
+			.build();
 	}
 
 	@Bean
 	public GroupedOpenApi aiApi() {
 		return GroupedOpenApi.builder()
-				.group("ai")
-				.pathsToMatch("/api/ai/**")
-				.build();
+			.group("ai")
+			.pathsToMatch("/api/ai/**")
+			.build();
 	}
 
 	@Bean
 	public GroupedOpenApi imageApi() {
 		return GroupedOpenApi.builder()
-				.group("image")
-				.pathsToMatch("/api/images/**")
-				.build();
+			.group("image")
+			.pathsToMatch("/api/images/**")
+			.build();
+	}
+
+	@Bean
+	public GroupedOpenApi authApi() {
+		return GroupedOpenApi.builder()
+			.group("auth")
+			.pathsToMatch("/api/auth/**")
+			.build();
 	}
 }
