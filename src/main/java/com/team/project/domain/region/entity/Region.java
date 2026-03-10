@@ -1,19 +1,26 @@
 package com.team.project.domain.region.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.locationtech.jts.geom.MultiPolygon;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
-@AllArgsConstructor
-@Builder
 @Table(name = "p_region")
 public class Region {
 
@@ -40,15 +47,15 @@ public class Region {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
-
     // 생성(기본 active=true)
     public Region(String name, MultiPolygon geom) {
         this.name = name;
         this.geom = geom;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
     }
 
     // 정보 수정
