@@ -3,6 +3,15 @@ package com.team.project.domain.auth.service;
 import java.util.List;
 import java.util.UUID;
 
+import com.team.project.domain.address.dto.CreateUserAddressCommand;
+import com.team.project.domain.address.dto.CreateUserAddressQuery;
+import com.team.project.domain.address.service.UserAddressService;
+import com.team.project.domain.auth.api.request.SignUpRequest;
+import com.team.project.domain.auth.api.response.SignUpResponse;
+import com.team.project.domain.auth.dto.UserDto;
+import com.team.project.domain.user.exception.CustomException;
+import com.team.project.domain.user.repository.UserRoleRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.team.project.domain.auth.api.request.LoginRequest;
-import com.team.project.domain.auth.api.request.SignUpRequest;
 import com.team.project.domain.auth.api.response.LoginResponse;
 import com.team.project.domain.auth.dto.CustomUserPrincipal;
 import com.team.project.domain.user.entity.Role;
@@ -37,6 +45,8 @@ public class AuthService {
 	private final UserRepository userRepository;
 	private final RoleRepository roleRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final UserRoleRepository userRoleRepository;
+	private final UserAddressService userAddressService;
 
 	public LoginResponse login(LoginRequest request) {
 		Authentication authentication = authenticationManager.authenticate(
@@ -93,24 +103,63 @@ public class AuthService {
 		user.clearRefreshToken();
 	}
 
-	public void signUp(SignUpRequest request) {
+	public SignUpResponse signUp(SignUpRequest request) {
+
+		validateDuplicate(request);
+		validateSignUpRole(request.getRole());
+
+		// role 조회
+		Role role = roleRepository.findByType(request.getRole())
+				.orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 권한이 존재하지 않습니다."));
+
+		// 유저 생성
+		User user = new User(
+				request.getLoginId(),
+				request.getEmail(),
+				passwordEncoder.encode(request.getPassword()),
+				request.getName(),
+				request.getPhone()
+		);
+		User savedUser = userRepository.save(user);
+		// 권한 연결
+		UserRole userRole = new UserRole(savedUser, role);
+		userRoleRepository.save(userRole);
+		savedUser.addUserRole(userRole);
+		// 주소 command 생성
+		CreateUserAddressCommand command = CreateUserAddressCommand.of(
+				request.getAddressName(),
+				request.getAddressPhone(),
+				request.getAddress(),
+				request.getDetailAddress(),
+				request.getLatitude(),
+				request.getLongitude(),
+				request.getIsDefault()
+		);
+		// User → UserDto 변환
+		UserDto userDto = UserDto.from(savedUser);
+		// 주소 생성
+		CreateUserAddressQuery addressQuery = userAddressService.createUserAddress(command, userDto);
+		//응답 반환
+		return SignUpResponse.from(savedUser, role.getType(), addressQuery);
+
+	}
+	private void validateSignUpRole(RoleType roleType) {
+		if (roleType == RoleType.ROLE_ADMIN) {
+			throw new CustomException(HttpStatus.FORBIDDEN, "ADMIN 권한으로는 회원가입할 수 없습니다.");
+		}
+	}
+	private void validateDuplicate(SignUpRequest request) {
 		if (userRepository.existsByLoginId(request.getLoginId())) {
-			throw new IllegalArgumentException("이미 존재하는 로그인 아이디입니다.");
+			throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 loginId 입니다.");
 		}
 
 		if (userRepository.existsByEmail(request.getEmail())) {
-			throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+			throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 email 입니다.");
 		}
 
-		Role userRole = roleRepository.findByType(request.getType())
-			.orElseThrow(() -> new IllegalArgumentException("기본 권한이 존재하지 않습니다."));
-
-		User user = new User(request.getLoginId(), request.getEmail(), passwordEncoder.encode(request.getPassword()),
-			request.getName(), request.getPhone());
-
-		UserRole userRoleMapping = UserRole.create(user, userRole);
-		user.addUserRole(userRoleMapping);
-
-		userRepository.save(user);
+		if (userRepository.existsByPhone(request.getPhone())) {
+			throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 phone 입니다.");
+		}
 	}
+
 }

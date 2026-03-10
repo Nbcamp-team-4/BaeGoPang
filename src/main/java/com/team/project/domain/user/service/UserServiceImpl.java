@@ -11,24 +11,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.team.project.domain.auth.dto.UserDto;
-import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
-import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
 import com.team.project.domain.user.entity.Role;
 import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.entity.UserRole;
 import com.team.project.domain.user.entity.UserStatus;
-import com.team.project.domain.user.exception.CustomException;
 import com.team.project.domain.user.repository.RoleRepository;
-import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 import com.team.project.domain.user.repository.UserRoleRepository;
 
@@ -43,35 +36,7 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final RoleRepository roleRepository;
 	private final UserRoleRepository userRoleRepository;
-	private final PasswordEncoder passwordEncoder;
 
-	@Override
-	@Transactional
-	public SignUpResponse signUp(SignUpRequest request) {
-
-		validateDuplicate(request);
-		validateSignUpRole(request.getRole());
-
-		Role role = roleRepository.findByType(request.getRole())
-			.orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 권한이 존재하지 않습니다."));
-
-		User user = new User(
-			request.getLoginId(),
-			request.getEmail(),
-			passwordEncoder.encode(request.getPassword()),
-			request.getName(),
-			request.getPhone()
-		);
-
-		User savedUser = userRepository.save(user);
-
-		UserRole userRole = new UserRole(savedUser, role);
-		userRoleRepository.save(userRole);
-
-		savedUser.addUserRole(userRole);
-
-		return SignUpResponse.from(savedUser, role.getType());
-	}
 
 	@Override
 	@Transactional
@@ -226,26 +191,6 @@ public class UserServiceImpl implements UserService {
 		return userRoleRepository.findByUser(user).stream()
 			.map(userRole -> userRole.getRole().getType())
 			.toList();
-	}
-
-	private void validateDuplicate(SignUpRequest request) {
-		if (userRepository.existsByLoginId(request.getLoginId())) {
-			throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 loginId 입니다.");
-		}
-
-		if (userRepository.existsByEmail(request.getEmail())) {
-			throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 email 입니다.");
-		}
-
-		if (userRepository.existsByPhone(request.getPhone())) {
-			throw new CustomException(HttpStatus.CONFLICT, "이미 사용 중인 phone 입니다.");
-		}
-	}
-
-	private void validateSignUpRole(RoleType roleType) {
-		if (roleType == RoleType.ROLE_ADMIN) {
-			throw new CustomException(HttpStatus.FORBIDDEN, "ADMIN 권한으로는 회원가입할 수 없습니다.");
-		}
 	}
 
 	private void validateUpdatableUser(User user) {
