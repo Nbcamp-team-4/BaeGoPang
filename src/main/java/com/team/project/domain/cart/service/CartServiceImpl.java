@@ -6,6 +6,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.team.project.domain.cart.api.request.AddCartItemRequest;
 import com.team.project.domain.cart.api.request.UpdateCartItemRequest;
@@ -21,6 +23,8 @@ import com.team.project.domain.cart.exception.CartNotFoundException;
 import com.team.project.domain.cart.exception.InvalidCartQuantityException;
 import com.team.project.domain.cart.exception.InvalidCartStatusException;
 import com.team.project.domain.cart.model.vo.CartStatus;
+import com.team.project.domain.cart.repository.CartItemOptionRepository;
+import com.team.project.domain.cart.repository.CartItemRepository;
 import com.team.project.domain.cart.repository.CartRepository;
 import com.team.project.domain.product.entity.Product;
 import com.team.project.domain.product.entity.ProductOption;
@@ -31,7 +35,6 @@ import com.team.project.domain.store.repository.StoreRepository;
 import com.team.project.domain.user.entity.User;
 import com.team.project.domain.user.repository.UserRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -39,6 +42,8 @@ import lombok.RequiredArgsConstructor;
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final CartItemOptionRepository cartItemOptionRepository;
 
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
@@ -47,7 +52,7 @@ public class CartServiceImpl implements CartService {
     private final com.team.project.domain.product.repository.ProductOptionItemRepository productOptionItemRepository;
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public GetCartResponse getCart(UUID userId) {
         Cart cart = cartRepository.findActiveCartDetailByUserId(userId)
                 .orElseThrow(CartNotFoundException::new);
@@ -58,7 +63,6 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public AddCartItemResponse addCartItem(UUID userId, AddCartItemRequest request) {
-
         if (request.getQuantity() == null || request.getQuantity() < 1) {
             throw new InvalidCartQuantityException();
         }
@@ -72,7 +76,6 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
 
-        // add 시에도 items/options까지 포함된 장바구니 조회가 더 안전함
         Cart cart = cartRepository.findActiveCartDetailByUserId(user.getId())
                 .orElseGet(() -> cartRepository.save(new Cart(user, store)));
 
@@ -86,11 +89,9 @@ public class CartServiceImpl implements CartService {
             cartReset = true;
         }
 
-        // 옵션 요청 검증 및 비교용 키 생성
         List<AddCartItemRequest.CartItemOptionRequest> requestOptions = request.getOptions();
         validateAddCartItemOptions(product, requestOptions);
 
-        // 같은 상품 + 같은 옵션 조합이면 기존 수량 증가
         CartItem existingItem = cart.getItems().stream()
                 .filter(cartItem -> cartItem.getProduct().getId().equals(product.getId()))
                 .filter(cartItem -> isSameOptions(cartItem.getOptions(), requestOptions))
@@ -111,7 +112,6 @@ public class CartServiceImpl implements CartService {
             );
         }
 
-        // 같은 조합이 없으면 새 라인 생성
         CartItem item = new CartItem(product, request.getQuantity());
 
         if (requestOptions != null) {
@@ -142,7 +142,6 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public UpdateCartItemResponse updateCartItem(UUID userId, UUID cartId, UUID itemId, UpdateCartItemRequest request) {
-
         if (request.getQuantity() == null || request.getQuantity() < 1) {
             throw new InvalidCartQuantityException();
         }
@@ -200,16 +199,20 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void clearCart(UUID userId) {
-        Cart cart = cartRepository.findActiveCartDetailByUserId(userId)
+        Cart cart = cartRepository.findActiveCartByUserId(userId)
                 .orElseThrow(CartNotFoundException::new);
 
         if (cart.getStatus() != CartStatus.ACTIVE) {
             throw new InvalidCartStatusException();
         }
 
-        cart.clearItems();
+        UUID cartId = cart.getId();
+
+        cartItemOptionRepository.deleteAllByCartId(cartId);
+        cartItemRepository.deleteAllByCartId(cartId);
+        cartRepository.deleteById(cartId);
     }
 
     private void validateAddCartItemOptions(
@@ -227,12 +230,10 @@ public class CartServiceImpl implements CartService {
             ProductOptionItem optionItem = productOptionItemRepository.findById(optReq.getProductOptionItemId())
                     .orElseThrow(() -> new IllegalArgumentException("PRODUCT_OPTION_ITEM_NOT_FOUND"));
 
-            // 옵션이 현재 상품 소속인지 검증
             if (!option.getProduct().getId().equals(product.getId())) {
                 throw new IllegalArgumentException("PRODUCT_OPTION_NOT_MATCHED_TO_PRODUCT");
             }
 
-            // 옵션 아이템이 현재 옵션 소속인지 검증
             if (!optionItem.getProductOption().getId().equals(option.getId())) {
                 throw new IllegalArgumentException("PRODUCT_OPTION_ITEM_NOT_MATCHED_TO_OPTION");
             }
