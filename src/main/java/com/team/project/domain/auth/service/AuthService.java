@@ -67,7 +67,7 @@ public class AuthService {
 
 		List<RoleType> types = user.getUserRoles().stream().map(r -> r.getRole().getType()).toList();
 
-		return new LoginResponse(accessToken, refreshToken, user.getLoginId(), user.getName(), types);
+		return new LoginResponse(accessToken, refreshToken, user.getId(), user.getLoginId(), user.getName(), types);
 	}
 
 	public LoginResponse reissue(String refreshToken) {
@@ -94,7 +94,8 @@ public class AuthService {
 
 		List<RoleType> roleTypes = user.getUserRoles().stream().map(r -> r.getRole().getType()).toList();
 
-		return new LoginResponse(newAccessToken, newRefreshToken, user.getLoginId(), user.getName(), roleTypes);
+		return new LoginResponse(newAccessToken, newRefreshToken, user.getId(), user.getLoginId(), user.getName(),
+			roleTypes);
 	}
 
 	public void logout(UUID userId) {

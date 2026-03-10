@@ -1,6 +1,7 @@
 package com.team.project.domain.auth.api.response;
 
 import java.util.List;
+import java.util.UUID;
 
 import com.team.project.domain.user.entity.RoleType;
 
@@ -18,15 +19,17 @@ public class LoginResponse {
 	@Schema(description = "유저 정보", example = "loginId = test12, name = testName, roles = ROLE_CUSTOMER ")
 	private UserInfo user;
 
-	public LoginResponse(String accessToken, String refreshToken, String loginId, String name, List<RoleType> roles) {
+	public LoginResponse(String accessToken, String refreshToken, UUID id, String loginId, String name,
+		List<RoleType> roles) {
 		this.accessToken = accessToken;
 		this.refreshToken = refreshToken;
-		this.user = new UserInfo(loginId, name, roles);
+		this.user = new UserInfo(id, loginId, name, roles);
 	}
 
 	@Getter
 	@AllArgsConstructor
 	public static class UserInfo {
+		private UUID id;
 		private String loginId;
 		private String name;
 		private List<RoleType> roles;
