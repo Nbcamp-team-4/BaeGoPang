@@ -32,7 +32,7 @@ public class GetStoresRequest extends BasePageRequest {
 			.status(this.status)
 			.regionId(this.regionId)
 			.categoryId(this.categoryId)
-			.userId(userId) // <- 여기서 userId 주입!
+			.userId(userId)
 			.page(this.getPage())
 			.size(this.getSize())
 			.build();

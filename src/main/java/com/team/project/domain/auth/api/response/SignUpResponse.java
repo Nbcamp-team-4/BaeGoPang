@@ -1,5 +1,7 @@
-package com.team.project.domain.user.api.response;
+package com.team.project.domain.auth.api.response;
 
+import com.team.project.domain.address.api.response.SignUpAddressResponse;
+import com.team.project.domain.address.dto.CreateUserAddressQuery;
 import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,7 +26,10 @@ public class SignUpResponse {
     @Schema(description = "권한", example = "ROLE_ADMIN")
     private RoleType  role;
 
-    public static SignUpResponse from(User user, RoleType role) {
+    @Schema(description = "기본 배송지 정보")
+    private SignUpAddressResponse address;
+
+    public static SignUpResponse from(User user, RoleType role, CreateUserAddressQuery addressQuery) {
         return SignUpResponse.builder()
                 .id(user.getId())
                 .loginId(user.getLoginId())
@@ -32,6 +37,7 @@ public class SignUpResponse {
                 .name(user.getName())
                 .phone(user.getPhone())
                 .role(role)
+                .address(SignUpAddressResponse.from(addressQuery))
                 .build();
     }
 }

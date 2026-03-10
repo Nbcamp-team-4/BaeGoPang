@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.project.domain.auth.dto.CurrentUser;
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.store.api.request.AdminUpdateStoreRequest;
 import com.team.project.domain.store.api.request.CreateStoreRequest;
 import com.team.project.domain.store.api.request.GetStoresRequest;
@@ -44,9 +46,11 @@ public class StoreController {
 	@Operation(summary = "가게 등록", description = "가게를 등록합니다.")
 	@PostMapping
 	@PreAuthorize("hasRole('OWNER')")
-	public ResponseEntity<StoreResponse> createStore(@RequestBody @Valid CreateStoreRequest request) {
-		// TODO: @AuthenticationPrincipal 로부터 유저 정보 받아오도록 수정 예정
-		StoreResult result = storeService.createStore(request.toCommand());
+	public ResponseEntity<StoreResponse> createStore(
+		@CurrentUser UserDto userDto,
+		@RequestBody @Valid CreateStoreRequest request
+	) {
+		StoreResult result = storeService.createStore(request.toCommand(userDto.getId()));
 		return ResponseEntity.status(HttpStatus.CREATED).body(StoreResponse.from(result));
 	}
 
@@ -69,10 +73,10 @@ public class StoreController {
 	@GetMapping
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 관리자 권한 유지!
 	public ResponseEntity<GetStoresResponse> getStores(
-		@RequestParam UUID userId,
+		@CurrentUser UserDto userDto,
 		@ModelAttribute GetStoresRequest request
 	) {
-		SearchStoreCommand command = request.toCommand(userId);
+		SearchStoreCommand command = request.toCommand(userDto.getId());
 		List<StoreResult> results = storeService.searchStores(command);
 		return ResponseEntity.ok(GetStoresResponse.of(results, request));
 	}
@@ -82,9 +86,9 @@ public class StoreController {
 	@GetMapping("/my")
 	@PreAuthorize("hasRole('OWNER')")
 	public ResponseEntity<GetStoresResponse> getMyStores(
-		@RequestParam UUID userId // TODO: Security 적용 후 제거
+		@CurrentUser UserDto userDto
 	) {
-		List<StoreResult> results = storeService.getMyStores(userId);
+		List<StoreResult> results = storeService.getMyStores(userDto.getId());
 		return ResponseEntity.ok(GetStoresResponse.of(results));
 	}
 
@@ -94,10 +98,10 @@ public class StoreController {
 	@PreAuthorize("hasRole('OWNER')")
 	public ResponseEntity<StoreResponse> updateStoreByOwner(
 		@PathVariable UUID storeId,
-		@RequestParam UUID userId, // TODO: @AuthenticationPrincipal 적용 예정
+		@CurrentUser UserDto userDto,
 		@RequestBody @Valid UpdateOwnerFieldsRequest request) {
 
-		StoreResult result = storeService.updateStoreByOwner(storeId, userId, request.toCommand(userId));
+		StoreResult result = storeService.updateStoreByOwner(storeId, request.toCommand(userDto.getId()));
 		return ResponseEntity.ok(StoreResponse.from(result));
 	}
 
@@ -107,10 +111,10 @@ public class StoreController {
 	@PreAuthorize("hasAnyRole('MANAGER', 'MASTER')") // 관리자 권한 유지!
 	public ResponseEntity<StoreResponse> updateStoreByAdmin(
 		@PathVariable UUID storeId,
-		@RequestParam UUID userId, // TODO: @AuthenticationPrincipal 적용 예정
+		@CurrentUser UserDto userDto,
 		@RequestBody @Valid AdminUpdateStoreRequest request) {
 
-		StoreResult result = storeService.updateStoreByAdmin(storeId, userId, request.toCommand(storeId));
+		StoreResult result = storeService.updateStoreByAdmin(storeId, request.toCommand(storeId, userDto.getId()));
 		return ResponseEntity.ok(StoreResponse.from(result));
 	}
 
@@ -120,11 +124,11 @@ public class StoreController {
 	@PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')") // 점주(OPEN/CLOSED) 및 관리자 권한 유지!
 	public ResponseEntity<StoreResponse> updateStoreStatus(
 		@PathVariable UUID storeId,
-		@RequestParam UUID userId, // TODO: @AuthenticationPrincipal 적용 예정
+		@CurrentUser UserDto userDto,
 		@RequestParam String role, // TODO: User/Role 구조 확정 후 제거
 		@RequestParam StoreStatus status) { // ?status=OPEN
 
-		StoreResult result = storeService.updateStatus(storeId, userId, status, role);
+		StoreResult result = storeService.updateStatus(storeId, status, userDto.getId(), role);
 		return ResponseEntity.ok(StoreResponse.from(result));
 	}
 
@@ -133,10 +137,10 @@ public class StoreController {
 	@GetMapping("/nearby")
 	public ResponseEntity<GetStoresResponse> searchByMyAddress(
 		@RequestParam UUID addressId,
-		@RequestParam UUID userId, // TODO: Security 적용 후 제거
+		@CurrentUser UserDto userDto,
 		@ModelAttribute GetStoresRequest request
 	) {
-		SearchStoreCommand command = request.toCommand(userId);
+		SearchStoreCommand command = request.toCommand(userDto.getId());
 		List<StoreResult> results = storeService.searchByUserIdAddress(addressId, command);
 		return ResponseEntity.ok(GetStoresResponse.of(results, request));
 	}
