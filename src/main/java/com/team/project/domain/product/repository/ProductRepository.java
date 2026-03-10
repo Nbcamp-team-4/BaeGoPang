@@ -42,4 +42,14 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
            AND p.deletedAt IS NULL
     """)
 	void softDeleteByStoreId(@Param("storeId") UUID storeId, @Param("userId") UUID userId);
+
+	@Query("""
+		select p
+		from Product p
+		join fetch p.store s
+		where p.deletedAt is null
+		  and p.isHidden = false
+		  and p.isSoldOut = false
+	""")
+	List<Product> findAllRecommendableProducts();
 }

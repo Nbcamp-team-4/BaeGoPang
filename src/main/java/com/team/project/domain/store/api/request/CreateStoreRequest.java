@@ -16,9 +16,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor // JSON 파싱을 위해 필요
 public class CreateStoreRequest {
 
-    @NotNull(message = "사용자 ID는 필수입니다.")
-    private UUID userId;
-
     @NotNull(message = "지역 ID는 필수입니다.")
     private UUID regionId;
 
@@ -57,9 +54,9 @@ public class CreateStoreRequest {
     /**
      * Request DTO를 Service용 Command로 변환
      */
-    public CreateStoreCommand toCommand() {
+    public CreateStoreCommand toCommand(UUID userId) {
         return CreateStoreCommand.builder()
-            .userId(this.userId)      // TODO: 추후 @AuthenticationPrincipal 적용 시 제거 가능
+            .userId(userId)
             .regionId(this.regionId)
             .name(this.name)
             .description(this.description)

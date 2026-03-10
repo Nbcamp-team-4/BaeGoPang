@@ -13,8 +13,6 @@ import com.team.project.global.file.dto.UploadImageResponse;
 import com.team.project.global.file.service.ImageService;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -39,6 +37,14 @@ public class ImageController {
 			@RequestPart("file") MultipartFile file
 	) {
 		String imageUrl = imageService.upload(file, ImageType.PRODUCT);
+		return ResponseEntity.ok(UploadImageResponse.from(imageUrl));
+	}
+	@Operation(summary = "리뷰 이미지 업로드")
+	@PostMapping(value = "/reviews", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<UploadImageResponse> uploadReviewImage(
+		@RequestPart("file") MultipartFile file
+	) {
+		String imageUrl = imageService.upload(file, ImageType.REVIEW);
 		return ResponseEntity.ok(UploadImageResponse.from(imageUrl));
 	}
 }
