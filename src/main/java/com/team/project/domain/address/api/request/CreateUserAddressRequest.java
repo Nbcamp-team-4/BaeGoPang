@@ -1,14 +1,15 @@
 package com.team.project.domain.address.api.request;
 
-import java.math.BigDecimal;
-import java.util.UUID;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.Setter;
+
+import java.math.BigDecimal;
 
 @Getter
+@Setter
 public class CreateUserAddressRequest {
 	@NotBlank
 	@Schema(description = "배송지 이름", example = "집")
