@@ -24,10 +24,10 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 	@Override
 	public Optional<Store> findDetailById(UUID storeId) {
 		return em.createQuery("""
-                select distinct s from Store s
-                join fetch s.region r
-                where s.id = :storeId and s.deletedAt is null
-            """, Store.class)
+				    select distinct s from Store s
+				    join fetch s.region r
+				    where s.id = :storeId and s.deletedAt is null
+				""", Store.class)
 			.setParameter("storeId", storeId)
 			.getResultStream().findFirst();
 	}
@@ -35,20 +35,20 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 	@Override
 	public List<Store> findByUser_IdAndDeletedAtIsNull(UUID userId) {
 		return em.createQuery("""
-                select s from Store s
-                join fetch s.region r
-                where s.user.id = :userId and s.deletedAt is null
-                order by s.createdAt desc
-            """, Store.class)
+				    select s from Store s
+				    join fetch s.region r
+				    where s.user.id = :userId and s.deletedAt is null
+				    order by s.createdAt desc
+				""", Store.class)
 			.setParameter("userId", userId)
 			.getResultList();
 	}
 
 	public List<Store> findAllWithFilters(StoreStatus status, UUID regionId, UUID userId) {
 		StringBuilder jpql = new StringBuilder("""
-        select s from Store s
-        where s.deletedAt is null
-    """);
+			    select s from Store s
+			    where s.deletedAt is null
+			""");
 
 		Map<String, Object> params = new HashMap<>();
 
@@ -80,36 +80,45 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
 	@Override
 	public List<Store> findNearbyStores(double longitude, double latitude, double distanceInMeters, UUID categoryId) {
-		String sql = """
-        SELECT s.*
-        FROM p_store s
-        WHERE s.status = 'OPEN'
-          AND s.deleted_at IS NULL
-          AND ST_DWithin(
-              s.location::geography,
-              ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
-              :distance
-          )
-          AND (
-              :categoryId::uuid IS NULL
-              OR EXISTS (
-                  SELECT 1
-                  FROM p_store_category sc
-                  WHERE sc.store_id = s.id
-                    AND sc.category_id = :categoryId
-              )
-          )
-        ORDER BY ST_Distance(
-            s.location::geography,
-            ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
-        ) ASC
-    """;
+		StringBuilder sql = new StringBuilder("""
+			    SELECT s.*
+			    FROM p_store s
+			    WHERE s.status = 'OPEN'
+			      AND s.deleted_at IS NULL
+			      AND ST_DWithin(
+			          s.location::geography,
+			          ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+			          :distance
+			      )
+			""");
 
-		return em.createNativeQuery(sql, Store.class)
+		if (categoryId != null) {
+			sql.append("""
+				  AND EXISTS (
+				      SELECT 1
+				      FROM p_store_category sc
+				      WHERE sc.store_id = s.id
+				        AND sc.category_id = :categoryId
+				  )
+				""");
+		}
+
+		sql.append("""
+			    ORDER BY ST_Distance(
+			        s.location::geography,
+			        ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+			    ) ASC
+			""");
+
+		var query = em.createNativeQuery(sql.toString(), Store.class)
 			.setParameter("lng", longitude)
 			.setParameter("lat", latitude)
-			.setParameter("distance", distanceInMeters)
-			.setParameter("categoryId", categoryId)
-			.getResultList();
+			.setParameter("distance", distanceInMeters);
+
+		if (categoryId != null) {
+			query.setParameter("categoryId", categoryId);
+		}
+
+		return query.getResultList();
 	}
 }
