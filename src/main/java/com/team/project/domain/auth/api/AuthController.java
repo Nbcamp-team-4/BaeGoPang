@@ -1,8 +1,10 @@
 package com.team.project.domain.auth.api;
 
 import com.team.project.domain.auth.api.request.SignUpRequest;
+import com.team.project.domain.auth.dto.CustomUserPrincipal;
 import com.team.project.domain.user.api.response.ApiResponse;
 import com.team.project.domain.auth.api.response.SignUpResponse;
+import com.team.project.domain.user.exception.CustomException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -12,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -82,8 +85,12 @@ public class AuthController {
 			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음")
 	})
 	@PostMapping("/logout")
-	public ResponseEntity<Void> logout(@CurrentUser UserDto userDto) {
-		authService.logout(userDto.getId());
+	public ResponseEntity<Void> logout(@AuthenticationPrincipal CustomUserPrincipal principal) {
+		if (principal == null) {
+			throw new CustomException(HttpStatus.UNAUTHORIZED, "인증된 사용자가 없습니다.");
+		}
+
+		authService.logout(principal.getUserId());
 		return ResponseEntity.noContent().build();
 	}
 

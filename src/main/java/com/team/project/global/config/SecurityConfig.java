@@ -45,6 +45,7 @@ public class SecurityConfig {
 								"/api/stores/**",
 								"/api/images/**"
 						).permitAll()
+						.requestMatchers("/api/auth/logout").authenticated()
 						.requestMatchers("/api/admin/**").hasRole("ADMIN")
 						.requestMatchers("/api/user/**").hasAnyRole("USER", "ADMIN")
 						.requestMatchers("/api/carts/**").hasRole("CUSTOMER")
