@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.team.project.domain.auth.dto.CurrentUser;
+import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.product.api.request.CreateProductRequest;
 import com.team.project.domain.product.api.request.UpdateProductRequest;
 import com.team.project.domain.product.api.response.GetProductResponse;
@@ -45,11 +47,13 @@ public class ProductController {
     @PostMapping
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<ProductResponse> createProduct(
+        @CurrentUser UserDto userDto,
         @RequestBody CreateProductRequest request
     ) {
 
         CreateProductCommand command = request.toCommand();
-        ProductResult result = productService.createProduct(command);
+        String role = userDto.getRoles().get(0).replace("ROLE_", "");
+        ProductResult result = productService.createProduct(userDto.getId(), role, command);
 
         return ResponseEntity.ok(ProductResponse.from(result));
     }
@@ -62,11 +66,13 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<ProductResponse> updateProduct(
         @PathVariable UUID productId,
+        @CurrentUser UserDto userDto,
         @RequestBody UpdateProductRequest request
     ) {
 
         UpdateProductCommand command = request.toCommand(productId);
-        ProductResult result = productService.updateProduct(command);
+        String role = userDto.getRoles().get(0).replace("ROLE_", "");
+        ProductResult result = productService.updateProduct(userDto.getId(), role, command);
 
         return ResponseEntity.ok(ProductResponse.from(result));
     }
@@ -79,10 +85,11 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<Void> deleteProduct(
         @PathVariable UUID productId,
-        @RequestParam(required = false) UUID userId
+        @CurrentUser UserDto userDto
     ) {
 
-        productService.deleteProduct(productId, userId);
+        String role = userDto.getRoles().get(0).replace("ROLE_", "");
+        productService.deleteProduct(productId, userDto.getId(), role);
 
         return ResponseEntity.noContent().build();
     }
@@ -143,12 +150,13 @@ public class ProductController {
     public ResponseEntity<ProductResponse> updateSoldOutStatus(
         @PathVariable UUID productId,
         @RequestParam boolean soldOut,
-        @RequestParam(required = false) UUID userId
+        @CurrentUser UserDto userDto
     ) {
 
+        String role = userDto.getRoles().get(0).replace("ROLE_", "");
         ProductResult result = soldOut
-            ? productService.markSoldOut(productId, userId)
-            : productService.markAvailable(productId, userId);
+            ? productService.markSoldOut(productId, userDto.getId(), role)
+            : productService.markAvailable(productId, userDto.getId(), role);
 
         return ResponseEntity.ok(ProductResponse.from(result));
     }
@@ -162,12 +170,13 @@ public class ProductController {
     public ResponseEntity<ProductResponse> updateHiddenStatus(
         @PathVariable UUID productId,
         @RequestParam boolean hidden,
-        @RequestParam(required = false) UUID userId
+        @CurrentUser UserDto userDto
     ) {
 
+        String role = userDto.getRoles().get(0).replace("ROLE_", "");
         ProductResult result = hidden
-            ? productService.hideProduct(productId, userId)
-            : productService.unhideProduct(productId, userId);
+            ? productService.hideProduct(productId, userDto.getId(), role)
+            : productService.unhideProduct(productId, userDto.getId(), role);
 
         return ResponseEntity.ok(ProductResponse.from(result));
     }
