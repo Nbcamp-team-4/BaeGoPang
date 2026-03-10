@@ -16,12 +16,13 @@ import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.region.api.request.CreateRegionRequest;
 import com.team.project.domain.region.api.request.RegionSearchRequest;
 import com.team.project.domain.region.api.request.UpdateRegionRequest;
-import com.team.project.domain.region.api.response.PagedRegionsResponse;
 import com.team.project.domain.region.api.response.RegionResponse;
 import com.team.project.domain.region.entity.Region;
 import com.team.project.domain.region.exception.InvalidRegionGeomException;
+import com.team.project.domain.region.exception.RegionDuplicateException;
 import com.team.project.domain.region.exception.RegionNotFoundException;
 import com.team.project.domain.region.repository.RegionRepository;
+import com.team.project.global.common.dto.BasePageResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,141 +31,154 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class RegionServiceImpl implements RegionService {
 
-    private final RegionRepository regionRepository;
+	private final RegionRepository regionRepository;
 
-    @Override
-    public RegionResponse createRegion(UserDto userDto, CreateRegionRequest request) {
-        MultiPolygon geom = toMultiPolygon(request.getGeomWkt());
+	@Override
+	public RegionResponse createRegion(UserDto userDto, CreateRegionRequest request) {
+		if (regionRepository.existsByName(request.getName())) {
+			throw new RegionDuplicateException();
+		}
 
-        Region region = new Region(request.getName(), geom);
+		MultiPolygon geom = toMultiPolygon(request.getGeomWkt());
 
-        if (request.getIsActive() != null && !request.getIsActive()) {
-            region.deactivate();
-        }
+		Region region = new Region(request.getName(), geom);
 
-        return RegionResponse.from(regionRepository.save(region));
-    }
+		if (request.getIsActive() != null && !request.getIsActive()) {
+			region.deactivate();
+		}
 
-    @Override
-    @Transactional(readOnly = true)
-    public RegionResponse getRegion(UUID regionId) {
-        Region region = regionRepository.findById(regionId)
-            .orElseThrow(RegionNotFoundException::new);
-        return RegionResponse.from(region);
-    }
+		return RegionResponse.from(regionRepository.save(region));
+	}
 
-    @Override
-    @Transactional(readOnly = true)
-    public PagedRegionsResponse getRegionsForUser(RegionSearchRequest request) {
-        Pageable pageable = PageRequest.of(
-            request.getPage(),
-            request.getSize(),
-            Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+	@Override
+	@Transactional(readOnly = true)
+	public RegionResponse getRegion(UUID regionId) {
+		Region region = regionRepository.findById(regionId)
+			.orElseThrow(RegionNotFoundException::new);
 
-        String keyword = normalizeKeyword(request.getKeyword());
-        Page<Region> page;
+		return RegionResponse.from(region);
+	}
 
-        if (keyword == null) {
-            page = regionRepository.findAllByActiveTrueOrderByCreatedAtDesc(pageable);
-        } else {
-            page = regionRepository.findAllByIsActiveTrueAndNameContainingIgnoreCaseOrderByCreatedAtDesc(
-                keyword,
-                pageable
-            );
-        }
+	@Override
+	@Transactional(readOnly = true)
+	public BasePageResponse<RegionResponse> getRegionsForUser(RegionSearchRequest request) {
+		Pageable pageable = PageRequest.of(
+			request.getPage(),
+			request.getSize(),
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
 
-        return new PagedRegionsResponse(
-            page.getContent().stream().map(RegionResponse::from).toList(),
-            page.getNumber(),
-            page.getSize(),
-            page.getTotalElements(),
-            page.getTotalPages()
-        );
-    }
+		String keyword = normalizeKeyword(request.getKeyword());
+		Page<Region> page;
 
-    @Override
-    @Transactional(readOnly = true)
-    public PagedRegionsResponse getRegionsForAdmin(RegionSearchRequest request) {
-        Pageable pageable = PageRequest.of(
-            request.getPage(),
-            request.getSize(),
-            Sort.by(Sort.Direction.DESC, "createdAt")
-        );
+		if (keyword == null) {
+			page = regionRepository.findAllByActiveTrueOrderByCreatedAtDesc(pageable);
+		} else {
+			page = regionRepository.findAllByActiveTrueAndNameContainingIgnoreCaseOrderByCreatedAtDesc(
+				keyword,
+				pageable
+			);
+		}
 
-        String keyword = normalizeKeyword(request.getKeyword());
-        Page<Region> page;
+		return new BasePageResponse<RegionResponse>(
+			page.getContent().stream().map(RegionResponse::from).toList(),
+			page.getNumber(),
+			page.getSize(),
+			page.getTotalElements(),
+			page.getTotalPages()
+		);
+	}
 
-        if (keyword == null) {
-            page = regionRepository.findAllByOrderByCreatedAtDesc(pageable);
-        } else {
-            page = regionRepository.findAllByNameContainingIgnoreCaseOrderByCreatedAtDesc(
-                keyword,
-                pageable
-            );
-        }
+	@Override
+	@Transactional(readOnly = true)
+	public BasePageResponse<RegionResponse> getRegionsForAdmin(RegionSearchRequest request) {
+		Pageable pageable = PageRequest.of(
+			request.getPage(),
+			request.getSize(),
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
 
-        return new PagedRegionsResponse(
-            page.getContent().stream().map(RegionResponse::from).toList(),
-            page.getNumber(),
-            page.getSize(),
-            page.getTotalElements(),
-            page.getTotalPages()
-        );
-    }
+		String keyword = normalizeKeyword(request.getKeyword());
+		Page<Region> page;
 
-    @Override
-    public RegionResponse updateRegion(UserDto userDto, UUID regionId, UpdateRegionRequest request) {
-        Region region = regionRepository.findById(regionId)
-            .orElseThrow(RegionNotFoundException::new);
+		if (keyword == null) {
+			page = regionRepository.findAllByOrderByCreatedAtDesc(pageable);
+		} else {
+			page = regionRepository.findAllByNameContainingIgnoreCaseOrderByCreatedAtDesc(
+				keyword,
+				pageable
+			);
+		}
 
-        MultiPolygon geom = toMultiPolygon(request.getGeomWkt());
-        region.updateInfo(request.getName(), geom);
+		return new BasePageResponse<RegionResponse>(
+			page.getContent().stream().map(RegionResponse::from).toList(),
+			page.getNumber(),
+			page.getSize(),
+			page.getTotalElements(),
+			page.getTotalPages()
+		);
+	}
 
-        if (request.getIsActive() != null) {
-            if (request.getIsActive()) {
-                region.activate();
-            } else {
-                region.deactivate();
-            }
-        }
+	@Override
+	public RegionResponse updateRegion(UserDto userDto, UUID regionId, UpdateRegionRequest request) {
+		Region region = regionRepository.findById(regionId)
+			.orElseThrow(RegionNotFoundException::new);
 
-        return RegionResponse.from(region);
-    }
+		if (!region.getName().equals(request.getName()) && regionRepository.existsByName(request.getName())) {
+			throw new RegionDuplicateException();
+		}
 
-    @Override
-    public void deactivateRegion(UserDto userDto, UUID regionId) {
-        Region region = regionRepository.findById(regionId)
-            .orElseThrow(RegionNotFoundException::new);
-        region.deactivate();
-    }
+		MultiPolygon geom = toMultiPolygon(request.getGeomWkt());
+		region.updateInfo(request.getName(), geom);
 
-    @Override
-    public void activateRegion(UserDto userDto, UUID regionId) {
-        Region region = regionRepository.findById(regionId)
-            .orElseThrow(RegionNotFoundException::new);
-        region.activate();
-    }
+		if (request.getIsActive() != null) {
+			if (request.getIsActive()) {
+				region.activate();
+			} else {
+				region.deactivate();
+			}
+		}
 
-    private String normalizeKeyword(String keyword) {
-        if (keyword == null || keyword.isBlank()) {
-            return null;
-        }
-        return keyword.trim();
-    }
+		return RegionResponse.from(region);
+	}
 
-    private MultiPolygon toMultiPolygon(String wkt) {
-        try {
-            Geometry g = new WKTReader().read(wkt);
-            g.setSRID(4326);
-            if (!(g instanceof MultiPolygon)) {
-                throw new InvalidRegionGeomException();
-            }
-            return (MultiPolygon) g;
-        } catch (InvalidRegionGeomException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new InvalidRegionGeomException();
-        }
-    }
+	@Override
+	public void deactivateRegion(UserDto userDto, UUID regionId) {
+		Region region = regionRepository.findById(regionId)
+			.orElseThrow(RegionNotFoundException::new);
+
+		region.deactivate();
+	}
+
+	@Override
+	public void activateRegion(UserDto userDto, UUID regionId) {
+		Region region = regionRepository.findById(regionId)
+			.orElseThrow(RegionNotFoundException::new);
+
+		region.activate();
+	}
+
+	private String normalizeKeyword(String keyword) {
+		if (keyword == null || keyword.isBlank()) {
+			return null;
+		}
+		return keyword.trim();
+	}
+
+	private MultiPolygon toMultiPolygon(String wkt) {
+		try {
+			Geometry geometry = new WKTReader().read(wkt);
+			geometry.setSRID(4326);
+
+			if (!(geometry instanceof MultiPolygon)) {
+				throw new InvalidRegionGeomException();
+			}
+
+			return (MultiPolygon) geometry;
+		} catch (InvalidRegionGeomException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new InvalidRegionGeomException();
+		}
+	}
 }

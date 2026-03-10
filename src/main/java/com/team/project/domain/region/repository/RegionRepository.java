@@ -33,7 +33,7 @@ public interface RegionRepository extends JpaRepository<Region, UUID> {
     // 관리자용(전체) 페이징
     Page<Region> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
-    Page<Region> findAllByIsActiveTrueAndNameContainingIgnoreCaseOrderByCreatedAtDesc(String keyword, Pageable pageable);
+    Page<Region> findAllByActiveTrueAndNameContainingIgnoreCaseOrderByCreatedAtDesc(String keyword, Pageable pageable);
 
     Page<Region> findAllByNameContainingIgnoreCaseOrderByCreatedAtDesc(String keyword, Pageable pageable);
 }

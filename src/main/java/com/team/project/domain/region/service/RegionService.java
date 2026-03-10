@@ -6,8 +6,8 @@ import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.region.api.request.CreateRegionRequest;
 import com.team.project.domain.region.api.request.RegionSearchRequest;
 import com.team.project.domain.region.api.request.UpdateRegionRequest;
-import com.team.project.domain.region.api.response.PagedRegionsResponse;
 import com.team.project.domain.region.api.response.RegionResponse;
+import com.team.project.global.common.dto.BasePageResponse;
 
 public interface RegionService {
 
@@ -15,12 +15,13 @@ public interface RegionService {
 
     RegionResponse getRegion(UUID regionId);
 
-    PagedRegionsResponse getRegionsForUser(RegionSearchRequest request);
+    BasePageResponse<RegionResponse> getRegionsForUser(RegionSearchRequest request);
 
-    PagedRegionsResponse getRegionsForAdmin(RegionSearchRequest request);
+    BasePageResponse<RegionResponse> getRegionsForAdmin(RegionSearchRequest request);
 
     RegionResponse updateRegion(UserDto userDto, UUID regionId, UpdateRegionRequest request);
 
+    // 운영상 활성/비활성 전환
     void deactivateRegion(UserDto userDto, UUID regionId);
 
     void activateRegion(UserDto userDto, UUID regionId);
