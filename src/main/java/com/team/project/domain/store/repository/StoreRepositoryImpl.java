@@ -147,65 +147,73 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 
 	@Override
 	public Page<Store> findNearbyStores(
-		double longitude,
-		double latitude,
-		double distanceInMeters,
-		UUID categoryId,
-		Pageable pageable
+			double longitude,
+			double latitude,
+			double distanceInMeters,
+			UUID categoryId,
+			Pageable pageable
 	) {
-		String idSql = """
-			SELECT s.id
-			FROM p_store s
-			WHERE s.status = 'OPEN'
-			  AND s.deleted_at IS NULL
-			  AND ST_DWithin(
-			  	s.location::geography,
-			  	ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
-			  	:distance
-			  )
-			  AND (
-			  	:categoryId::uuid IS NULL
-			  	OR EXISTS (
-			  		SELECT 1
-			  		FROM p_store_category sc
-			  		WHERE sc.store_id = s.id
-			  		  AND sc.category_id = :categoryId
-			  		  AND sc.deleted_at IS NULL
-			  	)
-			  )
-			ORDER BY ST_Distance(
-				s.location::geography,
-				ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
-			) ASC
-		""";
+		StringBuilder idSql = new StringBuilder("""
+		SELECT s.id
+		FROM p_store s
+		WHERE s.status = 'OPEN'
+		  AND s.deleted_at IS NULL
+		  AND ST_DWithin(
+		  	s.location::geography,
+		  	ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+		  	:distance
+		  )
+	""");
 
-		String countSql = """
-			SELECT COUNT(*)
-			FROM p_store s
-			WHERE s.status = 'OPEN'
-			  AND s.deleted_at IS NULL
-			  AND ST_DWithin(
-			  	s.location::geography,
-			  	ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
-			  	:distance
-			  )
-			  AND (
-			  	:categoryId::uuid IS NULL
-			  	OR EXISTS (
-			  		SELECT 1
-			  		FROM p_store_category sc
-			  		WHERE sc.store_id = s.id
-			  		  AND sc.category_id = :categoryId
-			  		  AND sc.deleted_at IS NULL
-			  	)
-			  )
-		""";
+		StringBuilder countSql = new StringBuilder("""
+		SELECT COUNT(*)
+		FROM p_store s
+		WHERE s.status = 'OPEN'
+		  AND s.deleted_at IS NULL
+		  AND ST_DWithin(
+		  	s.location::geography,
+		  	ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography,
+		  	:distance
+		  )
+	""");
 
-		Query idQuery = em.createNativeQuery(idSql)
-			.setParameter("lng", longitude)
-			.setParameter("lat", latitude)
-			.setParameter("distance", distanceInMeters)
-			.setParameter("categoryId", categoryId);
+		if (categoryId != null) {
+			idSql.append("""
+			  AND EXISTS (
+			  	SELECT 1
+			  	FROM p_store_category sc
+			  	WHERE sc.store_id = s.id
+			  	  AND sc.category_id = :categoryId
+			  	  AND sc.deleted_at IS NULL
+			  )
+		""");
+
+			countSql.append("""
+			  AND EXISTS (
+			  	SELECT 1
+			  	FROM p_store_category sc
+			  	WHERE sc.store_id = s.id
+			  	  AND sc.category_id = :categoryId
+			  	  AND sc.deleted_at IS NULL
+			  )
+		""");
+		}
+
+		idSql.append("""
+		ORDER BY ST_Distance(
+			s.location::geography,
+			ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography
+		) ASC
+	""");
+
+		Query idQuery = em.createNativeQuery(idSql.toString())
+				.setParameter("lng", longitude)
+				.setParameter("lat", latitude)
+				.setParameter("distance", distanceInMeters);
+
+		if (categoryId != null) {
+			idQuery.setParameter("categoryId", categoryId);
+		}
 
 		idQuery.setFirstResult((int) pageable.getOffset());
 		idQuery.setMaxResults(pageable.getPageSize());
@@ -214,33 +222,37 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 		List<Object> rawIds = idQuery.getResultList();
 
 		List<UUID> ids = rawIds.stream()
-			.map(value -> {
-				if (value instanceof UUID uuid) {
-					return uuid;
-				}
-				return UUID.fromString(value.toString());
-			})
-			.toList();
+				.map(value -> {
+					if (value instanceof UUID uuid) {
+						return uuid;
+					}
+					return UUID.fromString(value.toString());
+				})
+				.toList();
 
-		if (ids.isEmpty()) {
-			Number totalNumber = (Number) em.createNativeQuery(countSql)
+		Query countQuery = em.createNativeQuery(countSql.toString())
 				.setParameter("lng", longitude)
 				.setParameter("lat", latitude)
-				.setParameter("distance", distanceInMeters)
-				.setParameter("categoryId", categoryId)
-				.getSingleResult();
+				.setParameter("distance", distanceInMeters);
 
+		if (categoryId != null) {
+			countQuery.setParameter("categoryId", categoryId);
+		}
+
+		Number totalNumber = (Number) countQuery.getSingleResult();
+
+		if (ids.isEmpty()) {
 			return new PageImpl<>(Collections.emptyList(), pageable, totalNumber.longValue());
 		}
 
 		List<Store> stores = em.createQuery("""
-				select s from Store s
-				join fetch s.region r
-				join fetch s.user u
-				where s.id in :ids
-			""", Store.class)
-			.setParameter("ids", ids)
-			.getResultList();
+			select s from Store s
+			join fetch s.region r
+			join fetch s.user u
+			where s.id in :ids
+		""", Store.class)
+				.setParameter("ids", ids)
+				.getResultList();
 
 		Map<UUID, Integer> orderMap = new HashMap<>();
 		for (int i = 0; i < ids.size(); i++) {
@@ -248,15 +260,8 @@ public class StoreRepositoryImpl implements StoreRepositoryCustom {
 		}
 
 		List<Store> orderedStores = stores.stream()
-			.sorted(Comparator.comparingInt(store -> orderMap.get(store.getId())))
-			.toList();
-
-		Number totalNumber = (Number) em.createNativeQuery(countSql)
-			.setParameter("lng", longitude)
-			.setParameter("lat", latitude)
-			.setParameter("distance", distanceInMeters)
-			.setParameter("categoryId", categoryId)
-			.getSingleResult();
+				.sorted(Comparator.comparingInt(store -> orderMap.get(store.getId())))
+				.toList();
 
 		return new PageImpl<>(orderedStores, pageable, totalNumber.longValue());
 	}
