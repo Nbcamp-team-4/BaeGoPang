@@ -57,6 +57,8 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findActiveCartDetailByUserId(userId)
                 .orElseThrow(CartNotFoundException::new);
 
+        cartRepository.fetchItemOptionsByCartId(cart.getId());
+
         return GetCartResponse.from(cart);
     }
 
@@ -76,7 +78,7 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
 
-        Cart cart = cartRepository.findActiveCartDetailByUserId(user.getId())
+        Cart cart = cartRepository.findActiveCartByUserId(user.getId())
                 .orElseGet(() -> cartRepository.save(new Cart(user, store)));
 
         if (cart.getStatus() != CartStatus.ACTIVE) {
@@ -87,6 +89,10 @@ public class CartServiceImpl implements CartService {
         if (!cart.getStore().getId().equals(store.getId())) {
             cart.changeStoreAndClear(store);
             cartReset = true;
+        } else {
+            cart = cartRepository.findActiveCartDetailByUserId(user.getId())
+                    .orElseThrow(CartNotFoundException::new);
+            cartRepository.fetchItemOptionsByCartId(cart.getId());
         }
 
         List<AddCartItemRequest.CartItemOptionRequest> requestOptions = request.getOptions();
@@ -148,6 +154,8 @@ public class CartServiceImpl implements CartService {
 
         Cart cart = cartRepository.findCartDetailById(cartId)
                 .orElseThrow(CartNotFoundException::new);
+
+        cartRepository.fetchItemOptionsByCartId(cartId);
 
         if (!cart.getUser().getId().equals(userId)) {
             throw new CartForbiddenException();

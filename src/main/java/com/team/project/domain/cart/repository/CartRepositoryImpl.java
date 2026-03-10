@@ -17,26 +17,24 @@ public class CartRepositoryImpl implements CartRepositoryCustom {
 
     private final EntityManager em;
 
-    @Override
-    public Optional<Cart> findActiveCartDetailByUserId(UUID userId) {
-        // 유저의 ACTIVE 장바구니를 "상세"로 조회
-        // - cart + store + items + itemOptions 까지 한번에 가져오기(fetch join)
-        // - 컬렉션(items/options) fetch join은 row가 늘어날 수 있어서 distinct로 중복 제거
+	@Override
+	public Optional<Cart> findActiveCartDetailByUserId(UUID userId) {
 		return em.createQuery("""
-			select distinct c
-			from Cart c
-			join fetch c.store s
-			left join fetch c.items ci
-			left join fetch ci.product p
-			where c.user.id = :userId
-			  and c.status = :status
-			  and c.deletedAt is null
-		""", Cart.class)
-		.setParameter("userId", userId)
-		.setParameter("status", CartStatus.ACTIVE)
-		.getResultStream()
-		.findFirst();
-    }
+        select distinct c
+        from Cart c
+        join fetch c.user u
+        join fetch c.store s
+        left join fetch c.items ci
+        left join fetch ci.product p
+        where c.user.id = :userId
+          and c.status = :status
+          and c.deletedAt is null
+    """, Cart.class)
+				.setParameter("userId", userId)
+				.setParameter("status", CartStatus.ACTIVE)
+				.getResultStream()
+				.findFirst();
+	}
 
 	@Override
 	public Optional<Cart> findCartDetailById(UUID cartId) {
