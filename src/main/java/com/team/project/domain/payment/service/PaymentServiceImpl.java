@@ -3,6 +3,7 @@ package com.team.project.domain.payment.service;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.payment.entity.Payment;
+import com.team.project.domain.payment.event.PaymentSuccessEvent;
 import com.team.project.domain.payment.exception.InvalidPaymentRequestException;
 import com.team.project.domain.payment.exception.PaymentAlreadyPaidException;
 import com.team.project.domain.payment.exception.PaymentAmountMismatchException;
@@ -50,6 +52,7 @@ public class PaymentServiceImpl implements PaymentService {
 	private final PaymentRepository paymentRepository;
 	private final PaymentLogService paymentLogService;
 	private final PgProviderService pgProviderService;
+	private final ApplicationEventPublisher applicationEventPublisher;
 
 	/**
 	 * 결제 준비 메서드
@@ -126,6 +129,11 @@ public class PaymentServiceImpl implements PaymentService {
 			paymentLogService.createPaymentLog(
 				CreatePaymentLogCommand.of(paymentKey, PaymentLogStatus.PAY_SUCCESS,
 					null, payment.getId()));
+
+			// 6. 커밋 후 장바구니 삭제 이벤트 발행
+			applicationEventPublisher.publishEvent(
+				new PaymentSuccessEvent(command.getUserId())
+			);
 
 			return PayPaymentQuery.from(payment);
 		} catch (PgProviderBaseException e) {
