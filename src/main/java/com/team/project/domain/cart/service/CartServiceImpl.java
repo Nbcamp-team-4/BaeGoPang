@@ -1,6 +1,9 @@
 package com.team.project.domain.cart.service;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -37,17 +40,14 @@ public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
 
-    // FK 확인용(주문과 동일)
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
-
-    // 옵션 엔티티를 만든 상태라면, 옵션 검증을 위해 필요(없으면 빼도 됨)
     private final com.team.project.domain.product.repository.ProductOptionRepository productOptionRepository;
     private final com.team.project.domain.product.repository.ProductOptionItemRepository productOptionItemRepository;
 
     @Override
-    @Transactional // 또는 readOnly=true로 바꾸고 싶으면 spring 트랜잭션으로
+    @Transactional
     public GetCartResponse getCart(UUID userId) {
         Cart cart = cartRepository.findActiveCartDetailByUserId(userId)
                 .orElseThrow(CartNotFoundException::new);
@@ -59,12 +59,10 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public AddCartItemResponse addCartItem(UUID userId, AddCartItemRequest request) {
 
-        // 수량 검증
         if (request.getQuantity() == null || request.getQuantity() < 1) {
             throw new InvalidCartQuantityException();
         }
 
-        // 로그인 사용자 기준으로 유저 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("USER_NOT_FOUND"));
 
@@ -74,7 +72,8 @@ public class CartServiceImpl implements CartService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("PRODUCT_NOT_FOUND"));
 
-        Cart cart = cartRepository.findActiveCartByUserId(user.getId())
+        // add 시에도 items/options까지 포함된 장바구니 조회가 더 안전함
+        Cart cart = cartRepository.findActiveCartDetailByUserId(user.getId())
                 .orElseGet(() -> cartRepository.save(new Cart(user, store)));
 
         if (cart.getStatus() != CartStatus.ACTIVE) {
@@ -87,10 +86,36 @@ public class CartServiceImpl implements CartService {
             cartReset = true;
         }
 
+        // 옵션 요청 검증 및 비교용 키 생성
+        List<AddCartItemRequest.CartItemOptionRequest> requestOptions = request.getOptions();
+        validateAddCartItemOptions(product, requestOptions);
+
+        // 같은 상품 + 같은 옵션 조합이면 기존 수량 증가
+        CartItem existingItem = cart.getItems().stream()
+                .filter(cartItem -> cartItem.getProduct().getId().equals(product.getId()))
+                .filter(cartItem -> isSameOptions(cartItem.getOptions(), requestOptions))
+                .findFirst()
+                .orElse(null);
+
+        if (existingItem != null) {
+            existingItem.changeQuantity(existingItem.getQuantity() + request.getQuantity());
+
+            Cart saved = cartRepository.save(cart);
+
+            return AddCartItemResponse.of(
+                    saved,
+                    existingItem.getId(),
+                    product.getId(),
+                    existingItem.getQuantity(),
+                    cartReset
+            );
+        }
+
+        // 같은 조합이 없으면 새 라인 생성
         CartItem item = new CartItem(product, request.getQuantity());
 
-        if (request.getOptions() != null) {
-            for (AddCartItemRequest.CartItemOptionRequest optReq : request.getOptions()) {
+        if (requestOptions != null) {
+            for (AddCartItemRequest.CartItemOptionRequest optReq : requestOptions) {
                 ProductOption option = productOptionRepository.findById(optReq.getProductOptionId())
                         .orElseThrow(() -> new IllegalArgumentException("PRODUCT_OPTION_NOT_FOUND"));
 
@@ -118,7 +143,6 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public UpdateCartItemResponse updateCartItem(UUID userId, UUID cartId, UUID itemId, UpdateCartItemRequest request) {
 
-        // 수량 검증
         if (request.getQuantity() == null || request.getQuantity() < 1) {
             throw new InvalidCartQuantityException();
         }
@@ -126,7 +150,6 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findCartDetailById(cartId)
                 .orElseThrow(CartNotFoundException::new);
 
-        // 로그인 사용자와 장바구니 소유자 일치 여부 확인
         if (!cart.getUser().getId().equals(userId)) {
             throw new CartForbiddenException();
         }
@@ -163,8 +186,6 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void deleteCartItem(UUID itemId, UUID userId) {
-
-        // - 유저의 ACTIVE 장바구니를 가져와서 items에서 제거(orphanRemoval로 DB에서도 삭제)
         Cart cart = cartRepository.findActiveCartDetailByUserId(userId)
                 .orElseThrow(CartNotFoundException::new);
 
@@ -176,15 +197,11 @@ public class CartServiceImpl implements CartService {
         if (!removed) {
             throw new CartItemNotFoundException();
         }
-
-        // 별도 save 호출 없이도 트랜잭션 내 변경감지로 반영됨
     }
 
     @Override
     @Transactional
     public void clearCart(UUID userId) {
-
-        // 유저의 ACTIVE 장바구니 비우기
         Cart cart = cartRepository.findActiveCartDetailByUserId(userId)
                 .orElseThrow(CartNotFoundException::new);
 
@@ -193,5 +210,59 @@ public class CartServiceImpl implements CartService {
         }
 
         cart.clearItems();
+    }
+
+    private void validateAddCartItemOptions(
+            Product product,
+            List<AddCartItemRequest.CartItemOptionRequest> requestOptions
+    ) {
+        if (requestOptions == null || requestOptions.isEmpty()) {
+            return;
+        }
+
+        for (AddCartItemRequest.CartItemOptionRequest optReq : requestOptions) {
+            ProductOption option = productOptionRepository.findById(optReq.getProductOptionId())
+                    .orElseThrow(() -> new IllegalArgumentException("PRODUCT_OPTION_NOT_FOUND"));
+
+            ProductOptionItem optionItem = productOptionItemRepository.findById(optReq.getProductOptionItemId())
+                    .orElseThrow(() -> new IllegalArgumentException("PRODUCT_OPTION_ITEM_NOT_FOUND"));
+
+            // 옵션이 현재 상품 소속인지 검증
+            if (!option.getProduct().getId().equals(product.getId())) {
+                throw new IllegalArgumentException("PRODUCT_OPTION_NOT_MATCHED_TO_PRODUCT");
+            }
+
+            // 옵션 아이템이 현재 옵션 소속인지 검증
+            if (!optionItem.getProductOption().getId().equals(option.getId())) {
+                throw new IllegalArgumentException("PRODUCT_OPTION_ITEM_NOT_MATCHED_TO_OPTION");
+            }
+        }
+    }
+
+    private boolean isSameOptions(
+            List<CartItemOption> existingOptions,
+            List<AddCartItemRequest.CartItemOptionRequest> requestOptions
+    ) {
+        if (existingOptions == null || existingOptions.isEmpty()) {
+            return requestOptions == null || requestOptions.isEmpty();
+        }
+
+        if (requestOptions == null || requestOptions.isEmpty()) {
+            return false;
+        }
+
+        if (existingOptions.size() != requestOptions.size()) {
+            return false;
+        }
+
+        Set<String> existingSet = existingOptions.stream()
+                .map(opt -> opt.getProductOption().getId() + ":" + opt.getProductOptionItem().getId())
+                .collect(Collectors.toSet());
+
+        Set<String> requestSet = requestOptions.stream()
+                .map(opt -> opt.getProductOptionId() + ":" + opt.getProductOptionItemId())
+                .collect(Collectors.toSet());
+
+        return existingSet.equals(requestSet);
     }
 }
