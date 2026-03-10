@@ -20,4 +20,12 @@ public class GetOrdersRequest extends BasePageRequest {
 
     @Schema(description = "주문 생성일 범위")
     private BaseRangeRequest<LocalDateTime> rangeCreatedAt;
+
+    @Schema(description = "정렬 기준", example = "createdAt", allowableValues = {
+            "createdAt", "updatedAt", "orderDate", "totalAmount", "status"
+    })
+    private String sortBy = "createdAt";
+
+    @Schema(description = "정렬 방향", example = "desc", allowableValues = {"asc", "desc"})
+    private String direction = "desc";
 }

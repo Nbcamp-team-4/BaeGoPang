@@ -74,7 +74,9 @@ public class OwnerOrderController {
                 request.getStatus(),
                 request.getRangeCreatedAt(),
                 storeId,
-                null
+                null,
+                request.getSortBy(),
+                request.getDirection()
         );
 
         GetOrdersQuery query = orderService.getStoreOrders(userDto.getId(), storeId, command);
