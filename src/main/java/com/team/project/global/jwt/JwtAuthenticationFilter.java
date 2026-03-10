@@ -37,14 +37,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String uri = request.getRequestURI();
 
 		return uri.equals("/")
-			|| uri.equals("/error")
-			|| uri.equals("/favicon.ico")
-			|| uri.startsWith("/api/auth/")
-			|| uri.startsWith("/api/ai/")    // AI 추천 경로 추가!
-			|| uri.startsWith("/api/stores/") // 상점 조회 등 추가
-			|| uri.startsWith("/api/images/") // 이미지 조회 추가
-			|| uri.startsWith("/swagger-ui/")
-			|| uri.startsWith("/v3/api-docs/");
+				|| uri.equals("/error")
+				|| uri.equals("/favicon.ico")
+				|| uri.equals("/api/auth/login")
+				|| uri.equals("/api/auth/signup")
+				|| uri.equals("/api/auth/reissue")
+				|| uri.startsWith("/swagger-ui/")
+				|| uri.startsWith("/v3/api-docs/");
 	}
 
 	@Override

@@ -9,9 +9,7 @@ import com.team.project.domain.ai.api.response.SearchAiRecommendResponse;
 
 public interface AiService {
 
-
 	List<SearchAiRecommendResponse> recommendMenu(ProcessAiRecommendRequest request);
 
-	// 2. 여기 리턴 타입을 String에서 GetReviewReplyResponse로 수정!
 	GetReviewReplyResponse generateReviewReply(UUID reviewId, String tone);
 }
