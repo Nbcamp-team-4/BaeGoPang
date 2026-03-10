@@ -10,4 +10,6 @@ import com.team.project.domain.store.entity.StoreCategory;
 public interface StoreCategoryRepository extends JpaRepository<StoreCategory, UUID> {
 
 	List<StoreCategory> findAllByStore_IdAndDeletedAtIsNull(UUID storeId);
+
+	List<StoreCategory> findAllByCategory_IdAndDeletedAtIsNull(UUID categoryId);
 }

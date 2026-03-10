@@ -10,14 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.team.project.domain.category.entity.Category;
 import com.team.project.domain.category.repository.CategoryRepository;
 import com.team.project.domain.product.entity.Product;
-import com.team.project.domain.product.entity.ProductOption;
 import com.team.project.domain.product.repository.ProductOptionRepository;
 import com.team.project.domain.product.repository.ProductRepository;
 import com.team.project.domain.product.service.ProductOptionManager;
 import com.team.project.domain.region.entity.Region;
 import com.team.project.domain.region.repository.RegionRepository;
 import com.team.project.domain.store.entity.Store;
-import com.team.project.domain.store.entity.StoreCategory;
 import com.team.project.domain.store.exception.InvalidStoreRequestException;
 import com.team.project.domain.store.exception.StoreForbiddenException;
 import com.team.project.domain.store.exception.StoreNotFoundException;
@@ -32,8 +30,8 @@ import com.team.project.domain.store.service.command.UpdateStoreByAdminCommand;
 import com.team.project.domain.store.service.result.StoreResult;
 import com.team.project.domain.store.util.GeometryUtil;
 import com.team.project.domain.user.entity.User;
-import com.team.project.domain.user.entity.UserAddress;
-import com.team.project.domain.user.repository.UserAddressRepository;
+import com.team.project.domain.address.entity.UserAddress;
+import com.team.project.domain.address.repository.UserAddressRepository;
 import com.team.project.domain.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -267,7 +265,7 @@ public class StoreServiceImpl implements StoreService {
 	}
 
 	// === [삭제] Soft Delete ===
-	@Override
+	/*@Override
 	@Transactional
 	public void deleteStore(UUID storeId, UUID userId) {
 		Store store = findStoreById(storeId);
@@ -297,7 +295,7 @@ public class StoreServiceImpl implements StoreService {
 		}
 
 		store.markDeleted(userId);
-	}
+	}*/
 
 	// 내부 헬퍼: 삭제되지 않은 가게만 조회
 	private Store findStoreById(UUID storeId) {

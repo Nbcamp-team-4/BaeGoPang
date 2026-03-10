@@ -7,6 +7,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,9 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 import com.team.project.global.file.ImageType;
 
 @Service
+@Profile("local")
 public class LocalImageService implements ImageService {
 
-	private static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+	private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 	@Value("${file.upload-dir}")
 	private String uploadDir;
@@ -39,9 +41,6 @@ public class LocalImageService implements ImageService {
 			throw new RuntimeException("이미지 저장에 실패했습니다.", e);
 		}
 
-		// TODO: 추후 S3 전환 시 이 반환값은 "/images/..."가 아니라
-		// TODO: S3 또는 CloudFront의 전체 URL로 변경될 수 있음
-		// 예: https://cdn.example.com/products/uuid.png
 		return "/images/" + imageType.getDirName() + "/" + savedFileName;
 	}
 
@@ -68,15 +67,15 @@ public class LocalImageService implements ImageService {
 
 	private boolean isImageContentType(String contentType) {
 		return contentType.equals("image/jpeg")
-			|| contentType.equals("image/png")
-			|| contentType.equals("image/webp");
+				|| contentType.equals("image/png")
+				|| contentType.equals("image/webp");
 	}
 
 	private boolean isAllowedExtension(String extension) {
 		return extension.equals("jpg")
-			|| extension.equals("jpeg")
-			|| extension.equals("png")
-			|| extension.equals("webp");
+				|| extension.equals("jpeg")
+				|| extension.equals("png")
+				|| extension.equals("webp");
 	}
 
 	private String extractExtension(String fileName) {
