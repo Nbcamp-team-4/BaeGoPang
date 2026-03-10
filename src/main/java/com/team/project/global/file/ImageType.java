@@ -5,7 +5,8 @@ import lombok.Getter;
 @Getter
 public enum ImageType {
 	STORE("stores"),
-	PRODUCT("products");
+	PRODUCT("products"),
+	REVIEW("reviews");
 
 	private final String dirName;
 
