@@ -1,4 +1,4 @@
-package com.team.project.domain.user.api.response;
+package com.team.project.domain.auth.api.response;
 
 import com.team.project.domain.user.entity.RoleType;
 import com.team.project.domain.user.entity.User;

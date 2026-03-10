@@ -1,6 +1,13 @@
 package com.team.project.domain.auth.api;
 
-import org.springframework.http.HttpStatus;
+import com.team.project.domain.auth.api.request.SignUpRequest;
+import com.team.project.domain.user.api.response.ApiResponse;
+import com.team.project.domain.auth.api.response.SignUpResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team.project.domain.auth.api.request.LoginRequest;
-import com.team.project.domain.auth.api.request.SignUpRequest;
 import com.team.project.domain.auth.api.response.LoginResponse;
 import com.team.project.domain.auth.dto.CurrentUser;
 import com.team.project.domain.auth.dto.UserDto;
@@ -40,9 +46,26 @@ public class AuthController {
 		return ResponseEntity.noContent().build();
 	}
 
+
+	@Operation(summary = "회원 가입", description = "회원 가입합니다.")
+	@ApiResponses(value = {
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원 가입 성공"),
+			@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(
+					mediaType = "application/json",
+					schema = @Schema(implementation = ResponseEntity.class),
+					examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
+							value = """
+					  {
+					        "Bad Request"
+					  }
+					"""
+					)))})
 	@PostMapping("/signup")
-	public ResponseEntity<Void> signUp(@RequestBody SignUpRequest request) {
-		authService.signUp(request);
-		return ResponseEntity.status(HttpStatus.CREATED).build();
+	public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
+		SignUpResponse response = authService.signUp(request);
+
+		return ResponseEntity.ok(
+				ApiResponse.ok("회원가입이 완료되었습니다.", response)
+		);
 	}
 }

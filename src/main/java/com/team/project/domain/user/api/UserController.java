@@ -8,18 +8,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.team.project.domain.auth.dto.CurrentUser;
 import com.team.project.domain.auth.dto.UserDto;
-import com.team.project.domain.user.api.request.SignUpRequest;
 import com.team.project.domain.user.api.request.UpdateUserRequest;
 import com.team.project.domain.user.api.request.UserListRequest;
-import com.team.project.domain.user.api.response.ApiResponse;
-import com.team.project.domain.user.api.response.SignUpResponse;
 import com.team.project.domain.user.api.response.UserResponse;
 import com.team.project.domain.user.model.dto.UserList;
 import com.team.project.domain.user.service.UserService;
@@ -41,28 +37,6 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
 	private final UserService userService;
-
-	@Operation(summary = "회원 가입", description = "회원 가입합니다.")
-	@ApiResponses(value = {
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원 가입 성공"),
-		@io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(
-			mediaType = "application/json",
-			schema = @Schema(implementation = ResponseEntity.class),
-			examples = @io.swagger.v3.oas.annotations.media.ExampleObject(
-				value = """
-					  {
-					        "Bad Request"
-					  }
-					"""
-			)))})
-	@PostMapping("/signup")
-	public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@Valid @RequestBody SignUpRequest request) {
-		SignUpResponse response = userService.signUp(request);
-
-		return ResponseEntity.ok(
-			ApiResponse.ok("회원가입이 완료되었습니다.", response)
-		);
-	}
 
 	@Operation(summary = "유저 조회", description = "관리자가 userId로 정보를 조회합니다.")
 	@ApiResponses(value = {
