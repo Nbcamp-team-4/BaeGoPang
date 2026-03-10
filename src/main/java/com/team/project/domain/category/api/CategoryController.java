@@ -20,94 +20,72 @@ import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.category.api.request.CategoryPageRequest;
 import com.team.project.domain.category.api.request.CreateCategoryRequest;
 import com.team.project.domain.category.api.request.UpdateCategoryRequest;
+import com.team.project.domain.category.api.response.AdminCategoryResponse;
 import com.team.project.domain.category.api.response.CategoryResponse;
-import com.team.project.domain.category.api.response.GetCategoriesResponse;
 import com.team.project.domain.category.api.response.GetCategoryResponse;
 import com.team.project.domain.category.service.CategoryService;
+import com.team.project.global.common.dto.BasePageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
-@Slf4j
 @RequestMapping("/api/categories")
-@Tag(name = "Category", description = "카테고리 API")
 public class CategoryController {
 
     private final CategoryService categoryService;
 
-    /**
-     * 카테고리 생성
-     */
-    @Operation(summary = "카테고리 생성", description = "관리자(MASTER, MANAGER)가 카테고리를 생성합니다.")
+    @Operation(summary = "카테고리 등록")
     @PostMapping
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     @ResponseStatus(HttpStatus.CREATED)
-    public CategoryResponse create(
+    public CategoryResponse createCategory(
         @CurrentUser UserDto userDto,
-        @Valid @RequestBody CreateCategoryRequest request
+        @RequestBody CreateCategoryRequest request
     ) {
         return categoryService.createCategory(userDto, request);
     }
 
-    /**
-     * 사용자용 카테고리 목록 조회
-     */
-    @Operation(summary = "카테고리 목록 조회 (사용자)", description = "삭제되지 않은 카테고리 목록을 조회합니다.")@GetMapping
-    public GetCategoriesResponse getCategoriesForUser(
-        @ModelAttribute CategoryPageRequest request
-    ) {
-        return categoryService.getCategoriesForUser(request);
+    @Operation(summary = "카테고리 단건 조회")
+    @GetMapping("/{categoryId}")
+    public GetCategoryResponse getCategory(@PathVariable UUID categoryId) {
+        return categoryService.getCategory(categoryId);
     }
 
-    /**
-     * 관리자용 카테고리 목록 조회
-     */
+    @Operation(summary = "카테고리 목록 조회")
+    @GetMapping
+    public BasePageResponse<CategoryResponse> getCategories(
+        @ModelAttribute CategoryPageRequest request
+    ) {
+        return categoryService.getCategories(request);
+    }
+
+    @Operation(summary = "관리자용 카테고리 목록 조회")
     @GetMapping("/admin")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
-    public GetCategoriesResponse getCategoriesForAdmin(
+    public BasePageResponse<AdminCategoryResponse> getCategoriesForAdmin(
         @ModelAttribute CategoryPageRequest request
     ) {
         return categoryService.getCategoriesForAdmin(request);
     }
 
-    /**
-     * 카테고리 단건 조회
-     */
-    @Operation(summary = "카테고리 조회", description = "카테고리 정보를 조회합니다.")
-    @GetMapping("/{categoryId}")
-    public GetCategoryResponse getCategory(
-        @PathVariable UUID categoryId
-    ) {
-        return categoryService.getCategory(categoryId);
-    }
-
-    /**
-     * 카테고리 수정
-     */
-    @Operation(summary = "카테고리 수정", description = "관리자(MASTER, MANAGER)가 카테고리를 수정합니다.")
+    @Operation(summary = "카테고리 수정")
     @PutMapping("/{categoryId}")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
-    public CategoryResponse update(
+    public CategoryResponse updateCategory(
         @CurrentUser UserDto userDto,
         @PathVariable UUID categoryId,
-        @Valid @RequestBody UpdateCategoryRequest request
+        @RequestBody UpdateCategoryRequest request
     ) {
         return categoryService.updateCategory(userDto, categoryId, request);
     }
 
-    /**
-     * 카테고리 삭제 (Soft Delete)
-     */
-    @Operation(summary = "카테고리 삭제", description = "관리자(MASTER, MANAGER)가 카테고리를 삭제합니다.")
+    @Operation(summary = "카테고리 삭제")
     @DeleteMapping("/{categoryId}")
     @PreAuthorize("hasAnyRole('MASTER','MANAGER')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(
+    public void deleteCategory(
         @CurrentUser UserDto userDto,
         @PathVariable UUID categoryId
     ) {

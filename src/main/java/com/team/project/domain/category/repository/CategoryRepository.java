@@ -11,15 +11,14 @@ import com.team.project.domain.category.entity.Category;
 
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
-    Optional<Category> findByName(String name);
-
-    boolean existsByNameAndDeletedAtIsNull(String name);
     Optional<Category> findByIdAndDeletedAtIsNull(UUID categoryId);
 
-    //관리자
-    Page<Category> findAll(Pageable pageable);
+    boolean existsByNameAndDeletedAtIsNull(String name);
 
-    //사용자
     Page<Category> findAllByDeletedAtIsNull(Pageable pageable);
+
+    Page<Category> findByNameContainingIgnoreCaseAndDeletedAtIsNull(String name, Pageable pageable);
+
+    Page<Category> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
 }

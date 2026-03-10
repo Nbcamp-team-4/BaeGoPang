@@ -14,8 +14,8 @@ import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.category.api.request.CategoryPageRequest;
 import com.team.project.domain.category.api.request.CreateCategoryRequest;
 import com.team.project.domain.category.api.request.UpdateCategoryRequest;
+import com.team.project.domain.category.api.response.AdminCategoryResponse;
 import com.team.project.domain.category.api.response.CategoryResponse;
-import com.team.project.domain.category.api.response.GetCategoriesResponse;
 import com.team.project.domain.category.api.response.GetCategoryResponse;
 import com.team.project.domain.category.entity.Category;
 import com.team.project.domain.category.exception.CategoryDuplicateException;
@@ -23,6 +23,7 @@ import com.team.project.domain.category.exception.CategoryNotFoundException;
 import com.team.project.domain.category.repository.CategoryRepository;
 import com.team.project.domain.store.entity.StoreCategory;
 import com.team.project.domain.store.repository.StoreCategoryRepository;
+import com.team.project.global.common.dto.BasePageResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,11 +43,10 @@ public class CategoryServiceImpl implements CategoryService {
 
         Category category = Category.builder()
             .name(request.getName())
-            .createdBy(userDto.getId())
             .build();
 
-        Category saved = categoryRepository.save(category);
-        return CategoryResponse.from(saved);
+        Category savedCategory = categoryRepository.save(category);
+        return CategoryResponse.from(savedCategory);
     }
 
     @Override
@@ -58,45 +58,61 @@ public class CategoryServiceImpl implements CategoryService {
         return GetCategoryResponse.of(CategoryResponse.from(category));
     }
 
-    /**
-     * 사용자용(삭제 제외) 페이징 조회
-     */
     @Override
     @Transactional(readOnly = true)
-    public GetCategoriesResponse getCategoriesForUser(CategoryPageRequest request) {
-
+    public BasePageResponse<CategoryResponse> getCategories(CategoryPageRequest request) {
         Pageable pageable = PageRequest.of(
             request.getPage(),
             request.getSize(),
-            Sort.by(Sort.Direction.DESC, "createdAt")
+            Sort.by("createdAt").descending()
         );
 
-        Page<Category> page = categoryRepository.findAllByDeletedAtIsNull(pageable);
+        Page<Category> page;
+        String name = request.getName();
 
-        return new GetCategoriesResponse(
-            page.getContent().stream().map(CategoryResponse::from).toList(),
+        if (name != null && !name.isBlank()) {
+            page = categoryRepository.findByNameContainingIgnoreCaseAndDeletedAtIsNull(name, pageable);
+        } else {
+            page = categoryRepository.findAllByDeletedAtIsNull(pageable);
+        }
+
+        List<CategoryResponse> content = page.getContent().stream()
+            .map(CategoryResponse::from)
+            .toList();
+
+        return new BasePageResponse<>(
+            content,
             page.getNumber(),
             page.getSize(),
             page.getTotalElements(),
             page.getTotalPages()
         );
     }
-    /**
-     * 관리자용(전체) 페이징 조회
-     */
+
     @Override
     @Transactional(readOnly = true)
-    public GetCategoriesResponse getCategoriesForAdmin(CategoryPageRequest request) {
+    public BasePageResponse<AdminCategoryResponse> getCategoriesForAdmin(CategoryPageRequest request) {
         Pageable pageable = PageRequest.of(
             request.getPage(),
             request.getSize(),
-            Sort.by(Sort.Direction.DESC, "createdAt")
+            Sort.by("createdAt").descending()
         );
 
-        Page<Category> page = categoryRepository.findAll(pageable);
+        Page<Category> page;
+        String name = request.getName();
 
-        return new GetCategoriesResponse(
-            page.getContent().stream().map(CategoryResponse::from).toList(),
+        if (name != null && !name.isBlank()) {
+            page = categoryRepository.findByNameContainingIgnoreCase(name, pageable);
+        } else {
+            page = categoryRepository.findAll(pageable);
+        }
+
+        List<AdminCategoryResponse> content = page.getContent().stream()
+            .map(AdminCategoryResponse::from)
+            .toList();
+
+        return new BasePageResponse<>(
+            content,
             page.getNumber(),
             page.getSize(),
             page.getTotalElements(),
@@ -109,12 +125,8 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findByIdAndDeletedAtIsNull(categoryId)
             .orElseThrow(CategoryNotFoundException::new);
 
-        boolean nameChanged = !category.getName().equals(request.getName());
-        if (nameChanged && categoryRepository.existsByNameAndDeletedAtIsNull(request.getName())) {
-            throw new CategoryDuplicateException();
-        }
-
         category.update(request.getName(), userDto.getId());
+
         return CategoryResponse.from(category);
     }
 
