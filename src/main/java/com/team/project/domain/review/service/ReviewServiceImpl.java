@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.team.project.domain.order.entity.Order;
 import com.team.project.domain.order.model.vo.OrderStatus;
 import com.team.project.domain.order.repository.OrderRepository;
@@ -21,8 +22,10 @@ import com.team.project.domain.review.entity.Review;
 import com.team.project.domain.review.entity.ReviewImage;
 import com.team.project.domain.review.repository.ReviewImageRepository;
 import com.team.project.domain.review.repository.ReviewRepository;
+import com.team.project.global.file.ImageType;
+import com.team.project.global.file.service.ImageService;
+
 import jakarta.persistence.EntityNotFoundException;
-import com.team.project.domain.review.api.response.ReviewResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -33,6 +36,9 @@ public class ReviewServiceImpl implements ReviewService {
 	private final ReviewRepository reviewRepository;
 	private final ReviewImageRepository reviewImageRepository;
 	private final OrderRepository orderRepository;
+
+	// 1. 이미지 인터페이스 주입 (설정에 따라 Local/S3 자동 선택)
+	private final ImageService imageService;
 
 	@Override
 	@Transactional
@@ -70,17 +76,20 @@ public class ReviewServiceImpl implements ReviewService {
 
 		Review savedReview = reviewRepository.save(review);
 
-		// 4. 이미지 저장
-		if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-			for (String url : request.getImageUrls()) {
+		// 4. 이미지 처리 및 저장 (이 부분이 핵심 수정 사항입니다!)
+		if (images != null && !images.isEmpty()) {
+			for (MultipartFile file : images) {
+				// (1) LocalImageService 또는 S3ImageService를 통해 파일 업로드 후 URL 획득
+				String uploadedUrl = imageService.upload(file, ImageType.REVIEW);
+
+				// (2) 획득한 URL을 ReviewImage 엔티티로 만들어 DB 저장
 				ReviewImage image = ReviewImage.builder()
 					.review(savedReview)
-					.imageUrl(url)
+					.imageUrl(uploadedUrl)
 					.build();
 				reviewImageRepository.save(image);
 			}
 		}
-
 		// 5. 가게 평점 업데이트 (Store 엔티티의 비즈니스 메서드 호출)
 		order.getStore().addReviewRating(request.getRating());
 

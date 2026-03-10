@@ -25,6 +25,7 @@ import com.team.project.domain.review.api.response.ReviewResponse;
 import com.team.project.domain.review.api.response.UpdateReviewRequest;
 import com.team.project.domain.review.service.ReviewService;
 import com.team.project.global.common.dto.BaseResponse;
+import com.team.project.global.file.service.ImageService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,19 +41,22 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ReviewController {
 	private final ReviewService reviewService;
-
+	private final ImageService imageService;
 	/**
 	 * 리뷰 생성 (이미지 포함)
 	 */
 	@Operation(summary = "리뷰 작성", description = "주문(orderId)에 대한 리뷰와 사진을 작성합니다.")
-	@PostMapping(value = "/orders/{orderId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE) // [수정] Multipart 설정
+	@PostMapping(value = "/orders/{orderId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<BaseResponse<ReviewResponse>> createReview(
 		@Parameter(description = "주문 ID") @PathVariable UUID orderId,
 		@Parameter(description = "사용자 ID 헤더") @RequestHeader(name = "X-User-Id") UUID userId,
-		@RequestPart("request") CreateReviewRequest request, // [수정] @RequestBody -> @RequestPart
-		@RequestPart(value = "images", required = false) List<MultipartFile> images) { // [추가] 이미지 파라미터
+		@RequestPart("request") CreateReviewRequest request,
+		@RequestPart(value = "images", required = false) List<MultipartFile> images) {
 
-		// [주의] ReviewService 인터페이스도 images를 받도록 수정해야 합니다.
+		log.info("리뷰 작성 요청 - 주문ID: {}, 사용자ID: {}, 이미지 개수: {}",
+			orderId, userId, (images != null ? images.size() : 0));
+
+		// 서비스로 파라미터를 그대로 전달합니다.
 		ReviewResponse response = reviewService.createReview(orderId, userId, request, images);
 
 		return ResponseEntity.status(HttpStatus.CREATED)
@@ -87,4 +91,7 @@ public class ReviewController {
 		reviewService.deleteReview(reviewId, userId);
 		return ResponseEntity.ok(BaseResponse.ofSuccess(null));
 	}
+
+
+
 }
