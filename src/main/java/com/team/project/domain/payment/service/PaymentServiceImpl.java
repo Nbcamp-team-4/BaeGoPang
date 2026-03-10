@@ -136,7 +136,7 @@ public class PaymentServiceImpl implements PaymentService {
 			);
 
 			throw e;
-		}catch(Payment)
+		}
 	}
 
 	/**
@@ -166,9 +166,8 @@ public class PaymentServiceImpl implements PaymentService {
 			payment.cancel();
 
 			// 2-2. PG 통신 성공 경우 로그 생성
-			String paymentKey = "test_paymentKey";
 			paymentLogService.createPaymentLog(
-				CreatePaymentLogCommand.of(paymentKey, PaymentLogStatus.valueOf(type + "_SUCCESS"),
+				CreatePaymentLogCommand.of(payment.getPaymentKey(), PaymentLogStatus.valueOf(type + "_SUCCESS"),
 					command.getReason(), payment.getId()));
 
 		} catch (PgProviderBaseException e) {
