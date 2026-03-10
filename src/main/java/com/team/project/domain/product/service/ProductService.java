@@ -3,6 +3,9 @@ package com.team.project.domain.product.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+
+import com.team.project.domain.product.api.request.ProductSearchRequest;
 import com.team.project.domain.product.service.command.CreateProductCommand;
 import com.team.project.domain.product.service.command.UpdateProductCommand;
 import com.team.project.domain.product.service.result.GetProductResult;
@@ -17,6 +20,8 @@ public interface ProductService {
     void deleteProduct(UUID productId, UUID userId, String role);
 
     List<ProductResult> getProducts(UUID storeId);
+
+    Page<ProductResult> getProductsForAdmin(UUID userId, String role, ProductSearchRequest request);
 
     //사용자용상품 상세 조회(상품 기본정보+옵션그룹+옵션아이템)
     GetProductResult getProduct(UUID productId);

@@ -3,10 +3,12 @@ package com.team.project.domain.product.api;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.team.project.domain.auth.dto.CurrentUser;
 import com.team.project.domain.auth.dto.UserDto;
 import com.team.project.domain.product.api.request.CreateProductRequest;
+import com.team.project.domain.product.api.request.ProductSearchRequest;
 import com.team.project.domain.product.api.request.UpdateProductRequest;
 import com.team.project.domain.product.api.response.GetProductResponse;
 import com.team.project.domain.product.api.response.ProductResponse;
@@ -27,9 +30,11 @@ import com.team.project.domain.product.service.command.CreateProductCommand;
 import com.team.project.domain.product.service.command.UpdateProductCommand;
 import com.team.project.domain.product.service.result.GetProductResult;
 import com.team.project.domain.product.service.result.ProductResult;
+import com.team.project.global.common.dto.BasePageResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Product", description = "상품 API")
@@ -48,7 +53,7 @@ public class ProductController {
     @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<ProductResponse> createProduct(
         @CurrentUser UserDto userDto,
-        @RequestBody CreateProductRequest request
+        @RequestBody @Valid CreateProductRequest request
     ) {
 
         CreateProductCommand command = request.toCommand();
@@ -67,7 +72,7 @@ public class ProductController {
     public ResponseEntity<ProductResponse> updateProduct(
         @PathVariable UUID productId,
         @CurrentUser UserDto userDto,
-        @RequestBody UpdateProductRequest request
+        @RequestBody @Valid UpdateProductRequest request
     ) {
 
         UpdateProductCommand command = request.toCommand(productId);
@@ -108,6 +113,35 @@ public class ProductController {
         List<ProductResponse> response = results.stream()
             .map(ProductResponse::from)
             .toList();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 관리자/점주용 상품 목록 조회
+     */
+    @Operation(summary = "관리자/점주용 상품 목록 조회", description = "상품명 검색 및 페이징으로 상품 목록을 조회합니다.")
+    @GetMapping("/admin")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'MASTER')")
+    public ResponseEntity<BasePageResponse<ProductResponse>> getProductsForAdmin(
+        @CurrentUser UserDto userDto,
+        @Valid @ModelAttribute ProductSearchRequest request
+    ) {
+
+        String role = userDto.getRoles().get(0).replace("ROLE_", "");
+        Page<ProductResult> resultPage = productService.getProductsForAdmin(userDto.getId(), role, request);
+
+        List<ProductResponse> content = resultPage.getContent().stream()
+            .map(ProductResponse::from)
+            .toList();
+
+        BasePageResponse<ProductResponse> response = new BasePageResponse<>(
+            content,
+            resultPage.getNumber(),
+            resultPage.getSize(),
+            resultPage.getTotalElements(),
+            resultPage.getTotalPages()
+        );
 
         return ResponseEntity.ok(response);
     }
