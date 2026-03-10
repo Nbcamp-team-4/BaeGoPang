@@ -128,8 +128,6 @@ public class StoreServiceImpl implements StoreService {
 		if (!address.getUser().getId().equals(command.getUserId())) {
 			throw new StoreForbiddenException();
 		}
-		log.info("latitude:{}, longitude:{}, categoryId:{}", address.getLatitude(), address.getLongitude(),
-			command.getCategoryId());
 
 		Double latitude = address.getLatitude().doubleValue();
 		Double longitude = address.getLongitude().doubleValue();
