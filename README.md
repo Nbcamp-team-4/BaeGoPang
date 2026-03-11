@@ -99,7 +99,7 @@ global
 - 권한(Role: CUSTOMER / OWNER / ADMIN), 예외 처리
 산출물
 - DB: users, user_roles, (선택) refresh_tokens
-- API: /user/*, /admin/*, /address/*
+- API: /user/* , /admin/* , /address/*
 
 2.😊 이호영 — 상품/가게 (Store/Catalog)
 - 카테고리/가게 목록·상세
