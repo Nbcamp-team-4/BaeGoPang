@@ -243,8 +243,8 @@ DB_PASSWORD=postgres
 
 JWT_SECRET=your-secret-key
 
-AWS_ACCESS_KEY=
-AWS_SECRET_KEY=
+AWS_ACCESS_KEY=<br>
+AWS_SECRET_KEY=<br>
 AWS_S3_BUCKET=
 
 ### 2. 프로젝트 실행
