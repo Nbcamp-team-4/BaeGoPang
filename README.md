@@ -159,6 +159,7 @@ AWS_S3_BUCKET=
 ./gradlew bootRun
 
 ## ERD
-https://www.erdcloud.com/d/HZggcjpBFCWuzNAQu
+<img width="4860" height="2502" alt="image" src="https://github.com/user-attachments/assets/9c2671fa-3f0c-4d37-b235-40dfd21e3deb" />
+
 
 
