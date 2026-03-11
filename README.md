@@ -32,6 +32,7 @@
 - **AI API 연동 기능**
 - **Swagger 기반 API 문서화**
 - **Flyway 기반 DB 마이그레이션 관리**
+- **PostGIS 기반 위치/지역 데이터 처리**
 
 ---
 
@@ -201,12 +202,12 @@ API: /reviews/*,/review_images/*, /ai/*
 </tr>
 <tr>
 <td><strong>이호영</strong></td>
-<td>상품 / 가게 / 지역 </td>
-<td>카테고리 및 가게 목록 조회, 메뉴 CRUD, 옵션 구성</td>
+<td>상품 / 가게 / 지역(PostGIS) / 카테고리 </td>
+<td>배송지 기반 가게 매핑, 멀티폴리곤(PostGIS)을 활용한 지역 식별, 카테고리/가게 목록 조회, 메뉴 CRUD 및 옵션 구성</td>
 <td>
- DB: category, store, store_category,product<br>
- DB: product_option, product_option_item, store, region<br>
- API: /product/*,/product_options/*, /product_option_items/*, /stores/*, /regions/*
+ DB: category, region, store, store_category, product<br>
+ DB: product_option, product_option_item<br>
+ API: /categories/*, /regions/*, /stores/*, /products/*, /images/*
 </td>
 </tr>
 <tr>
