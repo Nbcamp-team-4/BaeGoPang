@@ -237,8 +237,8 @@ http://localhost:8080/swagger-ui/index.html
 
 ### 1. 환경 변수 설정
 
-DB_URL=jdbc:postgresql://localhost:5432/baegopang
-DB_USERNAME=postgres
+DB_URL=jdbc:postgresql://localhost:5432/baegopang<br>
+DB_USERNAME=postgres<br>
 DB_PASSWORD=postgres
 
 JWT_SECRET=your-secret-key
