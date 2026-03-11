@@ -4,8 +4,11 @@
 
 ## 🥡 배고팡 (Baegopang)
 📌 소개
-- 한 줄 정리: 배달 주문 관리 플랫폼 개발
-- 내용:
+
+배달 서비스 기반의 커머스 플랫폼 백엔드 프로젝트입니다.
+사용자는 상품을 주문하고 결제할 수 있으며, 매장과 상품을 관리하고 리뷰를 작성할 수 있습니다.  
+또한 JWT 기반 인증, Toss 결제 연동, AI 기능 등을 포함한 서비스 구조를 구현했습니다.
+
 - 광화문 근처에서 운영될 음식점들의 배달 주문 관리, 결제, 주문 내역 관리 기능 제공
 - 전국적으로 작동 가능한 시스템을 구축하되, 실제 주문은 광화문 근처 음식점으로 한정
 
@@ -15,24 +18,24 @@
 - Framework : Spring Boot 3.X
 - Security : Spring Security
 - Module : Spring Data JPA
----
+
 ### Database
 - PostgreSQL
 - Flyway (DB Migration)
----
+
 ### Authentication
 - JWT (Access Token / Refresh Token)
----
+
 ### Payment
 - Toss Payments API
 - API : Gemini AI API, Toss Payments API
----
+
 ### Infrastructure
 - AWS S3 (파일 업로드)
----
+
 ### Tool  
 - Git, Github, Postman,Notion, Slack
----
+
 ### Documentation
 - Swagger (OpenAPI)
 
