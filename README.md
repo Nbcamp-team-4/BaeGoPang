@@ -15,18 +15,24 @@
 - Framework : Spring Boot 3.X
 - Security : Spring Security
 - Module : Spring Data JPA
+---
 ### Database
 - PostgreSQL
 - Flyway (DB Migration)
+---
 ### Authentication
 - JWT (Access Token / Refresh Token)
+---
 ### Payment
 - Toss Payments API
 - API : Gemini AI API, Toss Payments API
+---
 ### Infrastructure
 - AWS S3 (파일 업로드)
+---
 ### Tool  
 - Git, Github, Postman,Notion, Slack
+---
 ### Documentation
 - Swagger (OpenAPI)
 
@@ -139,6 +145,7 @@ global
 ## API Documentation
 
 Swagger를 사용하여 API 문서를 제공합니다.
+
 http://localhost:8080/swagger-ui/index.html
 
 ## How to Run
