@@ -159,7 +159,8 @@ AWS_S3_BUCKET=
 ./gradlew bootRun
 
 ## ERD
-<img width="4860" height="2502" alt="image" src="https://github.com/user-attachments/assets/9c2671fa-3f0c-4d37-b235-40dfd21e3deb" />
+<img width="4980" height="2482" alt="baegopa_main" src="https://github.com/user-attachments/assets/41b64375-a62e-46e5-9620-3d5fe4e32f53" />
+
 
 
 
