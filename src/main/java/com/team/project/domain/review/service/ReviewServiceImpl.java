@@ -109,7 +109,7 @@ public class ReviewServiceImpl implements ReviewService {
 		Pageable pageable = PageRequest.of(request.getPage(), request.getSize(), sort);
 
 		// 3. Repository 호출 및 엔티티를 DTO로 변환하여 반환
-		return reviewRepository.findAllByStoreIdAndDeletedAtIsNull(storeId, pageable)
+		return reviewRepository.findAllByStoreIdWithImages(storeId, pageable)
 			.map(review -> ReviewResponse.from(review));
 	}
 

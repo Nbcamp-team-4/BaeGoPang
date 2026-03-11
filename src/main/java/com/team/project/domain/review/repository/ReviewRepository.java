@@ -6,6 +6,9 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import com.team.project.domain.review.entity.Review;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
@@ -16,8 +19,10 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 	// 공통: 삭제되지 않은 리뷰 단건 조회
 	Optional<Review> findByIdAndDeletedAtIsNull(UUID reviewId);
 
-	// 2번 기능: 특정 가게의 삭제되지 않은 모든 리뷰 조회
-	Page <Review> findAllByStoreIdAndDeletedAtIsNull(UUID storeId, Pageable pageable);
-
-
+	@Query(value = "select distinct r from Review r " +
+		"left join fetch r.reviewImages " +
+		"where r.store.id = :storeId and r.deletedAt is null",
+		countQuery = "select count(r) from Review r " +
+			"where r.store.id = :storeId and r.deletedAt is null")
+	Page<Review> findAllByStoreIdWithImages(@Param("storeId") UUID storeId, Pageable pageable);
 }
