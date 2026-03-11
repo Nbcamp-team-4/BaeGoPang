@@ -107,7 +107,7 @@ global
 산출물
 - DB: category, store, store_category
 - DB: product, product_option, product_option_items
-- API: /store/*, /menu/*, /category/*, /owner/*
+- API: /store/* , /menu/* , /category/* , /owner/*
 
 3. 😊김민지 — 장바구니 + 주문 (Cart/Order) + AWS
 - 장바구니(한 가게만 담기), 옵션 선택, 수량 변경
@@ -117,7 +117,7 @@ global
 산출물
 - DB: cart, cart_item, cart_item_option
 - DB: order, order_item, order_item_option
-- API: /cart/*, /orders/*
+- API: /cart/* , /order/*
 계약
 - 결제팀과: 결제 성공 시 주문 상태 전이 이벤트/콜백
 - 상품팀과: 주문 생성 시 가격/옵션 검증 및 스냅샷 저장
@@ -129,7 +129,7 @@ global
 - 로그인 회원 가입, JWT + Security
 산출물
 - DB: payment
-- API: /payment/*, /payment_log/*, /auth/* 
+- API: /payment/* , /payment_log/* , /auth/* 
 계약
 - 주문팀에 결제 결과 통지 방식 합의 (동기 호출 vs 이벤트)
 
@@ -140,7 +140,7 @@ global
 산출물
 - DB: review, review_image, 
 - DB: ai_log
-- API: /review/*, /ai/*
+- API: /review/* , /ai/*
 
 
 ## API Documentation
