@@ -160,11 +160,11 @@ global
 ## 👥 팀 역할 분담
 | 이름      | 담당 기능                     | 주요 구현 내용                                                            | 산출물 (DB / API)                                                                                                                                                |
 | ------- | ------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **권진석** | 사용자 / 관리자 / 배송지           | 사용자 관리, 관리자 기능, 권한(Role: CUSTOMER / OWNER / ADMIN), 배송지 CRUD, 예외 처리 | **DB**: users, user_roles, refresh_tokens<br>**API**: `/user/*`, `/admin/*`, `/address/*`                                                                     |
-| **이호영** | 상품 / 가게 (Store / Catalog) | 카테고리 및 가게 목록·상세 조회, 메뉴 CRUD, 옵션 구성, 품절 처리                           | **DB**: category, store, store_category<br>**DB**: product, product_option, product_option_items<br>**API**: `/store/*`, `/menu/*`, `/category/*`, `/owner/*` |
-| **김민지** | 장바구니 / 주문 / AWS           | 장바구니(한 가게 기준), 옵션 선택, 수량 변경, 주문 생성/조회/취소, 주문 상태 관리, AWS 배포          | **DB**: cart, cart_item, cart_item_option<br>**DB**: order, order_item, order_item_option<br>**API**: `/cart/*`, `/order/*`                                   |
+| **권진석** | 사용자 / 관리자 / 배송지           | 사용자 관리, 관리자 기능, 권한(Role: CUSTOMER / OWNER / ADMIN), 배송지 CRUD, 예외 처리 | **DB**: users, user_role, address <br>**API**: `/user/*`, `/admin/*`, `/address/*`                                                                     |
+| **이호영** | 상품 / 가게 | 카테고리 및 가게 목록·상세 조회, 메뉴 CRUD, 옵션 구성, 품절 처리, 지역                           | **DB**: category, store, store_category <br>**DB**: product, product_option, product_option_items<br>**API**: `/store/*`, `/menu/*`, `/category/*`, `/owner/*` |
+| **김민지** | 장바구니 / 주문 / AWS           | 장바구니(한 가게 기준), 옵션 선택, 수량 변경, 주문 생성/조회/취소, 주문 상태 관리, AWS 배포          | **DB**: cart, cart_item, cart_item_option, region<br>**DB**: order, order_item, order_item_option<br>**API**: `/cart/*`, `/order/*` , `/regions/*`                                   |
 | **최미은** | 결제 / 로그인 / 회원가입           | Toss 결제 연동, 결제 승인/실패/환불 처리, 결제 로그 관리, JWT 인증 및 로그인/회원가입 구현          | **DB**: payment, payment_log<br>**API**: `/payment/*`, `/payment_log/*`, `/auth/*`                                                                            |
-| **김도형** | 리뷰 / AI API               | 리뷰 작성 및 조회, 가게 평점 집계, 리뷰 이미지 업로드, AI 리뷰 요약 및 악성 리뷰 필터링              | **DB**: review, review_image, ai_log<br>**API**: `/review/*`, `/ai/*`                                                                                         |
+| **김도형** | 리뷰 / AI API               | 리뷰 작성 및 조회, 가게 평점 집계, 리뷰 이미지 업로드, AI 리뷰 요약 및 악성 리뷰 필터링              | **DB**: review, review_image, ai_log<br>**API**: `/reviews/*`, `/ai/*`                                                                                         |
 
 
 
