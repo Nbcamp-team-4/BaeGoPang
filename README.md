@@ -83,6 +83,9 @@ global
  ├─ resolver
  ├─ file
  └─ common
+     ├─ dto
+     ├─ entity
+     └─ exception
  resources
 └─ db
    ├─ migration
