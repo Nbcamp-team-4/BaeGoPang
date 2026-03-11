@@ -14,6 +14,8 @@
 
 2026.02.24 ~ 2026.03.12
 
+---
+
 ## 🚀 프로젝트 소개
 
 **BaeGoPang(배고팡)** 은  
@@ -30,6 +32,8 @@
 - **AI API 연동 기능**
 - **Swagger 기반 API 문서화**
 - **Flyway 기반 DB 마이그레이션 관리**
+
+---
 
 ### 📌 프로젝트 목표
 
@@ -111,6 +115,7 @@
 
 공통 기능은 global 패키지에서 관리합니다.
 
+---
 ### 📂 Project Structure
 
 ```
@@ -155,24 +160,78 @@ global
 - 공통 응답/예외/엔티티는 global.common 에서 관리
 - DB 버전 관리는 Flyway를 통해 일관성 있게 유지
 - 인증/인가 로직은 Spring Security + JWT 구조로 분리
+
 ---
 
-## 👥 팀 역할 분담
-| 이름      | 담당 기능                     | 주요 구현 내용                                                            | 산출물 (DB / API)                                                                                                                                                |
-| ------- | ------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **권진석** | 사용자 / 관리자 / 배송지           | 사용자 관리, 관리자 기능, 권한(Role: CUSTOMER / OWNER / ADMIN), 배송지 CRUD, 예외 처리 | **DB**: users, user_role, address <br>**API**: `/user/*`, `/admin/*`, `/address/*`                                                                     |
-| **이호영** | 상품 / 가게 | 카테고리 및 가게 목록·상세 조회, 메뉴 CRUD, 옵션 구성, 품절 처리, 지역                           | **DB**: category, store, store_category <br>**DB**: product, product_option, product_option_items<br>**API**: `/store/*`, `/menu/*`, `/category/*`, `/owner/*` |
-| **김민지** | 장바구니 / 주문 / AWS           | 장바구니(한 가게 기준), 옵션 선택, 수량 변경, 주문 생성/조회/취소, 주문 상태 관리, AWS 배포          | **DB**: cart, cart_item, cart_item_option, region<br>**DB**: order, order_item, order_item_option<br>**API**: `/cart/*`, `/order/*` , `/regions/*`                                   |
-| **최미은** | 결제 / 로그인 / 회원가입           | Toss 결제 연동, 결제 승인/실패/환불 처리, 결제 로그 관리, JWT 인증 및 로그인/회원가입 구현          | **DB**: payment, payment_log<br>**API**: `/payment/*`, `/payment_log/*`, `/auth/*`                                                                            |
-| **김도형** | 리뷰 / AI API               | 리뷰 작성 및 조회, 가게 평점 집계, 리뷰 이미지 업로드, AI 리뷰 요약 및 악성 리뷰 필터링              | **DB**: review, review_image, ai_log<br>**API**: `/reviews/*`, `/ai/*`                                                                                         |
+## 👥 팀 역할 분담                                                                            |
+<table>
+<tr>
+<th width="110">이름</th>
+<th width="180">담당 기능</th>
+<th width="420">주요 구현 내용</th>
+<th width="380">산출물 (DB / API)</th>
+</tr>
+
+<tr>
+<td><strong>권진석</strong></td>
+<td>사용자 / 관리자 / 배송지</td>
+<td>사용자 관리, 관리자 기능, 권한(Role: CUSTOMER / OWNER / ADMIN), 배송지 CRUD</td>
+<td>
+ DB: user, user_role, role, address<br>
+ API: /users/*, /admins/*, /address/*
+</td>
+</tr>
+<tr>
+<td><strong>김도형</strong></td>
+<td>리뷰 / 리뷰 이미지 / AI API</td>
+<td>리뷰 작성 및 조회, AI 리뷰 요약</td>
+<td>
+ DB: review, review_image, ai_log<br>
+API: /reviews/*,/review_images/*, /ai/*
+</td>
+</tr>
+<tr>
+<td><strong>김민지</strong></td>
+<td>장바구니 / 주문 / AWS</td>
+<td>장바구니 관리, 주문 생성/조회/취소 / AWS 관련 배포</td>
+<td>
+ DB: cart, cart_item, cart_item_option<br>DB: order, order_item<br>
+ API: /carts/*, /orders/*
+</td>
+</tr>
+<tr>
+<td><strong>이호영</strong></td>
+<td>상품 / 가게 / 지역 </td>
+<td>카테고리 및 가게 목록 조회, 메뉴 CRUD, 옵션 구성</td>
+<td>
+ DB: category, store, store_category,product<br>
+ DB: product_option, product_option_item, store, region<br>
+ API: /product/*,/product_options/*, /product_option_items/*, /stores/*, /regions/*
+</td>
+</tr>
+<tr>
+<td><strong>최미은</strong></td>
+<td>결제 / 로그인 / 회원가입</td>
+<td>Toss 결제 연동, JWT 인증 구현</td>
+<td>
+ DB: payment, payment_log, refreshToekn<br>
+ API: /payment/*, /payment_log/*, /auth/*
+</td>
+</tr>
 
 
+
+</table>
+
+------
 
 ## 📄 API 문서
 
 Swagger를 사용하여 API 문서를 제공합니다.
 
 http://localhost:8080/swagger-ui/index.html
+
+----
 
 ## ⚙️ 실행 방법
 
@@ -190,6 +249,8 @@ AWS_S3_BUCKET=
 
 ### 2. 프로젝트 실행
 ./gradlew bootRun
+
+---
 
 ## 🗄️ ERD
 <img width="4980" height="2482" alt="baegopa_main" src="https://github.com/user-attachments/assets/41b64375-a62e-46e5-9620-3d5fe4e32f53" />
