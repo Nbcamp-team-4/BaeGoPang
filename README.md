@@ -57,7 +57,7 @@
 | 📦 **주문 관리 시스템**       | 주문 생성 / 조회 / 취소 및 주문 상태 관리                                                | 주문 상태 머신                       |
 | 💳 **결제 시스템**          | Toss Payments API 기반 결제 승인 / 실패 / 환불 처리                                   | Toss Payments API              |
 | ⭐ **리뷰 시스템**           | 리뷰 작성 및 조회, 가게 평점 집계 및 리뷰 이미지 업로드                                         | JPA, AWS S3                    |
-| 🤖 **AI 기능**           | 리뷰 요약, 악성 리뷰 필터링, 답글 초안 생성                                                | Gemini AI API                  |
+| 🤖 **AI 기능**           | 리뷰 요약, 악성 리뷰 필터링, 답글 초안 생성                                                | OPEN AI API                  |
 | 📄 **API 문서화**         | Swagger 기반 API 문서 자동 생성                                                   | Swagger / OpenAPI              |
 | 🗄️ **DB 버전 관리**       | Flyway 기반 데이터베이스 마이그레이션 관리                                                | Flyway                         |
 | ☁️ **파일 업로드**          | AWS S3를 활용한 이미지 파일 저장 및 관리                                                | AWS S3                         |
@@ -83,7 +83,7 @@
 - **Toss Payments API**
 
 ### AI / External API
-- **Gemini AI API**
+- **OPEN AI API**
 - **Toss Payments API**
 
 ### Storage / Infra
