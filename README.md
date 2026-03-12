@@ -2,13 +2,13 @@
 ## 🧭 목차
 * [🚀 프로젝트 소개](#-프로젝트-소개)
 * [🎯 핵심 기능](#-핵심-기능)
-* [🛠️ 기술 스택](#️-기술-스택)
+* [🛠️ 기술 스택](#-기술-스택)
 * [🏗️ 시스템 구조 및 설계](#️-시스템-구조-및-설계)
 * [👥 팀 역할 분담](#-팀-역할-분담)
 * [📄 API 문서](#-api-문서)
 * [⚙️ 실행 방법](#️-실행-방법)
 * [🗄️ ERD](#️-erd)
-
+  
 ---
 ## 📅 프로젝트 기간
 
@@ -46,6 +46,7 @@
 - 관리자: 사용자 및 권한 관리, 서비스 운영 기능
 
 ---
+
 ## 🎯 핵심 기능
 | 기능                     | 설명                                                                        | 기술 요소                          |
 | ---------------------- | ------------------------------------------------------------------------- | ------------------------------ |
@@ -63,165 +64,173 @@
 | ☁️ **파일 업로드**          | AWS S3를 활용한 이미지 파일 저장 및 관리                                                | AWS S3                         |
 
 ---
-## 🛠️ 기술 스택
+## 🧰 기술 스택
 
 ### Backend
-- **Java 21**
-- **Spring Boot 3.x**
-- **Spring Security**
-- **Spring Data JPA**
-- **Hibernate**
+![Java](https://img.shields.io/badge/Java_21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring Data JPA](https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Hibernate](https://img.shields.io/badge/Hibernate-59666C?style=for-the-badge&logo=hibernate&logoColor=white)
+
+### Security / Authentication
+![Spring Security](https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 
 ### Database
-- **PostgreSQL**
-- **Flyway**
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Flyway](https://img.shields.io/badge/Flyway-CC0200?style=for-the-badge&logo=flyway&logoColor=white)
 
-### Authentication
-- **JWT (Access Token / Refresh Token)**
+### Infrastructure / Storage
+![AWS S3](https://img.shields.io/badge/AWS_S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
 
-### Payment
-- **Toss Payments API**
+### External API / AI
+![OpenAI](https://img.shields.io/badge/OpenAI_API-412991?style=for-the-badge&logo=openai&logoColor=white)
+![Toss Payments](https://img.shields.io/badge/Toss_Payments-0064FF?style=for-the-badge&logo=simpleicons&logoColor=white)
 
-### AI / External API
-- **OPEN AI API**
-- **Toss Payments API**
-
-### Storage / Infra
-- **AWS S3**
-
-### Dev Tools
-- **Git**
-- **GitHub**
-- **Postman**
-- **Notion**
-- **Slack**
+### DevOps / Collaboration
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
+![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white)
+![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)
 
 ### Documentation
-- **Swagger / OpenAPI**
+![Swagger](https://img.shields.io/badge/Swagger/OpenAPI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)
 
 ---
-
 ## 🏗️ 시스템 구조 및 설계
 
-본 프로젝트는 **도메인 중심 패키지 구조 (Domain Driven Structure)** 를 기반으로 설계되었습니다.
+본 프로젝트는 **도메인 중심 패키지 구조(Domain-Oriented Package Structure)** 를 기반으로 설계했습니다.  
+기능별로 패키지를 분리하여 응집도를 높이고, 각 도메인 안에서 API, Entity, Repository, Service, Exception을 관리하도록 구성했습니다.
 
-각 도메인은 다음 계층으로 구성됩니다.
+공통 기능은 `global` 패키지에서 관리하며, 인증 / 인가, 공통 응답, 예외 처리, 파일 업로드 등 여러 도메인에서 함께 사용하는 기능을 분리했습니다.
 
-- **api** : Controller, Request/Response DTO
-- **dto** : 도메인 내부 데이터 전달 객체
-- **entity** : JPA Entity
-- **repository** : 데이터 접근 계층
-- **service** : 비즈니스 로직
-- **exception** : 도메인 예외 처리
-
-공통 기능은 global 패키지에서 관리합니다.
-
----
 ### 📂 Project Structure
 
-```
-domain
- ├─ address
- │  ├─ api
- │  │  ├─ request
- │  │  └─ response
- │  ├─ dto
- │  ├─ entity
- │  ├─ repository
- │  └─ service
- ├─ auth
- ├─ cart
- ├─ category
- ├─ order
- ├─ payment
- ├─ payment_log
- ├─ product
- ├─ region
- ├─ review
- ├─ store
- └─ user
+```text
+src/main/java/com/team/project
 
-global
- ├─ config
- ├─ jwt
- ├─ resolver
- ├─ file
- └─ common
-     ├─ dto
-     ├─ entity
-     └─ exception
- resources
-└─ db
-   ├─ migration
-   └─ dev-seed
+├── domain
+│   ├── address
+│   ├── ai
+│   ├── auth
+│   ├── cart
+│   ├── category
+│   ├── order
+│   ├── payment
+│   ├── payment_log
+│   ├── product
+│   ├── region
+│   ├── review
+│   ├── store
+│   └── user
+│
+└── global
+    ├── common
+    ├── config
+    ├── file
+    ├── jwt
+    └── resolver
 ```
-## 📌 설계 특징
+각 도메인은 아래와 같은 공통 구조를 따릅니다.
 
-- 도메인별 관심사를 분리하여 유지보수성과 확장성을 높임
-- 공통 응답/예외/엔티티는 global.common 에서 관리
-- DB 버전 관리는 Flyway를 통해 일관성 있게 유지
-- 인증/인가 로직은 Spring Security + JWT 구조로 분리
+```
+domain/{domain-name}
+
+├── api
+│   ├── request
+│   └── response
+├── entity
+├── repository
+├── service
+├── exception
+└── model (dto / vo)
+```
 
 ---
 
-## 👥 팀 역할 분담                                                                            |
+
+## 📌 설계 특징
+
+- 도메인별 관심사를 분리하여 유지보수성과 확장성을 높였습니다.
+- 공통 응답 / 예외 / 엔티티는 global.common에서 관리합니다.
+- 인증 / 인가 로직은 Spring Security + JWT 구조로 분리했습니다.
+- DB 버전 관리는 Flyway를 통해 일관성 있게 유지했습니다.
+
+---
+
+## 👥 팀 역할 분담
 <table>
-<tr>
-<th width="110">이름</th>
-<th width="180">담당 기능</th>
-<th width="420">주요 구현 내용</th>
-<th width="380">산출물 (DB / API)</th>
-</tr>
-
-<tr>
-<td><strong>권진석</strong></td>
-<td>사용자 / 관리자 / 배송지</td>
-<td>사용자 관리, 관리자 기능, 권한(Role: CUSTOMER / OWNER / ADMIN), 배송지 CRUD</td>
-<td>
- DB: user, user_role, role, address<br>
- API: /users/*, /admins/*, /address/*
-</td>
-</tr>
-<tr>
-<td><strong>김도형</strong></td>
-<td>리뷰 / 리뷰 이미지 / AI API</td>
-<td>리뷰 작성 및 조회, AI 리뷰 요약</td>
-<td>
- DB: review, review_image, ai_log<br>
-API: /reviews/*,/review_images/*, /ai/*
-</td>
-</tr>
-<tr>
-<td><strong>김민지</strong></td>
-<td>장바구니 / 주문 / AWS</td>
-<td>장바구니 관리, 주문 생성/조회/취소 / AWS 관련 배포</td>
-<td>
- DB: cart, cart_item, cart_item_option<br>DB: order, order_item<br>
- API: /carts/*, /orders/*
-</td>
-</tr>
-<tr>
-<td><strong>이호영</strong></td>
-<td>상품 / 가게 / 지역(PostGIS) / 카테고리 </td>
-<td>배송지 기반 가게 매핑, 멀티폴리곤(PostGIS)을 활용한 지역 식별, 카테고리/가게 목록 조회, 메뉴 CRUD 및 옵션 구성</td>
-<td>
- DB: category, region, store, store_category, product<br>
- DB: product_option, product_option_item<br>
- API: /categories/*, /regions/*, /stores/*, /products/*, /images/*
-</td>
-</tr>
-<tr>
-<td><strong>최미은</strong></td>
-<td>결제 / 로그인 / 회원가입</td>
-<td>Toss 결제 연동, JWT 인증 구현</td>
-<td>
- DB: payment, payment_log, refreshToekn<br>
- API: /payment/*, /payment_log/*, /auth/*
-</td>
-</tr>
-
-
-
+  <thead>
+    <tr>
+      <th width="110">이름</th>
+      <th width="190">담당 영역</th>
+      <th width="420">주요 구현 내용</th>
+      <th width="380">산출물 (DB / API)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>권진석</strong></td>
+      <td>사용자 / 관리자 / 배송지</td>
+      <td>
+        사용자 정보 관리, 관리자 기능 구현, 권한(Role: CUSTOMER / OWNER / ADMIN) 관리,
+        배송지 등록 / 조회 / 수정 / 삭제 기능 구현
+      </td>
+      <td>
+        DB: user, user_role, role, address<br>
+        API: /users/*, /admins/*, /address/*
+      </td>
+    </tr>
+    <tr>
+      <td><strong>김도형</strong></td>
+      <td>리뷰 / 리뷰 이미지 / AI</td>
+      <td>
+        리뷰 작성 및 조회 기능 구현, 리뷰 이미지 처리,
+        AI 기반 리뷰 요약 기능 구현
+      </td>
+      <td>
+        DB: review, review_image, ai_log<br>
+        API: /reviews/*, /review_images/*, /ai/*
+      </td>
+    </tr>
+    <tr>
+      <td><strong>김민지</strong></td>
+      <td>장바구니 / 주문 / AWS</td>
+      <td>
+        장바구니 관리, 주문 생성 / 조회 / 취소 기능 구현,
+        AWS 기반 배포 및 인프라 구성
+      </td>
+      <td>
+        DB: cart, cart_item, cart_item_option, order, order_item<br>
+        API: /carts/*, /orders/*
+      </td>
+    </tr>
+    <tr>
+      <td><strong>이호영</strong></td>
+      <td>상품 / 가게 / 지역 / 카테고리</td>
+      <td>
+        배송지 기반 가게 매핑, PostGIS 멀티폴리곤을 활용한 지역 식별,
+        카테고리 / 가게 목록 조회, 메뉴 CRUD 및 옵션 구성 구현
+      </td>
+      <td>
+        DB: category, region, store, store_category, product, product_option, product_option_item<br>
+        API: /categories/*, /regions/*, /stores/*, /products/*, /images/*
+      </td>
+    </tr>
+    <tr>
+      <td><strong>최미은</strong></td>
+      <td>결제 / 로그인 / 회원가입</td>
+      <td>
+        Toss Payments 결제 연동,
+        JWT 기반 인증 및 로그인 / 회원가입 기능 구현
+      </td>
+      <td>
+        DB: payment, payment_log, refreshToken<br>
+        API: /payment/*, /payment_log/*, /auth/*
+      </td>
+    </tr>
+  </tbody>
 </table>
 
 ------
@@ -230,14 +239,15 @@ API: /reviews/*,/review_images/*, /ai/*
 
 Swagger를 사용하여 API 문서를 제공합니다.
 
-http://localhost:8080/swagger-ui/index.html
+- http://localhost:8080/swagger-ui/index.html
+- https://baegopang.kro.kr/swagger-ui/index.html
 
 ----
 
 ## ⚙️ 실행 방법
 
 ### 1. 환경 변수 설정
-
+```
 DB_URL=jdbc:postgresql://localhost:5432/baegopang<br>
 DB_USERNAME=postgres<br>
 DB_PASSWORD=postgres
@@ -247,11 +257,24 @@ JWT_SECRET=your-secret-key
 AWS_ACCESS_KEY=<br>
 AWS_SECRET_KEY=<br>
 AWS_S3_BUCKET=
+```
 
 ### 2. 프로젝트 실행
+```
 ./gradlew bootRun
+```
 
 ---
 
 ## 🗄️ ERD
 <img width="4980" height="2482" alt="baegopa_main" src="https://github.com/user-attachments/assets/41b64375-a62e-46e5-9620-3d5fe4e32f53" />
+
+---
+
+## 🖥️ Frontend Repository
+
+BaeGoPang의 프론트엔드는 별도의 저장소에서 관리됩니다.
+
+[![BaeGoPang Frontend](https://img.shields.io/badge/BaeGoPang-Frontend-0A66C2?style=for-the-badge&logo=github)](https://github.com/Nbcamp-team-4/BaeGoPangFront)
+
+🔗 https://github.com/Nbcamp-team-4/BaeGoPangFront
