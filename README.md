@@ -267,7 +267,10 @@ AWS_S3_BUCKET=
 ---
 
 ## 🗄️ ERD
-<img width="4980" height="2482" alt="baegopa_main" src="https://github.com/user-attachments/assets/41b64375-a62e-46e5-9620-3d5fe4e32f53" />
+<img width="800" height="2482" alt="baegopa_main" src="https://github.com/user-attachments/assets/41b64375-a62e-46e5-9620-3d5fe4e32f53" />
+
+## 🚚 Architecture
+<img width="700" height="675" alt="baepopang_infra_6" src="https://github.com/user-attachments/assets/ffcf8922-be69-4be9-9b7b-5d3a96616221" />
 
 ---
 
